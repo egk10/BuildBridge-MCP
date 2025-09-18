@@ -63,30 +63,37 @@ See `docs/setup.md` for detailed setup instructions.
 
 ## 🚀 Quick Start
 
-1. **Clone the repository**
+1. Clone and install
    ```bash
    git clone https://github.com/egk10/BuildBridge-MCP.git
    cd BuildBridge-MCP
-   ```
-
-2. **Install dependencies**
-   ```bash
    pip install -r requirements.txt
    ```
 
-3. **Configure credentials**
+2. Local Mode (no Azure required)
    ```bash
-   cp config/credentials.json.template config/credentials.json
-   # Edit config/credentials.json with your Azure/Microsoft 365 credentials
+   # Copy template and enable local mode
+   copy config\credentials.json.template config\credentials.json  # Windows
+   # or: cp config/credentials.json.template config/credentials.json  # macOS/Linux
+   # Then open config/credentials.json and set:
+   #   "local_mode": true
+   #   "onedrive_folder": "data/sample"
    ```
 
-4. **Test the setup**
+3. Test
    ```bash
    python test_mcp.py
    ```
 
-5. **Configure your MCP client** (VS Code or Cursor)
-   - See `docs/vscode_setup.md` for detailed instructions
+4. Start the MCP server
+   ```bash
+   python src/main.py
+   ```
+
+5. Connect your MCP client (VS Code or Cursor)
+   - See `docs/vscode_setup.md` for configuration
+
+Want real SharePoint/OneDrive data? Disable local mode and add your Azure credentials; see `docs/setup.md`.
 
 ## 📊 Features
 

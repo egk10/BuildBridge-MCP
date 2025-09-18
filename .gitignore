@@ -1,0 +1,11 @@
+# Root gitignore for workspace
+
+# Python venv at workspace root
+/.venv/
+
+# Top-level credentials created by tests (ensure not committed)
+/config/credentials.json
+
+# OS and editor
+.DS_Store
+Thumbs.db

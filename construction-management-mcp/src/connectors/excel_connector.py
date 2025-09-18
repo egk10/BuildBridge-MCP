@@ -17,6 +17,7 @@ from office365.runtime.auth.authentication_context import AuthenticationContext
 from office365.sharepoint.client_context import ClientContext
 from office365.runtime.auth.user_credential import UserCredential
 from office365.sharepoint.files.file import File
+import zipfile
 
 
 class ExcelConnector:
@@ -37,12 +38,20 @@ class ExcelConnector:
         self.onedrive_folder = config.get('onedrive_folder', '/Construction Projects')
         self.excel_files = config.get('excel_files', {})
         
+        # Determine local mode (no Azure auth; read local sample files)
+        self.local_mode: bool = bool(
+            config.get('local_mode') or
+            self.sharepoint_site in ('local-test', 'local', '') or
+            str(config.get('onedrive_folder', '')).startswith('data')
+        )
+
         # Cache for Excel data
         self._data_cache = {}
         self._cache_expiry = {}
         
-        # Initialize authentication
-        self._init_auth()
+        # Initialize authentication unless in local mode
+        if not self.local_mode:
+            self._init_auth()
     
     def _init_auth(self):
         """Initialize Microsoft Graph authentication"""
@@ -93,6 +102,15 @@ class ExcelConnector:
             Path to downloaded file
         """
         try:
+            if self.local_mode:
+                # Resolve local sample path relative to project root
+                base_dir = Path(__file__).resolve().parents[2]
+                local_folder = self.onedrive_folder.strip('/') if isinstance(self.onedrive_folder, str) else 'data/sample'
+                local_path = str((base_dir / local_folder / file_name).resolve())
+                if not os.path.exists(local_path):
+                    raise FileNotFoundError(f"Local sample file not found: {local_path}")
+                return local_path
+
             ctx = self._get_sharepoint_context()
             
             # Construct file URL
@@ -143,20 +161,24 @@ class ExcelConnector:
             return self._data_cache[cache_key]
         
         try:
-            # Download file
+            # Download or resolve file
             local_path = self.download_excel_file(file_name)
             
-            # Read Excel file
-            if sheet_name:
-                df = pd.read_excel(local_path, sheet_name=sheet_name)
-            else:
-                df = pd.read_excel(local_path)
+            # Read Excel file with CSV fallback for sample data
+            try:
+                if sheet_name:
+                    df = pd.read_excel(local_path, sheet_name=sheet_name, engine='openpyxl')
+                else:
+                    df = pd.read_excel(local_path, engine='openpyxl')
+            except (zipfile.BadZipFile, ValueError):
+                # Not a real Excel file; try CSV fallback
+                df = pd.read_csv(local_path)
             
             # Cache the data
             self._data_cache[cache_key] = df
             
-            # Clean up temporary file
-            if local_path.startswith(tempfile.gettempdir()):
+            # Clean up temporary file for cloud mode only
+            if not self.local_mode and local_path.startswith(tempfile.gettempdir()):
                 os.remove(local_path)
             
             return df

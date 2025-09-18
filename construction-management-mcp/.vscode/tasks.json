@@ -1,0 +1,22 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Run test_mcp.py",
+      "type": "shell",
+      "command": "python \"${workspaceFolder}/test_mcp.py\"",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Start MCP server",
+      "type": "shell",
+      "command": "python \"${workspaceFolder}/src/main.py\"",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}

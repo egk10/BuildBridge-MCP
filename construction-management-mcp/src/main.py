@@ -47,6 +47,11 @@ def initialize_connectors():
     config = load_config()
     
     # Initialize connectors
+    # Propagate local_mode from config (optional)
+    local_mode = bool(config.get('local_mode'))
+    if local_mode:
+        config = {**config, 'local_mode': True}
+
     excel_connector = ExcelConnector(config)
     sharepoint_connector = SharePointConnector(config)
     document_indexer = DocumentIndexer(config)

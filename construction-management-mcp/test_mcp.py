@@ -8,9 +8,14 @@ without requiring full SharePoint/OneDrive integration.
 
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Ensure runtime can import from the local src/ folder
+PROJECT_ROOT = os.path.dirname(__file__)
+SRC_PATH = os.path.join(PROJECT_ROOT, 'src')
+if SRC_PATH not in sys.path:
+    sys.path.insert(0, SRC_PATH)
 
 import pandas as pd
+import zipfile
 from unittest.mock import Mock, patch
 import json
 
@@ -36,22 +41,30 @@ def test_excel_connector_local():
             }
         }
         
-        # Test reading sample data as CSV instead
-        data_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'sample')
+        # Test reading sample data from local sample folder
+        data_dir = os.path.join(PROJECT_ROOT, 'data', 'sample')
         
+        # Helper to read either real Excel or CSV masquerading as .xlsx
+        def _read_table(path: str) -> pd.DataFrame:
+            try:
+                return pd.read_excel(path, engine='openpyxl')
+            except (zipfile.BadZipFile, ValueError, FileNotFoundError):
+                # Fallback to CSV if it's not a valid Excel file
+                return pd.read_csv(path)
+
         # Read project data
         projects_file = os.path.join(data_dir, 'Project_Database.xlsx')
         if os.path.exists(projects_file):
-            # Since we saved as CSV content, read as CSV
-            projects_df = pd.read_csv(projects_file)
+            projects_df = _read_table(projects_file)
             print(f"✓ Loaded {len(projects_df)} projects")
-            print(f"Projects: {projects_df['ProjectName'].tolist()}")
+            if 'ProjectName' in projects_df.columns:
+                print(f"Projects: {projects_df['ProjectName'].dropna().astype(str).tolist()}")
         
         # Read budget data
         budget_file = os.path.join(data_dir, 'Budget_Tracking.xlsx')
         if os.path.exists(budget_file):
-            budget_df = pd.read_csv(budget_file)
-            print(f"✓ Loaded budget data for {len(budget_df)} projects")
+            budget_df = _read_table(budget_file)
+            print(f"✓ Loaded budget data rows: {len(budget_df)}")
         
         print("Excel connector test passed!")
         return True
@@ -106,8 +119,8 @@ def test_document_indexer():
             'client_secret': 'test',
             'tenant_id': 'test', 
             'sharepoint_site': 'test',
-            'local_docs_path': os.path.join(os.path.dirname(__file__), '..', 'data', 'sample'),
-            'index_file': os.path.join(os.path.dirname(__file__), '..', 'data', 'test_index.json')
+            'local_docs_path': os.path.join(PROJECT_ROOT, 'data', 'sample'),
+            'index_file': os.path.join(PROJECT_ROOT, 'data', 'test_index.json')
         }
         
         # Mock the authentication to avoid SharePoint calls

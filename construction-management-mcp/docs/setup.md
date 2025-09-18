@@ -21,7 +21,31 @@
    pip install fastmcp pandas openpyxl msal office365-rest-python-client python-dotenv
    ```
 
-## Step 2: Microsoft 365 API Setup
+## Step 2a: Local Mode (no Azure required)
+
+For local development and demos, you can run entirely offline using the sample data.
+
+1. Copy credentials template and enable local mode:
+   ```bash
+   copy config\credentials.json.template config\credentials.json  # Windows
+   # or: cp config/credentials.json.template config/credentials.json  # macOS/Linux
+   ```
+2. Edit `config/credentials.json` and set:
+   ```json
+   {
+     "local_mode": true,
+     "onedrive_folder": "data/sample"
+   }
+   ```
+3. Run tests and start the server:
+   ```bash
+   python test_mcp.py
+   python src/main.py
+   ```
+
+In local mode, SharePoint list calls return empty arrays and the Excel connector reads from `data/sample/*`. No network calls or Azure auth are attempted.
+
+## Step 2b: Microsoft 365 API Setup
 
 ### For Excel/OneDrive Access:
 1. Go to [Azure Portal](https://portal.azure.com/)

@@ -32,13 +32,20 @@ class SharePointConnector:
         self.sharepoint_site = config['sharepoint_site']
         self.sharepoint_lists = config.get('sharepoint_lists', {})
         
+        # Local mode toggle
+        self.local_mode = bool(
+            config.get('local_mode') or
+            self.sharepoint_site in ('local-test', 'local', '')
+        )
+
         # Cache for list data
         self._list_cache = {}
         self._cache_expiry = {}
         self._cache_duration = timedelta(minutes=15)  # Cache for 15 minutes
         
-        # Initialize authentication
-        self._init_auth()
+        # Initialize authentication unless local mode
+        if not self.local_mode:
+            self._init_auth()
     
     def _init_auth(self):
         """Initialize Microsoft Graph authentication"""
@@ -103,6 +110,12 @@ class SharePointConnector:
             return self._list_cache[cache_key]
         
         try:
+            if self.local_mode:
+                # Return an empty list or simple mocked data in local mode
+                items: List[Dict[str, Any]] = []
+                self._list_cache[cache_key] = items
+                self._cache_expiry[cache_key] = datetime.now() + self._cache_duration
+                return items
             ctx = self._get_sharepoint_context()
             
             # Get the list
@@ -275,7 +288,7 @@ class SharePointConnector:
             List of timeline events sorted by date
         """
         # Get tasks for the project
-        tasks = self.get_tasks_list(project_id=project_id)
+        tasks = [] if self.local_mode else self.get_tasks_list(project_id=project_id)
         
         timeline = []
         
@@ -316,7 +329,7 @@ class SharePointConnector:
         
         try:
             # Get tasks
-            tasks = self.get_tasks_list(project_id=project_id)
+            tasks = [] if self.local_mode else self.get_tasks_list(project_id=project_id)
             if tasks:
                 completed_tasks = [t for t in tasks if t.get('Status') == 'Completed']
                 metrics['task_completion_rate'] = len(completed_tasks) / len(tasks) * 100

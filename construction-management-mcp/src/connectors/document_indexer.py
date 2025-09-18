@@ -34,6 +34,12 @@ class DocumentIndexer:
         self.tenant_id = config['tenant_id']
         self.sharepoint_site = config['sharepoint_site']
         
+        # Local mode toggle: skip SharePoint auth when true
+        self.local_mode = bool(
+            config.get('local_mode') or
+            self.sharepoint_site in ('local-test', 'local', '')
+        )
+
         # Document storage locations
         self.document_libraries = config.get('document_libraries', ['Documents', 'Shared Documents'])
         self.local_docs_path = config.get('local_docs_path', './data/documents')
@@ -76,8 +82,9 @@ class DocumentIndexer:
             'correspondence': ['email', 'letter', 'memo', 'correspondence']
         }
         
-        # Initialize authentication
-        self._init_auth()
+        # Initialize authentication unless local mode
+        if not self.local_mode:
+            self._init_auth()
         
         # Load existing index
         self._load_index()
@@ -85,6 +92,9 @@ class DocumentIndexer:
     def _init_auth(self):
         """Initialize SharePoint authentication"""
         try:
+            if self.local_mode:
+                # In local mode, rely only on local indexing
+                return
             self.app = msal.ConfidentialClientApplication(
                 client_id=self.client_id,
                 client_credential=self.client_secret,
