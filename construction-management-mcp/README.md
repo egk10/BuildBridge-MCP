@@ -159,3 +159,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Based on the MCP architecture from [KDnuggets Data Science MCP Article](https://www.kdnuggets.com/built-an-mcp-to-automate-my-data-science-job)
 - Built with [FastMCP](https://github.com/jxnl/fastmcp) framework
 - Inspired by the need for better construction data accessibility
+
+## Continue Copilot Chat on new hardware
+
+See `docs/copilot-continue.md` for a quick, copy-paste checklist to rehydrate your environment and resume this chat on another machine.
