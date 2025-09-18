@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "construction-management": {
+      "command": "python",
+      "args": ["src/main.py"],
+      "cwd": "c:/Users/eliek/Data Science MCP/construction-management-mcp",
+      "env": {
+        "PYTHONPATH": "c:/Users/eliek/Data Science MCP/construction-management-mcp/src"
+      }
+    }
+  }
+}

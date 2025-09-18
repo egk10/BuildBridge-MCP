@@ -1,0 +1,8 @@
+ProjectID,ProjectName,Status,Progress,ProjectManager,BudgetAllocated,StartDate,PlannedEndDate,ProjectType,Location
+PROJ001,Downtown Office Building,In Progress,65,John Smith,2500000,2024-01-15,2024-12-15,Commercial,Downtown District
+PROJ002,Residential Complex Phase 1,Active,80,Sarah Johnson,1800000,2023-09-01,2024-08-31,Residential,Northside
+PROJ003,Highway Bridge Renovation,On Hold,25,Mike Chen,4200000,2024-03-01,2025-06-30,Infrastructure,Route 95
+PROJ004,School Addition,In Progress,45,Lisa Davis,950000,2024-02-01,2024-10-15,Education,Westfield
+PROJ005,Medical Center Parking,Completed,100,Tom Wilson,675000,2023-11-01,2024-04-30,Healthcare,Medical District
+PROJ006,Warehouse Expansion,In Progress,30,Emily Brown,1250000,2024-04-01,2024-11-30,Industrial,South Industrial Park
+PROJ007,Community Center,Planning,10,David Martinez,825000,2024-06-01,2025-03-15,Public,Central Park Area

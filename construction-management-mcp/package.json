@@ -1,0 +1,39 @@
+{
+  "name": "buildbridge-mcp",
+  "version": "1.0.0",
+  "description": "Bridge your construction data with AI-powered natural language queries. An MCP server for construction management that integrates Excel files, SharePoint data, and documents.",
+  "main": "src/main.py",
+  "scripts": {
+    "start": "python src/main.py",
+    "test": "python test_mcp.py"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/egk10/BuildBridge-MCP.git"
+  },
+  "keywords": [
+    "construction-management",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "natural-language",
+    "excel",
+    "sharepoint",
+    "data-integration",
+    "project-management",
+    "fastmcp"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/egk10/BuildBridge-MCP/issues"
+  },
+  "homepage": "https://github.com/egk10/BuildBridge-MCP#readme",
+  "dependencies": {
+    "python": ">=3.8"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

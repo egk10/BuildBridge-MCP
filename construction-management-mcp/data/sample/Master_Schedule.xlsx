@@ -1,0 +1,14 @@
+ProjectID,TaskName,StartDate,DueDate,Status,AssignedTo,Priority,TaskType
+PROJ001,Foundation Pour,2024-01-15,2024-02-15,Completed,Concrete Team,High,Construction
+PROJ001,Steel Frame Installation,2024-02-16,2024-04-30,Completed,Steel Contractors,High,Construction
+PROJ001,Electrical Rough-in,2024-05-01,2024-07-15,In Progress,Electric Co,Medium,Systems
+PROJ001,HVAC Installation,2024-06-01,2024-08-30,Not Started,Climate Control Inc,Medium,Systems
+PROJ002,Site Preparation,2023-09-01,2023-10-15,Completed,Earth Movers,High,Site Work
+PROJ002,Building A Construction,2023-10-16,2024-03-31,Completed,Main Contractors,High,Construction
+PROJ002,Building B Construction,2024-01-01,2024-06-30,In Progress,Main Contractors,High,Construction
+PROJ002,Landscaping,2024-07-01,2024-08-31,Not Started,Green Spaces,Low,Finishing
+PROJ003,Environmental Assessment,2024-03-01,2024-04-15,Completed,EnviroTech,High,Planning
+PROJ003,Permit Acquisition,2024-04-16,2024-06-30,On Hold,Legal Team,High,Administrative
+PROJ004,Demolition,2024-02-01,2024-02-28,Completed,Demo Crew,High,Site Work
+PROJ004,Foundation Work,2024-03-01,2024-04-15,Completed,Foundation Pro,High,Construction
+PROJ004,Framing,2024-04-16,2024-06-30,In Progress,Frame Masters,High,Construction

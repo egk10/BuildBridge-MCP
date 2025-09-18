@@ -1,0 +1,11 @@
+ProjectID,ResourceType,ResourceName,Allocation,StartDate,EndDate,HourlyRate,TotalHours
+PROJ001,Equipment,Tower Crane,100%,2024-01-15,2024-12-15,150,2000
+PROJ001,Labor,Site Supervisor,100%,2024-01-15,2024-12-15,75,1800
+PROJ001,Labor,Construction Workers,80%,2024-02-01,2024-11-30,45,6000
+PROJ002,Equipment,Excavator,60%,2023-09-01,2024-08-31,120,800
+PROJ002,Labor,Project Manager,100%,2023-09-01,2024-08-31,85,2000
+PROJ002,Labor,Electricians,40%,2024-01-01,2024-06-30,65,1200
+PROJ003,Equipment,Bridge Crane,100%,2024-03-01,2025-06-30,200,3000
+PROJ003,Labor,Bridge Engineer,100%,2024-03-01,2025-06-30,95,2800
+PROJ004,Equipment,Mini Excavator,80%,2024-02-01,2024-10-15,90,600
+PROJ004,Labor,Foreman,100%,2024-02-01,2024-10-15,70,1400
