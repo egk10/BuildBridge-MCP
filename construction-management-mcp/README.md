@@ -61,6 +61,18 @@ See `docs/setup.md` for detailed setup instructions.
 - "Which subcontractors are working on active projects?"
 - "Generate a status report for projects ending this month"
 
+
+## 🚦 Quick Start on New Hardware
+
+See [docs/copilot-continue.md](docs/copilot-continue.md) for step-by-step setup and Copilot Chat resume instructions.
+
+Or use the Ubuntu one-liner:
+```bash
+curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/construction-management-mcp/scripts/bootstrap_ubuntu.sh | bash
+```
+
+---
+
 ## 🚀 Quick Start
 
 1. Clone and install
