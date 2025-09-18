@@ -95,7 +95,33 @@ See `docs/setup.md` for detailed setup instructions.
 
 Want real SharePoint/OneDrive data? Disable local mode and add your Azure credentials; see `docs/setup.md`.
 
-## 📊 Features
+## � Ubuntu one-liner bootstrap
+
+On a fresh Ubuntu Desktop machine, run this to clone, create a venv, install deps, enable local mode, run tests, and optionally start the server:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/construction-management-mcp/scripts/bootstrap_ubuntu.sh | bash
+```
+
+Environment variables (optional):
+- REPO_URL: repo to clone (default: https://github.com/egk10/BuildBridge-MCP.git)
+- BRANCH: branch to use (default: main)
+- DIR: target dir (default: BuildBridge-MCP)
+- START_SERVER: set to true to start server after setup (default: false)
+
+Example starting server automatically:
+```bash
+START_SERVER=true curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/construction-management-mcp/scripts/bootstrap_ubuntu.sh | bash
+```
+
+## 🧰 Helper scripts
+
+- `scripts/start_server.sh` — activate venv and run server
+   ```bash
+   bash scripts/start_server.sh
+   ```
+
+## �📊 Features
 
 - **Natural Language Queries**: Ask questions in plain English
 - **Multi-Source Integration**: Excel, SharePoint, and document libraries
