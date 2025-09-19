@@ -22,7 +22,7 @@ COPY src/ ./src/
 COPY config/ ./config/
 COPY data/ ./data/
 COPY production_mcp_integration.py .
-COPY *.py .
+COPY *.py ./
 
 # Create non-root user
 RUN useradd -m -u 1000 mcpuser && chown -R mcpuser:mcpuser /app

@@ -161,14 +161,13 @@ def search_documents(query: str, doc_type: Optional[str] = None) -> str:
         return f"Error searching documents: {str(e)}"
 
 @mcp.tool()
-def generate_report(report_type: str, project_id: Optional[str] = None, **kwargs) -> str:
+def generate_report(report_type: str, project_id: Optional[str] = None) -> str:
     """
     Generate construction management reports.
     
     Args:
         report_type: Type of report (status, budget, safety, compliance)
         project_id: Specific project (if None, generates for all projects)
-        **kwargs: Additional parameters for report generation
     
     Returns:
         Formatted report based on current data
@@ -177,7 +176,7 @@ def generate_report(report_type: str, project_id: Optional[str] = None, **kwargs
         return "Error: MCP server not properly initialized"
     
     try:
-        report = query_processor.generate_report(report_type, project_id, **kwargs)
+        report = query_processor.generate_report(report_type, project_id)
         return format_report(report)
     except Exception as e:
         return f"Error generating report: {str(e)}"

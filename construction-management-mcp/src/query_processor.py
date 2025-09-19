@@ -448,14 +448,13 @@ class QueryProcessor:
         
         return updates
     
-    def generate_report(self, report_type: str, project_id: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+    def generate_report(self, report_type: str, project_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Generate various construction management reports
         
         Args:
             report_type: Type of report to generate
             project_id: Specific project (optional)
-            **kwargs: Additional parameters
         
         Returns:
             Generated report data
