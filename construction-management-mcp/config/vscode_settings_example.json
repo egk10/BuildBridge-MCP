@@ -1,0 +1,15 @@
+{
+  "mcp.servers": {
+    "construction-management": {
+      "command": "bash",
+      "args": [
+        "-c", 
+        "cd /home/egk/buildbridge-MCP/BuildBridge-MCP/construction-management-mcp && source construction_env/bin/activate && python src/main.py"
+      ],
+      "cwd": "/home/egk/buildbridge-MCP/BuildBridge-MCP/construction-management-mcp",
+      "env": {
+        "PATH": "/home/egk/buildbridge-MCP/BuildBridge-MCP/construction-management-mcp/construction_env/bin:/usr/bin:/bin"
+      }
+    }
+  }
+}

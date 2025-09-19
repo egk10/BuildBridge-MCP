@@ -1,0 +1,52 @@
+# Production Requirements
+# Core MCP dependencies
+fastmcp>=0.3.0
+mcp>=1.0.0
+
+# Excel/Office integration
+pandas>=2.0.0
+openpyxl>=3.1.0
+office365-rest-python-client>=2.3.0
+msal>=1.20.0
+
+# Production API framework
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+pydantic>=2.5.0
+pydantic-settings>=2.6.0
+
+# HTTP client
+httpx>=0.26.0
+
+# Additional production dependencies
+python-multipart>=0.0.9
+python-dotenv>=1.0.0
+
+# Monitoring and logging
+structlog>=23.0.0
+prometheus-client>=0.19.0
+
+# Security
+cryptography>=41.0.0
+python-jose[cryptography]>=3.3.0
+
+# Database (optional)
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+psycopg2-binary>=2.9.0  # PostgreSQL
+# pymongo>=4.5.0  # MongoDB alternative
+
+# Caching (optional)
+redis>=5.0.0
+aioredis>=2.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+httpx>=0.26.0  # for testing
+
+# Development tools
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.6.0
