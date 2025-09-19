@@ -15,6 +15,7 @@ from datetime import datetime
 from dataclasses import dataclass, asdict
 from enum import Enum
 import traceback
+from collections import deque
 
 # Production imports
 try:
@@ -43,9 +44,41 @@ def get_mcp_connectors():
     except ImportError:
         return None, None, None, None
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging with real-time support
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger = logging.getLogger(__name__)
+
+# Global log storage for real-time viewing
+log_buffer = deque(maxlen=100)  # Keep last 100 log messages
+websocket_connections = set()
+
+class LogHandler(logging.Handler):
+    """Custom log handler that stores logs for real-time viewing"""
+    
+    def emit(self, record):
+        log_entry = {
+            'timestamp': datetime.fromtimestamp(record.created).isoformat(),
+            'level': record.levelname,
+            'logger': record.name,
+            'message': record.getMessage(),
+            'module': record.module,
+        }
+        
+        # Add to buffer
+        log_buffer.append(log_entry)
+        
+        # Send to connected WebSocket clients
+        if websocket_connections:
+            message = json.dumps(log_entry)
+            for websocket in websocket_connections.copy():
+                try:
+                    asyncio.create_task(websocket.send_text(message))
+                except Exception:
+                    websocket_connections.discard(websocket)
+
+# Add custom handler to root logger
+log_handler = LogHandler()
+logging.getLogger().addHandler(log_handler)
 
 class RequestType(Enum):
     """Types of requests supported by the MCP"""
@@ -129,21 +162,34 @@ class ConstructionMCPEngine:
         start_time = datetime.now()
         
         try:
+            logger.info(f"🔍 Processing query: '{request.query}' with type: {request.type}")
+            logger.info(f"📋 Parameters: {request.parameters}")
+            
             if not self.initialized:
+                logger.error("❌ MCP Engine not initialized")
                 raise Exception("MCP Engine not initialized")
             
             if request.type not in self.request_handlers:
+                logger.error(f"❌ Unsupported request type: {request.type}")
                 raise Exception(f"Unsupported request type: {request.type}")
             
             # Add construction context enhancement
+            logger.info("🧠 Enhancing query with construction context...")
             enhanced_query = enhance_query_with_construction_context(request.query)
+            if enhanced_query != request.query:
+                logger.info(f"✨ Enhanced query: {enhanced_query}")
             
             # Process the request
+            logger.info(f"🔄 Executing handler for {request.type.value}...")
             handler = self.request_handlers[request.type]
             result = await handler(request)
             
             # Calculate processing time
             processing_time = (datetime.now() - start_time).total_seconds() * 1000
+            logger.info(f"⚡ Processing completed in {processing_time:.2f}ms")
+            
+            if isinstance(result, dict) and 'count' in result:
+                logger.info(f"📊 Results: {result['count']} items found")
             
             return MCPResponse(
                 id=str(uuid.uuid4()),
@@ -418,6 +464,38 @@ if FASTAPI_AVAILABLE:
         except Exception as e:
             logger.error(f"WebSocket error: {e}")
             await websocket.close()
+    
+    @app.websocket("/ws/logs")
+    async def logs_websocket(websocket: WebSocket):
+        """WebSocket endpoint for real-time log streaming"""
+        await websocket.accept()
+        websocket_connections.add(websocket)
+        
+        try:
+            # Send recent logs immediately
+            for log_entry in list(log_buffer):
+                await websocket.send_text(json.dumps(log_entry))
+            
+            # Keep connection alive and wait for client messages
+            while True:
+                try:
+                    # Wait for ping or any message to keep connection alive
+                    await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
+                except asyncio.TimeoutError:
+                    # Send ping to keep connection alive
+                    await websocket.send_text(json.dumps({"type": "ping", "timestamp": datetime.now().isoformat()}))
+                
+        except WebSocketDisconnect:
+            logger.info("Log streaming WebSocket disconnected")
+        except Exception as e:
+            logger.error(f"Log WebSocket error: {e}")
+        finally:
+            websocket_connections.discard(websocket)
+
+    @app.get("/logs")
+    async def get_recent_logs():
+        """Get recent log entries via HTTP"""
+        return {"logs": list(log_buffer)}
 
 # Direct Python Integration Class
 class ConstructionMCPClient:

@@ -450,10 +450,10 @@
                 return '<div class="success-message">No projects found matching your criteria.</div>';
             }
 
-            // Calculate summary stats
-            const totalBudget = projects.reduce((sum, p) => sum + (p.BudgetAllocated || 0), 0);
+            // Calculate summary stats (using correct field names)
+            const totalBudget = projects.reduce((sum, p) => sum + (p.Total_Budget || 0), 0);
             const activeProjects = projects.filter(p => p.Status !== 'Completed').length;
-            const avgProgress = projects.reduce((sum, p) => sum + (p.Progress || 0), 0) / projects.length;
+            const avgProgress = projects.reduce((sum, p) => sum + (p.Progress_Percent || 0), 0) / projects.length;
 
             let html = `
                 <div class="stats-card">
@@ -493,11 +493,11 @@
 
             projects.forEach(project => {
                 const statusClass = getStatusClass(project.Status);
-                const progressPercent = project.Progress || 0;
+                const progressPercent = project.Progress_Percent || 0;
 
                 html += `
                     <tr>
-                        <td><strong>${project.ProjectName || 'N/A'}</strong></td>
+                        <td><strong>${project.Project_Name || 'N/A'}</strong></td>
                         <td><span class="status-badge ${statusClass}">${project.Status || 'Unknown'}</span></td>
                         <td>
                             ${progressPercent}%
@@ -505,9 +505,9 @@
                                 <div class="progress-fill" style="width: ${progressPercent}%"></div>
                             </div>
                         </td>
-                        <td class="budget-amount">$${(project.BudgetAllocated || 0).toLocaleString()}</td>
-                        <td>${project.ProjectManager || 'Unassigned'}</td>
-                        <td>${project.ProjectType || 'N/A'}</td>
+                        <td class="budget-amount">$${(project.Total_Budget || 0).toLocaleString()}</td>
+                        <td>${project.Project_Manager || 'Unassigned'}</td>
+                        <td>${project.Project_Type || 'N/A'}</td>
                     </tr>`;
             });
 

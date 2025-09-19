@@ -1,0 +1,19 @@
+{
+  "generation_date": "2025-09-19T12:36:21.206532",
+  "datasets": {
+    "projects": 7,
+    "schedule_tasks": 63,
+    "budget_items": 56,
+    "resource_allocations": 70
+  },
+  "project_status_summary": {
+    "Completed": 2,
+    "At Risk": 2,
+    "In Progress": 2,
+    "Near Completion": 1
+  },
+  "total_budget": 178000000.0,
+  "avg_project_progress": 88.9857142857143,
+  "delayed_tasks": 19,
+  "over_budget_items": 1
+}

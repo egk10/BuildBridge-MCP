@@ -1,0 +1,64 @@
+Task_ID,Project_ID,Project_Name,Project_Type,Phase,Task_Name,Start_Date,End_Date,Duration_Days,Progress_Percent,Status,Responsible_Team,Delay_Days,Delay_Reason,Priority,Dependencies,Critical_Path
+T0001,PROJ001,Downtown Office Tower,Commercial Office Building,Pre-Construction,Pre-Construction - Downtown Office Tower,2024-01-25,2024-02-16,22,100.0,Completed,General Contractor,0,,Low,,False
+T0002,PROJ001,Downtown Office Tower,Commercial Office Building,Site Preparation,Site Preparation - Downtown Office Tower,2024-02-17,2024-03-28,40,100.0,Completed,Quality Control,0,,Medium,T0001,False
+T0003,PROJ001,Downtown Office Tower,Commercial Office Building,Foundation,Foundation - Downtown Office Tower,2024-03-29,2024-06-06,69,100.0,Completed,Structural,0,,Low,T0002,False
+T0004,PROJ001,Downtown Office Tower,Commercial Office Building,Structural,Structural - Downtown Office Tower,2024-06-10,2024-10-11,123,100.0,Completed,Quality Control,0,,Medium,T0003,False
+T0005,PROJ001,Downtown Office Tower,Commercial Office Building,MEP Systems,MEP Systems - Downtown Office Tower,2024-10-13,2025-02-07,117,100.0,Completed,Quality Control,23,Site conditions,High,T0004,True
+T0006,PROJ001,Downtown Office Tower,Commercial Office Building,Interior Finishes,Interior Finishes - Downtown Office Tower,2025-02-11,2025-05-27,105,100.0,Completed,Finishes,18,Material shortages,High,T0005,False
+T0007,PROJ001,Downtown Office Tower,Commercial Office Building,Exterior Finishes,Exterior Finishes - Downtown Office Tower,2025-06-01,2025-07-10,39,100.0,Completed,Quality Control,0,,Medium,T0006,False
+T0008,PROJ001,Downtown Office Tower,Commercial Office Building,Final Inspections,Final Inspections - Downtown Office Tower,2025-07-15,2025-08-10,26,100.0,Completed,MEP,0,,Medium,T0007,False
+T0009,PROJ001,Downtown Office Tower,Commercial Office Building,Project Closeout,Project Closeout - Downtown Office Tower,2025-08-14,2025-08-29,15,100.0,Completed,MEP,5,Equipment issues,Medium,T0008,False
+T0010,PROJ002,Riverside Apartments,Residential Complex,Pre-Construction,Pre-Construction - Riverside Apartments,2024-02-23,2024-03-30,36,100.0,Completed,Finishes,0,,High,,False
+T0011,PROJ002,Riverside Apartments,Residential Complex,Site Preparation,Site Preparation - Riverside Apartments,2024-03-31,2024-05-07,37,100.0,Completed,MEP,0,,Low,T0010,False
+T0012,PROJ002,Riverside Apartments,Residential Complex,Foundation,Foundation - Riverside Apartments,2024-05-12,2024-08-08,88,100.0,Completed,Structural,27,Material shortages,Medium,T0011,False
+T0013,PROJ002,Riverside Apartments,Residential Complex,Structural,Structural - Riverside Apartments,2024-08-12,2024-12-16,126,100.0,Completed,Quality Control,0,,Low,T0012,True
+T0014,PROJ002,Riverside Apartments,Residential Complex,MEP Systems,MEP Systems - Riverside Apartments,2024-12-18,2025-03-11,83,100.0,Completed,MEP,0,,High,T0013,False
+T0015,PROJ002,Riverside Apartments,Residential Complex,Interior Finishes,Interior Finishes - Riverside Apartments,2025-03-12,2025-05-17,66,100.0,Completed,Structural,0,,High,T0014,False
+T0016,PROJ002,Riverside Apartments,Residential Complex,Exterior Finishes,Exterior Finishes - Riverside Apartments,2025-05-18,2025-07-21,64,100.0,Completed,Structural,0,,Low,T0015,False
+T0017,PROJ002,Riverside Apartments,Residential Complex,Final Inspections,Final Inspections - Riverside Apartments,2025-07-26,2025-08-04,9,100.0,Completed,Structural,0,,High,T0016,False
+T0018,PROJ002,Riverside Apartments,Residential Complex,Project Closeout,Project Closeout - Riverside Apartments,2025-08-08,2025-09-20,43,100.0,Completed,Finishes,24,Equipment issues,High,T0017,False
+T0019,PROJ003,Tech Campus Expansion,Commercial Office Building,Pre-Construction,Pre-Construction - Tech Campus Expansion,2024-03-28,2024-05-02,35,100.0,Completed,Structural,0,,High,,False
+T0020,PROJ003,Tech Campus Expansion,Commercial Office Building,Site Preparation,Site Preparation - Tech Campus Expansion,2024-05-05,2024-07-05,61,100.0,Completed,Structural,0,,High,T0019,False
+T0021,PROJ003,Tech Campus Expansion,Commercial Office Building,Foundation,Foundation - Tech Campus Expansion,2024-07-08,2024-09-06,60,100.0,Completed,Finishes,0,,High,T0020,False
+T0022,PROJ003,Tech Campus Expansion,Commercial Office Building,Structural,Structural - Tech Campus Expansion,2024-09-10,2025-01-20,132,100.0,Completed,Quality Control,0,,Medium,T0021,False
+T0023,PROJ003,Tech Campus Expansion,Commercial Office Building,MEP Systems,MEP Systems - Tech Campus Expansion,2025-01-24,2025-05-19,115,100.0,Completed,Quality Control,20,Supply chain disruptions,Medium,T0022,True
+T0024,PROJ003,Tech Campus Expansion,Commercial Office Building,Interior Finishes,Interior Finishes - Tech Campus Expansion,2025-05-22,2025-08-06,76,100.0,Completed,MEP,0,,Medium,T0023,False
+T0025,PROJ003,Tech Campus Expansion,Commercial Office Building,Exterior Finishes,Exterior Finishes - Tech Campus Expansion,2025-08-07,2025-09-24,48,81.6,Near Completion,MEP,0,,Medium,T0024,False
+T0026,PROJ003,Tech Campus Expansion,Commercial Office Building,Final Inspections,Final Inspections - Tech Campus Expansion,2025-09-27,2025-11-08,42,0.0,Not Started,Finishes,8,Supply chain disruptions,Low,T0025,False
+T0027,PROJ003,Tech Campus Expansion,Commercial Office Building,Project Closeout,Project Closeout - Tech Campus Expansion,2025-11-09,2025-11-21,12,0.0,Not Started,Structural,8,Permit delays,Low,T0026,False
+T0028,PROJ004,Metro Hospital Wing,Healthcare Facility,Pre-Construction,Pre-Construction - Metro Hospital Wing,2024-03-16,2024-05-05,50,100.0,Completed,General Contractor,0,,Medium,,False
+T0029,PROJ004,Metro Hospital Wing,Healthcare Facility,Site Preparation,Site Preparation - Metro Hospital Wing,2024-05-07,2024-06-25,49,100.0,Completed,Quality Control,0,,Medium,T0028,False
+T0030,PROJ004,Metro Hospital Wing,Healthcare Facility,Foundation,Foundation - Metro Hospital Wing,2024-06-29,2024-08-30,62,100.0,Completed,Finishes,0,,High,T0029,False
+T0031,PROJ004,Metro Hospital Wing,Healthcare Facility,Structural,Structural - Metro Hospital Wing,2024-09-03,2025-01-12,131,100.0,Completed,Quality Control,21,Supply chain disruptions,High,T0030,True
+T0032,PROJ004,Metro Hospital Wing,Healthcare Facility,MEP Systems,MEP Systems - Metro Hospital Wing,2025-01-13,2025-04-29,106,100.0,Completed,Finishes,0,,Medium,T0031,False
+T0033,PROJ004,Metro Hospital Wing,Healthcare Facility,Interior Finishes,Interior Finishes - Metro Hospital Wing,2025-05-01,2025-07-30,90,100.0,Completed,Quality Control,0,,Medium,T0032,False
+T0034,PROJ004,Metro Hospital Wing,Healthcare Facility,Exterior Finishes,Exterior Finishes - Metro Hospital Wing,2025-08-02,2025-09-06,35,100.0,Completed,Quality Control,0,,High,T0033,False
+T0035,PROJ004,Metro Hospital Wing,Healthcare Facility,Final Inspections,Final Inspections - Metro Hospital Wing,2025-09-11,2025-09-28,17,42.1,In Progress,Quality Control,0,,High,T0034,False
+T0036,PROJ004,Metro Hospital Wing,Healthcare Facility,Project Closeout,Project Closeout - Metro Hospital Wing,2025-10-02,2025-11-26,55,0.0,Not Started,MEP,26,Labor availability,Low,T0035,False
+T0037,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,Pre-Construction,Pre-Construction - Logistics Hub Warehouse,2024-03-09,2024-04-04,26,100.0,Completed,Structural,0,,Low,,False
+T0038,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,Site Preparation,Site Preparation - Logistics Hub Warehouse,2024-04-06,2024-05-25,49,100.0,Completed,Finishes,0,,Low,T0037,False
+T0039,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,Foundation,Foundation - Logistics Hub Warehouse,2024-05-27,2024-08-15,80,100.0,Completed,General Contractor,0,,Low,T0038,True
+T0040,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,Structural,Structural - Logistics Hub Warehouse,2024-08-17,2025-01-03,139,100.0,Completed,MEP,0,,Low,T0039,True
+T0041,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,MEP Systems,MEP Systems - Logistics Hub Warehouse,2025-01-05,2025-04-05,90,100.0,Completed,General Contractor,0,,High,T0040,True
+T0042,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,Interior Finishes,Interior Finishes - Logistics Hub Warehouse,2025-04-06,2025-06-21,76,100.0,Completed,Finishes,0,,Low,T0041,False
+T0043,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,Exterior Finishes,Exterior Finishes - Logistics Hub Warehouse,2025-06-24,2025-08-26,63,100.0,Completed,MEP,11,Labor availability,Low,T0042,False
+T0044,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,Final Inspections,Final Inspections - Logistics Hub Warehouse,2025-08-30,2025-09-27,28,79.4,In Progress,Structural,0,,High,T0043,False
+T0045,PROJ005,Logistics Hub Warehouse,Industrial Warehouse,Project Closeout,Project Closeout - Logistics Hub Warehouse,2025-09-28,2025-10-26,28,0.0,Not Started,Structural,0,,Low,T0044,False
+T0046,PROJ006,University Science Center,Educational Institution,Pre-Construction,Pre-Construction - University Science Center,2024-03-28,2024-04-30,33,100.0,Completed,Quality Control,0,,Low,,False
+T0047,PROJ006,University Science Center,Educational Institution,Site Preparation,Site Preparation - University Science Center,2024-05-02,2024-06-22,51,100.0,Completed,MEP,0,,High,T0046,False
+T0048,PROJ006,University Science Center,Educational Institution,Foundation,Foundation - University Science Center,2024-06-26,2024-08-28,63,100.0,Completed,Finishes,7,Material shortages,Low,T0047,True
+T0049,PROJ006,University Science Center,Educational Institution,Structural,Structural - University Science Center,2024-08-30,2025-01-01,124,100.0,Completed,Quality Control,0,,Medium,T0048,False
+T0050,PROJ006,University Science Center,Educational Institution,MEP Systems,MEP Systems - University Science Center,2025-01-03,2025-04-30,117,100.0,Completed,Quality Control,15,Labor availability,High,T0049,False
+T0051,PROJ006,University Science Center,Educational Institution,Interior Finishes,Interior Finishes - University Science Center,2025-05-04,2025-07-19,76,100.0,Completed,Finishes,0,,Medium,T0050,False
+T0052,PROJ006,University Science Center,Educational Institution,Exterior Finishes,Exterior Finishes - University Science Center,2025-07-21,2025-10-02,73,79.2,Delayed,Structural,8,Supply chain disruptions,Low,T0051,False
+T0053,PROJ006,University Science Center,Educational Institution,Final Inspections,Final Inspections - University Science Center,2025-10-03,2025-10-10,7,0.0,Not Started,General Contractor,0,,High,T0052,False
+T0054,PROJ006,University Science Center,Educational Institution,Project Closeout,Project Closeout - University Science Center,2025-10-15,2025-11-06,22,0.0,Not Started,Quality Control,0,,Medium,T0053,False
+T0055,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,Pre-Construction,Pre-Construction - Suburban Shopping Plaza,2024-03-07,2024-04-14,38,100.0,Completed,MEP,0,,Low,,False
+T0056,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,Site Preparation,Site Preparation - Suburban Shopping Plaza,2024-04-17,2024-07-06,80,100.0,Completed,Finishes,16,Supply chain disruptions,Medium,T0055,False
+T0057,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,Foundation,Foundation - Suburban Shopping Plaza,2024-07-11,2024-09-09,60,100.0,Completed,MEP,0,,High,T0056,False
+T0058,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,Structural,Structural - Suburban Shopping Plaza,2024-09-11,2025-01-02,113,100.0,Completed,Quality Control,0,,High,T0057,True
+T0059,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,MEP Systems,MEP Systems - Suburban Shopping Plaza,2025-01-04,2025-04-18,104,100.0,Completed,Structural,17,Material shortages,Low,T0058,False
+T0060,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,Interior Finishes,Interior Finishes - Suburban Shopping Plaza,2025-04-23,2025-07-05,73,100.0,Completed,Structural,0,,Low,T0059,False
+T0061,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,Exterior Finishes,Exterior Finishes - Suburban Shopping Plaza,2025-07-07,2025-09-30,85,87.1,Delayed,Finishes,21,Material shortages,Low,T0060,False
+T0062,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,Final Inspections,Final Inspections - Suburban Shopping Plaza,2025-10-05,2025-11-09,35,0.0,Not Started,Structural,23,Supply chain disruptions,Medium,T0061,False
+T0063,PROJ007,Suburban Shopping Plaza,Retail Shopping Center,Project Closeout,Project Closeout - Suburban Shopping Plaza,2025-11-13,2025-12-25,42,0.0,Not Started,General Contractor,30,Site conditions,Low,T0062,False
