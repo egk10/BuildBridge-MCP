@@ -14,6 +14,7 @@ import pandas as pd
 from connectors.excel_connector import ExcelConnector
 from connectors.sharepoint_connector import SharePointConnector
 from connectors.document_indexer import DocumentIndexer
+from construction_prompts import get_construction_prompt, enhance_query_with_construction_context
 
 
 class QueryProcessor:
@@ -133,6 +134,9 @@ class QueryProcessor:
         """
         query_lower = query.lower().strip()
         
+        # Enhance query with construction context
+        enhanced_query = enhance_query_with_construction_context(query)
+        
         # Check each query pattern
         for query_type, config in self.query_patterns.items():
             for pattern in config['patterns']:
@@ -146,7 +150,9 @@ class QueryProcessor:
                         'method': config['method'],
                         'data_source': config['data_source'],
                         'parameters': params,
-                        'original_query': query
+                        'original_query': query,
+                        'enhanced_query': enhanced_query,
+                        'construction_prompt': get_construction_prompt(query_type)
                     }
         
         # Default to general search if no pattern matches
@@ -155,7 +161,9 @@ class QueryProcessor:
             'method': 'general_search',
             'data_source': 'both',
             'parameters': {'search_term': query},
-            'original_query': query
+            'original_query': query,
+            'enhanced_query': enhanced_query,
+            'construction_prompt': get_construction_prompt('general')
         }
     
     def _extract_parameters(self, query: str, match: re.Match) -> Dict[str, Any]:
@@ -528,6 +536,52 @@ class QueryProcessor:
             results['error'] = f"Error in general search: {str(e)}"
         
         return results
+    
+    def enhance_response_with_construction_context(self, response: str, query_type: str, context_data: Dict[str, Any] = None) -> str:
+        """
+        Enhance AI responses with construction-specific context and terminology
+        
+        Args:
+            response: Original response from AI/data source
+            query_type: Type of construction query
+            context_data: Additional context data
+        
+        Returns:
+            Enhanced response with construction context
+        """
+        # Get construction-specific prompt for this query type
+        construction_prompt = get_construction_prompt(query_type, context_data)
+        
+        # Add construction context to the response
+        enhanced_response = f"{response}\n\n**Construction Context:**\n"
+        
+        # Add relevant construction terminology based on query type
+        if query_type == "budget_analysis":
+            enhanced_response += "- Budget variance analysis follows Earned Value Management (EVM) principles\n"
+            enhanced_response += "- Cost overruns often result from change orders, material price increases, or unforeseen conditions\n"
+            enhanced_response += "- Consider contingency reserves and escalation clauses in contracts\n"
+        
+        elif query_type == "safety_compliance":
+            enhanced_response += "- Safety protocols must comply with OSHA standards and local regulations\n"
+            enhanced_response += "- Regular safety training and PPE requirements are mandatory\n"
+            enhanced_response += "- Incident reporting and investigation follow specific protocols\n"
+        
+        elif query_type == "schedule_management":
+            enhanced_response += "- Schedule management uses Critical Path Method (CPM) for analysis\n"
+            enhanced_response += "- Weather delays and material shortages are common risk factors\n"
+            enhanced_response += "- Recovery plans may include schedule compression or resource reallocation\n"
+        
+        elif query_type == "project_status":
+            enhanced_response += "- Project progress is measured using Planned Value vs Earned Value\n"
+            enhanced_response += "- Milestone completion affects payment schedules and client reporting\n"
+            enhanced_response += "- Risk assessment should consider safety, quality, and budget factors\n"
+        
+        else:
+            enhanced_response += "- Construction projects follow standardized phases and methodologies\n"
+            enhanced_response += "- Industry standards (OSHA, PMI, AGC) guide best practices\n"
+            enhanced_response += "- Risk management is essential for project success\n"
+        
+        return enhanced_response
     
     # Helper formatting methods
     def _format_projects(self, projects_df: pd.DataFrame) -> List[Dict[str, Any]]:

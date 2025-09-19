@@ -43,9 +43,13 @@ class SharePointConnector:
         self._cache_expiry = {}
         self._cache_duration = timedelta(minutes=15)  # Cache for 15 minutes
         
-        # Initialize authentication unless local mode
+        # Initialize authentication only if NOT in local mode
         if not self.local_mode:
             self._init_auth()
+        else:
+            # In local mode, set dummy values to avoid attribute errors
+            self.app = None
+            self.access_token = None
     
     def _init_auth(self):
         """Initialize Microsoft Graph authentication"""

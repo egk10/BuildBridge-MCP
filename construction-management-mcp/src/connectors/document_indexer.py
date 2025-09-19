@@ -82,9 +82,13 @@ class DocumentIndexer:
             'correspondence': ['email', 'letter', 'memo', 'correspondence']
         }
         
-        # Initialize authentication unless local mode
+        # Initialize authentication only if NOT in local mode
         if not self.local_mode:
             self._init_auth()
+        else:
+            # In local mode, set dummy values to avoid attribute errors
+            self.app = None
+            self.access_token = None
         
         # Load existing index
         self._load_index()
@@ -92,9 +96,6 @@ class DocumentIndexer:
     def _init_auth(self):
         """Initialize SharePoint authentication"""
         try:
-            if self.local_mode:
-                # In local mode, rely only on local indexing
-                return
             self.app = msal.ConfidentialClientApplication(
                 client_id=self.client_id,
                 client_credential=self.client_secret,

@@ -49,9 +49,13 @@ class ExcelConnector:
         self._data_cache = {}
         self._cache_expiry = {}
         
-        # Initialize authentication unless in local mode
+        # Initialize authentication only if NOT in local mode
         if not self.local_mode:
             self._init_auth()
+        else:
+            # In local mode, set dummy values to avoid attribute errors
+            self.app = None
+            self.access_token = None
     
     def _init_auth(self):
         """Initialize Microsoft Graph authentication"""
