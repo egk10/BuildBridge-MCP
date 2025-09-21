@@ -210,6 +210,32 @@
             border: 1px solid #c3e6cb;
         }
 
+        .ai-response {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .ai-response h4 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+
+        .ai-response p {
+            margin: 0;
+            line-height: 1.6;
+        }
+
+        .ai-metadata {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+            font-size: 12px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -355,7 +381,16 @@
             let queryType = 'enhanced_query';
             let parameters = {};
 
-            if (query.toLowerCase().includes('budget') || query.toLowerCase().includes('cost') || query.toLowerCase().includes('money')) {
+            // Use ai_query for calculation and analysis questions
+            if (query.toLowerCase().includes('calculate') || 
+                query.toLowerCase().includes('what is') || 
+                query.toLowerCase().includes('how much') ||
+                query.toLowerCase().includes('current value') ||
+                query.toLowerCase().includes('times') ||
+                query.toLowerCase().includes('%') ||
+                query.toLowerCase().includes('percent')) {
+                queryType = 'ai_query';
+            } else if (query.toLowerCase().includes('budget') || query.toLowerCase().includes('cost') || query.toLowerCase().includes('money')) {
                 parameters.prompt_type = 'budget_analysis';
             } else if (query.toLowerCase().includes('safety') || query.toLowerCase().includes('incident')) {
                 parameters.prompt_type = 'safety_analysis';
@@ -400,6 +435,11 @@
 
             if (data.upcoming_milestones || data.delayed_projects) {
                 return formatScheduleResults(data);
+            }
+
+            // Handle AI query responses
+            if (data.ai_response) {
+                return formatAIResponse(data);
             }
 
             if (data.original_query) {
@@ -503,13 +543,50 @@
         }
 
         function formatEnhancedQuery(data) {
+            // Check if we have an AI response
+            if (data.has_ai_response && data.ai_response) {
+                return `
+                    <div class="success-message">
+                        🤖 AI-Enhanced Analysis Complete
+                    </div>
+                    <p><strong>Your Question:</strong> ${data.original_query}</p>
+                    <p><strong>Analysis Type:</strong> ${data.prompt_type}</p>
+                    <div class="ai-response">
+                        <h4>🎯 Analysis Result:</h4>
+                        <p>${data.ai_response}</p>
+                    </div>
+                `;
+            } else {
+                // Fallback to original behavior
+                return `
+                    <div class="success-message">
+                        🤖 AI-Enhanced Analysis Ready
+                    </div>
+                    <p><strong>Your Question:</strong> ${data.original_query}</p>
+                    <p><strong>Analysis Type:</strong> ${data.prompt_type}</p>
+                    <p><em>This query has been enhanced with construction industry expertise and best practices.</em></p>
+                `;
+            }
+        }
+
+        function formatAIResponse(data) {
             return `
                 <div class="success-message">
-                    🤖 AI-Enhanced Analysis Ready
+                    🤖 AI Analysis Complete
                 </div>
-                <p><strong>Your Question:</strong> ${data.original_query}</p>
-                <p><strong>Analysis Type:</strong> ${data.prompt_type}</p>
-                <p><em>This query has been enhanced with construction industry expertise and best practices.</em></p>
+                <div class="ai-response">
+                    <h4>🎯 Result:</h4>
+                    <p>${data.ai_response}</p>
+                    ${data.metadata ? `
+                        <div class="ai-metadata">
+                            <small>
+                                Model: ${data.metadata.model_used || data.model_used || 'gpt-3.5-turbo'} | 
+                                Tokens: ${data.metadata.tokens_used || data.tokens_used || 0} | 
+                                Confidence: ${Math.round((data.metadata.confidence_score || data.confidence_score || 0) * 100)}%
+                            </small>
+                        </div>
+                    ` : ''}
+                </div>
             `;
         }
 

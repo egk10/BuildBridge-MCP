@@ -378,21 +378,102 @@ class ConstructionMCPEngine:
             return {"error": str(e)}
     
     async def _handle_enhanced_query(self, request: MCPRequest) -> Dict[str, Any]:
-        """Handle enhanced query processing"""
+        """Handle enhanced query processing with AI response"""
         try:
             enhanced = enhance_query_with_construction_context(request.query)
             prompt_type = request.parameters.get('prompt_type', 'general')
             system_prompt = get_construction_prompt(prompt_type)
             
-            return {
-                "original_query": request.query,
-                "enhanced_query": enhanced,
-                "system_prompt": system_prompt,
-                "prompt_type": prompt_type
-            }
+            # If this looks like a calculation or analysis query, process it with AI
+            query_lower = request.query.lower()
+            needs_ai_processing = any(keyword in query_lower for keyword in [
+                'calculate', 'what is', 'how much', 'current value', 'budget', 'cost', 'progress'
+            ])
+            
+            if needs_ai_processing and self.ai_service:
+                # Get project data for context
+                project_data_result = await self._get_all_project_data()
+                
+                # Format data_context properly as a dictionary
+                search_result = await self._handle_search_projects(
+                    MCPRequest(
+                        id=f"{request.id}-context",
+                        type=RequestType.SEARCH_PROJECTS,
+                        query="all projects",
+                        parameters={'filters': {}},
+                        timestamp=request.timestamp
+                    )
+                )
+                
+                data_context = None
+                if search_result and 'results' in search_result:
+                    data_context = {"projects": search_result['results']}
+                
+                # Process with AI
+                ai_response = await self.ai_service.process_construction_query(
+                    query=request.query,
+                    context=None,
+                    data_context=data_context,
+                    query_type=prompt_type
+                )
+                
+                return {
+                    "original_query": request.query,
+                    "enhanced_query": enhanced,
+                    "system_prompt": system_prompt,
+                    "prompt_type": prompt_type,
+                    "ai_response": ai_response.content,
+                    "ai_metadata": {
+                        "confidence_score": ai_response.confidence_score,
+                        "tokens_used": ai_response.tokens_used,
+                        "cost_estimate": ai_response.cost_estimate,
+                        "response_time": ai_response.response_time,
+                        "model_used": ai_response.model_used
+                    },
+                    "has_ai_response": True
+                }
+            else:
+                # Just return enhancement metadata
+                return {
+                    "original_query": request.query,
+                    "enhanced_query": enhanced,
+                    "system_prompt": system_prompt,
+                    "prompt_type": prompt_type,
+                    "has_ai_response": False
+                }
         except Exception as e:
             logger.error(f"Error in enhanced_query: {e}")
             return {"error": str(e)}
+    
+    async def _get_all_project_data(self) -> str:
+        """Get all project data as formatted string for AI context"""
+        try:
+            # Create a search request to get all projects
+            search_request = MCPRequest(
+                id=str(uuid.uuid4()),
+                type=RequestType.SEARCH_PROJECTS,
+                query="all projects",
+                parameters={},
+                timestamp=datetime.now()
+            )
+            
+            # Get project data
+            result = await self._handle_search_projects(search_request)
+            if result.get('results'):
+                projects = result['results']
+                # Format project data for AI context
+                formatted_data = []
+                for project in projects:
+                    project_info = f"Project: {project.get('Project_Name', 'Unknown')} (ID: {project.get('Project_ID', 'Unknown')})"
+                    project_info += f", Budget: ${project.get('Total_Budget', 0):,}, Progress: {project.get('Progress_Percent', 0)}%"
+                    project_info += f", Status: {project.get('Status', 'Unknown')}, Manager: {project.get('Project_Manager', 'Unknown')}"
+                    formatted_data.append(project_info)
+                return "\n".join(formatted_data)
+            else:
+                return "No project data available"
+        except Exception as e:
+            logger.error(f"Error getting project data: {e}")
+            return f"Error retrieving project data: {str(e)}"
     
     async def _handle_ai_query(self, request: MCPRequest) -> Dict[str, Any]:
         """Handle AI-powered query processing"""
