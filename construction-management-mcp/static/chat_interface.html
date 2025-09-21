@@ -125,6 +125,8 @@
         .status-planning { background: #fff3cd; color: #856404; }
         .status-hold { background: #f8d7da; color: #721c24; }
         .status-active { background: #d1ecf1; color: #0c5460; }
+        .status-risk { background: #f8d7da; color: #721c24; }
+        .status-near { background: #fff3cd; color: #856404; }
 
         .budget-amount {
             font-weight: 600;
@@ -307,7 +309,7 @@
     </div>
 
     <script>
-        const API_BASE = '/api';
+        const API_BASE = 'http://localhost:8000';
         let isLoading = false;
 
         function handleKeyPress(event) {
@@ -349,25 +351,17 @@
         }
 
         async function queryMCP(query) {
-            // Determine query type based on content using valid RequestType enum values
-            let queryType = 'search_projects'; // Default to search_projects
+            // Determine query type based on content
+            let queryType = 'enhanced_query';
             let parameters = {};
 
-            if (query.toLowerCase().includes('budget') || query.toLowerCase().includes('cost') || query.toLowerCase().includes('over budget')) {
-                queryType = 'search_projects'; // Use search_projects for budget queries
+            if (query.toLowerCase().includes('budget') || query.toLowerCase().includes('cost') || query.toLowerCase().includes('money')) {
                 parameters.prompt_type = 'budget_analysis';
             } else if (query.toLowerCase().includes('safety') || query.toLowerCase().includes('incident')) {
-                queryType = 'search_projects';
                 parameters.prompt_type = 'safety_analysis';
-            } else if (query.toLowerCase().includes('schedule') || query.toLowerCase().includes('delay') || query.toLowerCase().includes('time') || query.toLowerCase().includes('behind')) {
-                queryType = 'search_projects';
+            } else if (query.toLowerCase().includes('schedule') || query.toLowerCase().includes('delay') || query.toLowerCase().includes('time')) {
                 parameters.prompt_type = 'schedule_analysis';
-            } else if (query.toLowerCase().includes('document') || query.toLowerCase().includes('find documents')) {
-                queryType = 'search_documents';
-            } else if (query.toLowerCase().includes('report') || query.toLowerCase().includes('summary') || query.toLowerCase().includes('analysis')) {
-                queryType = 'search_projects';
-                parameters.prompt_type = 'progress_analysis';
-            } else if (query.toLowerCase().includes('project') || query.toLowerCase().includes('status') || query.toLowerCase().includes('progress') || query.toLowerCase().includes('all')) {
+            } else if (query.toLowerCase().includes('project') || query.toLowerCase().includes('status') || query.toLowerCase().includes('progress')) {
                 queryType = 'search_projects';
             }
 
@@ -399,50 +393,22 @@
 
             const data = response.data;
 
-            // Handle budget analysis errors or empty results
-            if (data.error) {
-                return `<div class="info-message">
-                    💡 <strong>Budget Analysis Note:</strong> ${data.error}
-                    <br><br>
-                    <em>The system currently shows project budgets allocated, but doesn't track actual spending for comparison. 
-                    Here are all projects with their allocated budgets:</em>
-                </div>`;
-            }
-
-            // Handle project results with data array
-            if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+            // Handle different response types
+            if (data.results && Array.isArray(data.results)) {
                 return formatProjectResults(data.results);
             }
 
-            // Handle enhanced query responses (when only enhanced_context is returned)
-            if (response.enhanced_context || (data.original_query && data.prompt_type)) {
-                return formatEnhancedQuery(data);
-            }
-
-            // Handle schedule analysis responses
             if (data.upcoming_milestones || data.delayed_projects) {
                 return formatScheduleResults(data);
             }
 
-            // Handle empty results
-            if (data.results && Array.isArray(data.results) && data.results.length === 0) {
-                return '<div class="success-message">✅ No projects found matching your criteria.</div>';
+            if (data.original_query) {
+                return formatEnhancedQuery(data);
             }
 
-            // Default formatting with detailed data
-            let html = `<div class="success-message">✅ ${response.message}</div>`;
-            
-            if (data.count !== undefined) {
-                html += `<div class="stats-card"><h3>📊 Query Results</h3>`;
-                html += `<p><strong>Total Results:</strong> ${data.count}</p>`;
-                html += `<p><strong>Processing Time:</strong> ${response.processing_time_ms?.toFixed(2)}ms</p>`;
-                if (data.query) {
-                    html += `<p><strong>Query:</strong> "${data.query}"</p>`;
-                }
-                html += '</div>';
-            }
-
-            return html;
+            // Default formatting
+            return `<div class="success-message">✅ ${response.message}</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>`;
         }
 
         function formatProjectResults(projects) {
@@ -450,7 +416,7 @@
                 return '<div class="success-message">No projects found matching your criteria.</div>';
             }
 
-            // Calculate summary stats (using correct field names)
+            // Calculate summary stats using correct column names
             const totalBudget = projects.reduce((sum, p) => sum + (p.Total_Budget || 0), 0);
             const activeProjects = projects.filter(p => p.Status !== 'Completed').length;
             const avgProgress = projects.reduce((sum, p) => sum + (p.Progress_Percent || 0), 0) / projects.length;
@@ -553,7 +519,9 @@
                 'In Progress': 'status-progress',
                 'Active': 'status-active',
                 'Planning': 'status-planning',
-                'On Hold': 'status-hold'
+                'On Hold': 'status-hold',
+                'At Risk': 'status-risk',
+                'Near Completion': 'status-near'
             };
             return statusMap[status] || 'status-planning';
         }
@@ -580,9 +548,93 @@
             document.getElementById('sendButton').textContent = loading ? 'Thinking...' : 'Send';
         }
 
+        // Initialize dashboard with live data
+        async function loadDashboard() {
+            try {
+                const response = await queryMCP('Show me all projects');
+                if (response.success && response.data.results) {
+                    const projects = response.data.results;
+                    displayDashboard(projects);
+                }
+            } catch (error) {
+                console.error('Failed to load dashboard:', error);
+            }
+        }
+
+        function displayDashboard(projects) {
+            const totalBudget = projects.reduce((sum, p) => sum + (p.Total_Budget || 0), 0);
+            const activeProjects = projects.filter(p => p.Status !== 'Completed').length;
+            const avgProgress = projects.reduce((sum, p) => sum + (p.Progress_Percent || 0), 0) / projects.length;
+
+            const dashboardHTML = `
+                <div class="stats-card">
+                    <h3>📊 Project Summary</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-value">${projects.length}</div>
+                            <div class="stat-label">Total Projects</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">$${totalBudget.toLocaleString()}</div>
+                            <div class="stat-label">Total Budget</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${activeProjects}</div>
+                            <div class="stat-label">Active Projects</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value">${avgProgress.toFixed(1)}%</div>
+                            <div class="stat-label">Avg Progress</div>
+                        </div>
+                    </div>
+                    <table class="project-table">
+                        <thead>
+                            <tr>
+                                <th>Project Name</th>
+                                <th>Status</th>
+                                <th>Progress</th>
+                                <th>Budget</th>
+                                <th>Manager</th>
+                                <th>Type</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${projects.map(project => `
+                                <tr>
+                                    <td><strong>${project.Project_Name}</strong></td>
+                                    <td><span class="status-badge ${getStatusClass(project.Status)}">${project.Status}</span></td>
+                                    <td>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" style="width: ${project.Progress_Percent || 0}%"></div>
+                                        </div>
+                                        <small>${project.Progress_Percent || 0}%</small>
+                                    </td>
+                                    <td>$${(project.Total_Budget || 0).toLocaleString()}</td>
+                                    <td>${project.Project_Manager || 'Unassigned'}</td>
+                                    <td>${project.Project_Type || 'N/A'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // Add dashboard to the beginning of chat messages
+            const messagesDiv = document.getElementById('chatMessages');
+            const dashboardDiv = document.createElement('div');
+            dashboardDiv.className = 'message assistant';
+            dashboardDiv.innerHTML = `
+                <div class="message-header">Live Project Dashboard</div>
+                ${dashboardHTML}
+            `;
+            messagesDiv.insertBefore(dashboardDiv, messagesDiv.firstChild);
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('messageInput').focus();
+            // Load dashboard after a short delay to ensure API is ready
+            setTimeout(loadDashboard, 1000);
         });
     </script>
 </body>
