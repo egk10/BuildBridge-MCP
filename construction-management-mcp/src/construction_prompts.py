@@ -287,3 +287,113 @@ def get_construction_examples() -> list:
     ]
 
     return examples
+
+
+class ConstructionPrompts:
+    """
+    Centralized construction prompt management class
+    """
+    
+    def __init__(self):
+        self.system_prompts = CONSTRUCTION_SYSTEM_PROMPTS
+        self.query_templates = QUERY_TEMPLATES
+        self.context = CONSTRUCTION_CONTEXT
+    
+    def get_system_prompt(self, query_type: str = "general") -> str:
+        """Get system prompt for specific query type"""
+        return self.system_prompts.get(query_type, self.system_prompts["general"])
+    
+    def build_user_prompt(
+        self, 
+        query: str, 
+        context: str = None, 
+        data_context: dict = None, 
+        query_type: str = "general"
+    ) -> str:
+        """
+        Build comprehensive user prompt with context
+        
+        Args:
+            query: User's original query
+            context: Additional text context (file contents, etc.)
+            data_context: Structured data context
+            query_type: Type of query for specialized handling
+        """
+        # Start with enhanced query
+        enhanced_query = enhance_query_with_construction_context(query)
+        
+        prompt_parts = [enhanced_query]
+        
+        # Add text context if provided
+        if context:
+            prompt_parts.append(f"\n\nAdditional Context:\n{context}")
+        
+        # Add structured data context if provided
+        if data_context:
+            prompt_parts.append(f"\n\nData Context:\n{self._format_data_context(data_context)}")
+        
+        # Add query-specific template if available
+        if query_type in self.query_templates and data_context:
+            template_data = {}
+            if query_type == "project_status":
+                template_data["project_data"] = str(data_context)
+            elif query_type == "budget_analysis":
+                template_data["budget_data"] = str(data_context)
+            elif query_type == "schedule_management":
+                template_data["schedule_data"] = str(data_context)
+            elif query_type == "safety_compliance":
+                template_data["incident_data"] = str(data_context)
+            elif query_type == "quality_control":
+                template_data["resource_data"] = str(data_context)
+            
+            if template_data:
+                template = self.query_templates[query_type].format(**template_data)
+                prompt_parts.append(f"\n\nSpecialized Analysis Request:\n{template}")
+        
+        # Add construction terminology reminder
+        prompt_parts.append(f"\n\nPlease respond using appropriate construction management terminology and industry best practices.")
+        
+        return "\n".join(prompt_parts)
+    
+    def _format_data_context(self, data_context: dict) -> str:
+        """Format structured data context for the prompt"""
+        if not data_context:
+            return ""
+        
+        formatted_parts = []
+        
+        for key, value in data_context.items():
+            if isinstance(value, (list, dict)):
+                formatted_parts.append(f"{key}: {str(value)}")
+            else:
+                formatted_parts.append(f"{key}: {value}")
+        
+        return "\n".join(formatted_parts)
+    
+    def get_query_type_from_keywords(self, query: str) -> str:
+        """
+        Automatically detect query type based on keywords
+        """
+        query_lower = query.lower()
+        
+        # Budget-related keywords
+        budget_keywords = ["budget", "cost", "expense", "financial", "money", "price", "variance"]
+        if any(keyword in query_lower for keyword in budget_keywords):
+            return "budget_analysis"
+        
+        # Safety-related keywords
+        safety_keywords = ["safety", "incident", "accident", "hazard", "osha", "injury", "compliance"]
+        if any(keyword in query_lower for keyword in safety_keywords):
+            return "safety_compliance"
+        
+        # Schedule-related keywords
+        schedule_keywords = ["schedule", "timeline", "delay", "milestone", "deadline", "duration"]
+        if any(keyword in query_lower for keyword in schedule_keywords):
+            return "schedule_management"
+        
+        # Quality-related keywords
+        quality_keywords = ["quality", "defect", "inspection", "testing", "standard", "specification"]
+        if any(keyword in query_lower for keyword in quality_keywords):
+            return "quality_control"
+        
+        return "general"

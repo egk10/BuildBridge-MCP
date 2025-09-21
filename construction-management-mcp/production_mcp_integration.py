@@ -34,7 +34,14 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from main import initialize_connectors
-from construction_prompts import enhance_query_with_construction_context, get_construction_prompt
+try:
+    from construction_prompts import enhance_query_with_construction_context, get_construction_prompt
+    from ai_service import create_ai_service, AIService
+except ImportError:
+    # Try alternative import paths
+    sys.path.append(str(Path(__file__).parent))
+    from construction_prompts import enhance_query_with_construction_context, get_construction_prompt
+    from ai_service import create_ai_service, AIService
 
 def get_mcp_connectors():
     """Get the initialized MCP connectors"""
@@ -43,6 +50,43 @@ def get_mcp_connectors():
         return excel_connector, sharepoint_connector, document_indexer, query_processor
     except ImportError:
         return None, None, None, None
+
+def load_config():
+    """Load configuration from credentials.json and .env file"""
+    # Load environment variables from .env file
+    from dotenv import load_dotenv
+    import os
+    
+    # Load .env file if it exists
+    env_path = Path(__file__).parent / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        logger.info("✅ Loaded environment variables from .env file")
+    
+    config_path = Path(__file__).parent / "config" / "credentials.json"
+    try:
+        with open(config_path, 'r') as f:
+            config_content = f.read()
+            # Handle environment variable substitution
+            config_content = config_content.replace('${OPENAI_API_KEY}', os.getenv('OPENAI_API_KEY', ''))
+            config = json.loads(config_content)
+            
+            # Override with environment variables if set
+            if 'ai_service' in config:
+                ai_config = config['ai_service']
+                ai_config['openai_api_key'] = os.getenv('OPENAI_API_KEY', ai_config.get('openai_api_key', ''))
+                ai_config['model'] = os.getenv('AI_MODEL', ai_config.get('model', 'gpt-4-turbo'))
+                ai_config['max_tokens'] = int(os.getenv('AI_MAX_TOKENS', ai_config.get('max_tokens', 2000)))
+                ai_config['temperature'] = float(os.getenv('AI_TEMPERATURE', ai_config.get('temperature', 0.1)))
+                ai_config['max_retries'] = int(os.getenv('AI_MAX_RETRIES', ai_config.get('max_retries', 3)))
+            
+            # Override other settings
+            config['local_mode'] = os.getenv('LOCAL_MODE', str(config.get('local_mode', True))).lower() == 'true'
+            
+            return config
+    except Exception as e:
+        logger.error(f"Failed to load config: {e}")
+        return {}
 
 # Configure logging with real-time support
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
@@ -89,6 +133,7 @@ class RequestType(Enum):
     SEARCH_DOCUMENTS = "search_documents"
     GENERATE_REPORT = "generate_report"
     ENHANCED_QUERY = "enhanced_query"
+    AI_QUERY = "ai_query"  # New AI-powered query processing
 
 @dataclass
 class MCPRequest:
@@ -124,6 +169,8 @@ class ConstructionMCPEngine:
         self.sharepoint_connector = None
         self.document_indexer = None
         self.query_processor = None
+        self.ai_service = None  # Add AI service
+        self.config = {}
         self._setup_handlers()
         
     def _setup_handlers(self):
@@ -136,12 +183,18 @@ class ConstructionMCPEngine:
             RequestType.SEARCH_DOCUMENTS: self._handle_search_documents,
             RequestType.GENERATE_REPORT: self._handle_generate_report,
             RequestType.ENHANCED_QUERY: self._handle_enhanced_query,
+            RequestType.AI_QUERY: self._handle_ai_query,  # Add AI query handler
         }
     
     async def initialize(self) -> bool:
         """Initialize MCP connectors and services"""
         try:
             logger.info("Initializing Construction MCP Engine...")
+            
+            # Load configuration
+            self.config = load_config()
+            
+            # Initialize MCP connectors
             initialize_connectors()
             
             # Get the initialized connectors
@@ -149,6 +202,19 @@ class ConstructionMCPEngine:
             
             if self.query_processor is None:
                 raise Exception("Failed to initialize query processor")
+            
+            # Initialize AI service if API key is available
+            ai_config = self.config.get('ai_service', {})
+            if ai_config.get('openai_api_key'):
+                try:
+                    logger.info("🤖 Initializing AI service...")
+                    self.ai_service = create_ai_service(ai_config)
+                    logger.info("✅ AI service initialized successfully")
+                except Exception as e:
+                    logger.warning(f"⚠️ AI service initialization failed: {e}")
+                    logger.info("🔄 Continuing without AI service - set OPENAI_API_KEY to enable")
+            else:
+                logger.info("ℹ️ No OpenAI API key found - AI service disabled")
                 
             self.initialized = True
             logger.info("✅ Construction MCP Engine initialized successfully")
@@ -326,6 +392,71 @@ class ConstructionMCPEngine:
         except Exception as e:
             logger.error(f"Error in enhanced_query: {e}")
             return {"error": str(e)}
+    
+    async def _handle_ai_query(self, request: MCPRequest) -> Dict[str, Any]:
+        """Handle AI-powered query processing"""
+        try:
+            if not self.ai_service:
+                return {
+                    "error": "AI service not available",
+                    "message": "AI service not initialized. Please set OPENAI_API_KEY environment variable.",
+                    "fallback_data": await self._handle_enhanced_query(request)
+                }
+            
+            # Extract context parameters
+            query_type = request.parameters.get('query_type', 'general')
+            include_data_context = request.parameters.get('include_data_context', True)
+            
+            # Gather context data if requested
+            context = None
+            data_context = None
+            
+            if include_data_context:
+                try:
+                    # Try to gather relevant data based on query content
+                    if any(keyword in request.query.lower() for keyword in ['project', 'budget', 'cost']):
+                        # Get some project data for context
+                        search_result = await self._handle_search_projects(
+                            MCPRequest(
+                                id=f"{request.id}-context",
+                                type=RequestType.SEARCH_PROJECTS,
+                                query=request.query,
+                                parameters={'filters': {}},
+                                timestamp=request.timestamp
+                            )
+                        )
+                        if search_result and 'results' in search_result:
+                            data_context = {"projects": search_result['results'][:3]}  # Limit context size
+                except Exception as e:
+                    logger.warning(f"Failed to gather data context: {e}")
+            
+            # Process with AI service
+            logger.info(f"🤖 Processing AI query: {request.query}")
+            ai_response = await self.ai_service.process_construction_query(
+                query=request.query,
+                context=context,
+                data_context=data_context,
+                query_type=query_type
+            )
+            
+            return {
+                "ai_response": ai_response.content,
+                "confidence_score": ai_response.confidence_score,
+                "tokens_used": ai_response.tokens_used,
+                "cost_estimate": ai_response.cost_estimate,
+                "response_time": ai_response.response_time,
+                "model_used": ai_response.model_used,
+                "query_type": query_type,
+                "metadata": ai_response.metadata,
+                "has_context": data_context is not None
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in ai_query: {e}")
+            return {
+                "error": str(e),
+                "fallback_data": await self._handle_enhanced_query(request)
+            }
 
 # FastAPI Production Interface
 if FASTAPI_AVAILABLE:
@@ -398,7 +529,13 @@ if FASTAPI_AVAILABLE:
                 "excel_connector": mcp_engine.excel_connector is not None,
                 "sharepoint_connector": mcp_engine.sharepoint_connector is not None,
                 "document_indexer": mcp_engine.document_indexer is not None,
-                "query_processor": mcp_engine.query_processor is not None
+                "query_processor": mcp_engine.query_processor is not None,
+                "ai_service": mcp_engine.ai_service is not None
+            },
+            "ai_service_info": {
+                "enabled": mcp_engine.ai_service is not None,
+                "model": mcp_engine.config.get('ai_service', {}).get('model', 'N/A') if mcp_engine.ai_service else None,
+                "usage_stats": mcp_engine.ai_service.get_usage_stats() if mcp_engine.ai_service else None
             }
         }
     
@@ -555,6 +692,24 @@ class ConstructionMCPClient:
         )
         response = await self.engine.process_request(request)
         return response.data if response.success else {"error": response.message}
+    
+    async def ai_query(self, query: str, query_type: str = "general", include_data_context: bool = True) -> Dict[str, Any]:
+        """Process query with AI service"""
+        request = MCPRequest(
+            id=str(uuid.uuid4()),
+            type=RequestType.AI_QUERY,
+            query=query,
+            parameters={'query_type': query_type, 'include_data_context': include_data_context},
+            timestamp=datetime.now()
+        )
+        response = await self.engine.process_request(request)
+        return response.data if response.success else {"error": response.message}
+    
+    async def get_ai_usage_stats(self) -> Dict[str, Any]:
+        """Get AI service usage statistics"""
+        if self.engine.ai_service:
+            return self.engine.ai_service.get_usage_stats()
+        return {"error": "AI service not available"}
 
 # Production deployment function
 def run_production_server(host: str = "0.0.0.0", port: int = 8000, workers: int = 1):
