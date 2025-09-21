@@ -21,6 +21,7 @@ from collections import deque
 try:
     from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import FileResponse, Response
     from pydantic import BaseModel, Field
     import uvicorn
     FASTAPI_AVAILABLE = True
@@ -633,6 +634,41 @@ if FASTAPI_AVAILABLE:
     async def get_recent_logs():
         """Get recent log entries via HTTP"""
         return {"logs": list(log_buffer)}
+
+    # Static file serving and chat interface
+    @app.get("/chat_interface.html")
+    async def get_chat_interface():
+        """Serve the chat interface HTML file"""
+        import os
+        
+        chat_file = "chat_interface.html"
+        static_file = os.path.join("static", "chat_interface.html")
+        
+        # Try main directory first, then static directory
+        if os.path.exists(chat_file):
+            return FileResponse(chat_file, media_type="text/html")
+        elif os.path.exists(static_file):
+            return FileResponse(static_file, media_type="text/html")
+        else:
+            raise HTTPException(status_code=404, detail="Chat interface not found")
+    
+    @app.get("/logs_viewer.html")
+    async def get_logs_viewer():
+        """Serve the logs viewer HTML file"""
+        import os
+        
+        static_file = os.path.join("static", "logs_viewer.html")
+        if os.path.exists(static_file):
+            return FileResponse(static_file, media_type="text/html")
+        else:
+            raise HTTPException(status_code=404, detail="Logs viewer not found")
+    
+    @app.get("/favicon.ico")
+    async def get_favicon():
+        """Return a basic favicon to avoid 404 errors"""
+        # Return a simple 1x1 transparent PNG
+        favicon_data = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90wS\xde\x00\x00\x00\tpHYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\x00\x00\x00\x1aiTXtComment\x00\x00\x00\x00\x00Created with GIMPW\x81\x0e\x17\x00\x00\x00\x0bIDATx\x9cc```\x00\x00\x00\x02\x00\x01\xe5\'\xde\xfc\x00\x00\x00\x00IEND\xaeB`\x82'
+        return Response(content=favicon_data, media_type="image/x-icon")
 
 # Direct Python Integration Class
 class ConstructionMCPClient:
