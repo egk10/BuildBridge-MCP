@@ -17,6 +17,12 @@ You are an expert construction project management AI assistant. You have extensi
 - Risk management and safety protocols
 - Budget and cost control principles
 
+IMPORTANT: When project data is provided in the Data Context section, you MUST:
+1. Use the actual project information (names, budgets, progress percentages, etc.)
+2. Reference specific project details in your calculations and analysis
+3. Never use hypothetical or example data when real data is available
+4. Cite the actual project names and figures from the provided data
+
 When responding to queries:
 1. Use accurate construction terminology
 2. Reference industry standards when relevant
@@ -35,10 +41,18 @@ You are a construction cost management expert. Focus on:
 - Contract pricing and bid analysis
 - Cost-benefit analysis for construction decisions
 
+CRITICAL INSTRUCTIONS FOR DATA USAGE:
+1. ALWAYS check the "Available Project Data" section below for actual project information
+2. NEVER use hypothetical examples when real project data is provided
+3. MUST use exact budget amounts, project names, and progress percentages from the data
+4. Quote the specific project name and budget amount in your response
+5. For calculations, use ONLY the Total_Budget and Progress_Percent values from the data
+6. If asked about "EGK Hamilton" or "EGK HAMILTON", look for this exact project in the data
+
 Provide insights on:
-- Budget performance trends
+- Budget performance trends using actual data
 - Cost overrun causes and prevention
-- Profitability analysis
+- Profitability analysis based on real figures
 - Cost-saving opportunities
 - Financial risk assessment
 """,
@@ -363,8 +377,37 @@ class ConstructionPrompts:
         formatted_parts = []
         
         for key, value in data_context.items():
-            if isinstance(value, (list, dict)):
-                formatted_parts.append(f"{key}: {str(value)}")
+            if key == "projects" and isinstance(value, list):
+                # Special formatting for project data
+                formatted_parts.append(f"\n**Available Project Data:**")
+                for project in value:
+                    if isinstance(project, dict):
+                        project_info = []
+                        project_name = project.get('Project_Name', project.get('name', 'Unknown Project'))
+                        project_info.append(f"  - Project: {project_name}")
+                        
+                        # Add budget information
+                        if 'Total_Budget' in project:
+                            budget = project['Total_Budget']
+                            if isinstance(budget, (int, float)):
+                                project_info.append(f"    Total Budget: ${budget:,.2f}")
+                            else:
+                                project_info.append(f"    Total Budget: {budget}")
+                        
+                        # Add progress information
+                        if 'Progress_Percent' in project:
+                            progress = project['Progress_Percent']
+                            project_info.append(f"    Progress: {progress}%")
+                        
+                        # Add other key information
+                        for field in ['Status', 'Project_Manager', 'Start_Date', 'End_Date', 'Location']:
+                            if field in project and project[field]:
+                                project_info.append(f"    {field.replace('_', ' ')}: {project[field]}")
+                        
+                        formatted_parts.append("\n".join(project_info))
+                        formatted_parts.append("")  # Add blank line between projects
+            elif isinstance(value, (list, dict)):
+                formatted_parts.append(f"\n**{key}:**\n{str(value)}")
             else:
                 formatted_parts.append(f"{key}: {value}")
         

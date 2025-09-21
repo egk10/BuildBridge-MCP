@@ -391,10 +391,7 @@ class ConstructionMCPEngine:
             ])
             
             if needs_ai_processing and self.ai_service:
-                # Get project data for context
-                project_data_result = await self._get_all_project_data()
-                
-                # Format data_context properly as a dictionary
+                # Get all project data for context - use the most relevant search
                 search_result = await self._handle_search_projects(
                     MCPRequest(
                         id=f"{request.id}-context",
@@ -407,6 +404,7 @@ class ConstructionMCPEngine:
                 
                 data_context = None
                 if search_result and 'results' in search_result:
+                    # Pass all projects, not just the first few
                     data_context = {"projects": search_result['results']}
                 
                 # Process with AI
@@ -508,7 +506,8 @@ class ConstructionMCPEngine:
                             )
                         )
                         if search_result and 'results' in search_result:
-                            data_context = {"projects": search_result['results'][:3]}  # Limit context size
+                            # Pass all relevant projects, not just first 3
+                            data_context = {"projects": search_result['results']}
                 except Exception as e:
                     logger.warning(f"Failed to gather data context: {e}")
             
