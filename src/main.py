@@ -273,7 +273,27 @@ def format_report(report: Dict[str, Any]) -> str:
     return formatted
 
 if __name__ == "__main__":
-    # Initialize connectors
+    import sys
+    
+    # Check for test mode
+    if len(sys.argv) > 1 and sys.argv[1] == "--test":
+        # Test mode: just initialize and exit
+        try:
+            initialize_connectors()
+            print("✅ Construction Management MCP Server initialization test PASSED")
+            print("Available tools:")
+            print("- search_projects: Search for projects by natural language")
+            print("- get_project_status: Get detailed project status")
+            print("- analyze_budget: Analyze budget performance")
+            print("- get_schedule_updates: Get schedule milestones and delays")
+            print("- search_documents: Search construction documents")
+            print("- generate_report: Generate various reports")
+            sys.exit(0)
+        except Exception as e:
+            print(f"❌ Initialization test FAILED: {e}")
+            sys.exit(1)
+    
+    # Normal server mode
     try:
         initialize_connectors()
         print("Construction Management MCP Server initialized successfully!")

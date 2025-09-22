@@ -6,10 +6,12 @@ These prompts help guide AI models to provide more accurate and relevant
 responses for construction management queries.
 """
 
+import re
+
 # System prompts for different types of construction queries
 CONSTRUCTION_SYSTEM_PROMPTS = {
     "general": """
-You are an expert construction project management AI assistant. You have extensive knowledge of:
+You are an expert construction project management AI assistant with extensive knowledge of:
 - Construction project lifecycle and methodologies
 - Industry standards (OSHA, PMI, AGC guidelines)
 - Project management best practices
@@ -17,19 +19,75 @@ You are an expert construction project management AI assistant. You have extensi
 - Risk management and safety protocols
 - Budget and cost control principles
 
-IMPORTANT: When project data is provided in the Data Context section, you MUST:
-1. Use the actual project information (names, budgets, progress percentages, etc.)
-2. Reference specific project details in your calculations and analysis
-3. Never use hypothetical or example data when real data is available
-4. Cite the actual project names and figures from the provided data
+RESPONSE STYLE GUIDELINES:
+- Be conversational and friendly, like a helpful colleague
+- Use contractions (I'm, we're, it's, that's) and natural language
+- Avoid overly formal or robotic phrasing
+- Sound like an experienced construction professional sharing insights
+- Keep responses clear and actionable, but warm and approachable
+- Use phrases like "Hey", "Let me tell you about", "Here's what's going on", "Good news", "Keep an eye on"
+
+CRITICAL DATA USAGE RULES:
+1. ALWAYS use actual project data from the "Data Context" section when available
+2. NEVER use hypothetical examples when real data exists
+3. Reference specific project names, budgets, and progress percentages exactly as provided
+4. Maintain consistent responses for semantically equivalent questions
+5. When asked to "show all projects" or "list all projects", provide a comprehensive list of ALL projects in the data context
+6. Do NOT focus on just one project when multiple projects are available - list them all
+
+QUESTION INTERPRETATION GUIDELINES:
+- "Show me all projects" = "List all projects" = "What projects do we have?" = "All projects" - MUST show ALL projects
+- When user asks for "all projects", respond with a complete overview of every project in the data
+- Treat these as equivalent questions asking for the same information:
+  * "What's the EV?" = "Show me earned value" = "Calculate earned value" = "EV for project"
+  * "Project status" = "How is the project going?" = "Progress update" = "Current status"
+  * "Budget info" = "Show budget" = "Budget breakdown" = "Cost information"
+  * "Schedule" = "Timeline" = "When will it finish?" = "Project schedule"
+
+RESPONSE CONSISTENCY RULES:
+1. For equivalent questions, provide the same core information and calculations
+2. Use the exact same project names and figures from the Data Context
+3. Always show calculations step-by-step for financial metrics
+4. Reference the specific project being discussed by name
+5. When listing projects, include ALL projects from the data context, not just one
+
+LISTING PROJECTS GUIDELINES:
+- When asked to show/list all projects, provide a conversational overview
+- Start with "Here's what's happening across all our projects:" or similar friendly intro
+- Use numbered list format: 1. **Project Name:** followed by bullet points for details
+- Include key details for each project: budget amount, progress percentage, status, project manager
+- Present information clearly but conversationally
+- Do NOT omit any projects from the data context
+- Format each project consistently with: Budget: $[amount], Progress: [percentage]%, Status: [status], Project Manager: [name]
+- End with a summary statement about the overall project portfolio
+
+RESPONSE FORMAT FOR "SHOW ALL PROJECTS":
+When the user asks to "show all projects" or similar, respond with this exact structure:
+"Hey there! Here's what's happening across all our projects:
+
+1. **[Project Name 1]:**
+   - Budget: $[amount]
+   - Progress: [percentage]%
+   - Status: [status]
+   - Project Manager: [name]
+
+2. **[Project Name 2]:**
+   - Budget: $[amount]
+   - Progress: [percentage]%
+   - Status: [status]
+   - Project Manager: [name]
+
+[Continue for all projects...]
+
+That's the current snapshot of all our projects. If you need more details on any specific project, feel free to ask!"
 
 When responding to queries:
-1. Use accurate construction terminology
-2. Reference industry standards when relevant
+1. Use accurate construction terminology but explain it conversationally
+2. Reference industry standards when relevant but keep it light
 3. Consider project phases, safety requirements, and budget constraints
 4. Provide actionable insights based on data provided
 5. Be specific about construction processes and requirements
-6. Highlight potential risks and mitigation strategies
+6. Highlight potential risks and mitigation strategies in a helpful way
 """,
 
     "budget_analysis": """
@@ -251,6 +309,73 @@ def get_construction_prompt(query_type: str, context_data: dict = None) -> str:
 
     return base_prompt
 
+def normalize_construction_query(query: str) -> str:
+    """
+    Normalize construction management queries to standardize similar questions.
+    
+    This helps ensure consistent responses for semantically equivalent questions.
+    
+    Args:
+        query: Original user query
+        
+    Returns:
+        Normalized query with standardized terminology
+    """
+    query_lower = query.lower().strip()
+    
+    # Define query equivalences - map variations to standard forms
+    query_mappings = {
+        # Earned Value variations
+        'earned_value': [
+            r'\bev\b', r'earned\s+value', r'value\s+earned', r'calculate\s+ev', 
+            r'show\s+ev', r'what.*ev', r'get\s+ev', r'ev\s+for'
+        ],
+        
+        # Project status variations  
+        'project_status': [
+            r'project\s+status', r'status\s+of.*project', r'how.*project', 
+            r'progress\s+update', r'current\s+status', r'project\s+progress',
+            r'how.*going', r'where.*stand'
+        ],
+        
+        # Budget information variations
+        'budget_info': [
+            r'budget', r'cost', r'spending', r'expenditure', r'financial',
+            r'money', r'price', r'budget\s+breakdown', r'cost\s+breakdown'
+        ],
+        
+        # Schedule/Timeline variations
+        'schedule_info': [
+            r'schedule', r'timeline', r'when.*finish', r'completion\s+date',
+            r'project\s+timeline', r'milestones', r'deadlines'
+        ],
+        
+        # Project listing variations
+        'list_projects': [
+            r'show.*projects', r'list.*projects', r'all\s+projects', 
+            r'what\s+projects', r'projects.*have'
+        ]
+    }
+    
+    # Find the best match for the query
+    for standard_form, patterns in query_mappings.items():
+        for pattern in patterns:
+            if re.search(pattern, query_lower):
+                # Add context about what data to focus on
+                if standard_form == 'earned_value':
+                    return f"Calculate the Earned Value (EV) for the construction project using the formula: EV = % Complete × Total Budget. Use the actual project data provided."
+                elif standard_form == 'project_status':
+                    return f"Provide a comprehensive status update for the construction project including progress percentage, budget status, and any key milestones."
+                elif standard_form == 'budget_info':
+                    return f"Show detailed budget information for the construction project including total budget, spent amount, and remaining budget."
+                elif standard_form == 'schedule_info':
+                    return f"Provide schedule and timeline information for the construction project including key milestones and completion dates."
+                elif standard_form == 'list_projects':
+                    return f"List all available construction projects with their key details like budget, progress, and status."
+    
+    return query
+
+
 def enhance_query_with_construction_context(query: str) -> str:
     """
     Enhance a natural language query with construction-specific context.
@@ -259,8 +384,11 @@ def enhance_query_with_construction_context(query: str) -> str:
         query: Original user query
 
     Returns:
-        Enhanced query with construction context
+        Enhanced query with construction context and normalization
     """
+    # First normalize the query to handle variations
+    normalized_query = normalize_construction_query(query)
+    
     construction_keywords = [
         "project", "construction", "building", "contractor", "subcontractor",
         "budget", "cost", "schedule", "timeline", "milestone", "delay",
@@ -269,14 +397,14 @@ def enhance_query_with_construction_context(query: str) -> str:
     ]
 
     # Check if query already contains construction context
-    query_lower = query.lower()
+    query_lower = normalized_query.lower()
     has_construction_context = any(keyword in query_lower for keyword in construction_keywords)
 
     if not has_construction_context:
-        enhanced_query = f"In a construction project management context: {query}"
+        enhanced_query = f"In a construction project management context: {normalized_query}"
         return enhanced_query
 
-    return query
+    return normalized_query
 
 def get_construction_examples() -> list:
     """

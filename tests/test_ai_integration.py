@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Dict, Any
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
@@ -81,7 +81,7 @@ class AIIntegrationTester:
             raise Exception(f"Missing packages: {', '.join(missing_packages)}")
         
         # Check configuration files
-        config_path = Path(__file__).parent / "config" / "credentials.json"
+        config_path = Path(__file__).parent.parent / "config" / "credentials.json"
         if not config_path.exists():
             raise Exception("credentials.json not found")
         logger.info("  ✓ Configuration file exists")

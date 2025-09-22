@@ -21,7 +21,8 @@ from collections import deque
 try:
     from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
     from fastapi.middleware.cors import CORSMiddleware
-    from fastapi.responses import FileResponse, Response
+    from fastapi.responses import FileResponse, Response, RedirectResponse, HTMLResponse
+    from fastapi.staticfiles import StaticFiles
     from pydantic import BaseModel, Field
     import uvicorn
     FASTAPI_AVAILABLE = True
@@ -59,12 +60,12 @@ def load_config():
     import os
     
     # Load .env file if it exists
-    env_path = Path(__file__).parent / ".env"
+    env_path = Path(__file__).parent.parent / ".env"  # Project root .env file
     if env_path.exists():
         load_dotenv(env_path)
         logger.info("✅ Loaded environment variables from .env file")
     
-    config_path = Path(__file__).parent / "config" / "credentials.json"
+    config_path = Path(__file__).parent.parent / "config" / "credentials.json"
     try:
         with open(config_path, 'r') as f:
             config_content = f.read()
@@ -493,21 +494,26 @@ class ConstructionMCPEngine:
             
             if include_data_context:
                 try:
-                    # Try to gather relevant data based on query content
-                    if any(keyword in request.query.lower() for keyword in ['project', 'budget', 'cost']):
-                        # Get some project data for context
+                    # Always gather project data for project-related queries
+                    query_lower = request.query.lower()
+                    if any(keyword in query_lower for keyword in ['project', 'budget', 'cost', 'schedule', 'status']) or \
+                       ('all' in query_lower and 'project' in query_lower) or \
+                       ('list' in query_lower and 'project' in query_lower) or \
+                       ('show' in query_lower and 'project' in query_lower):
+                        # Get all project data for context
                         search_result = await self._handle_search_projects(
                             MCPRequest(
                                 id=f"{request.id}-context",
                                 type=RequestType.SEARCH_PROJECTS,
-                                query=request.query,
+                                query="all projects",  # Always search for all projects to get complete data
                                 parameters={'filters': {}},
                                 timestamp=request.timestamp
                             )
                         )
                         if search_result and 'results' in search_result:
-                            # Pass all relevant projects, not just first 3
+                            # Pass all projects from the data
                             data_context = {"projects": search_result['results']}
+                            logger.info(f"🤖 Gathered context data for {len(search_result['results'])} projects")
                 except Exception as e:
                     logger.warning(f"Failed to gather data context: {e}")
             
@@ -590,14 +596,14 @@ if FASTAPI_AVAILABLE:
         allow_headers=["*"],
     )
     
-    @app.get("/")
-    async def root():
-        """API root endpoint"""
-        return {
-            "name": "Construction Management MCP API",
-            "version": "1.0.0",
-            "status": "running" if mcp_engine.initialized else "initializing"
-        }
+    # Mount static files
+    import os
+    static_dir = os.path.join(os.path.dirname(__file__), "..", "static")
+    if os.path.exists(static_dir):
+        app.mount("/static", StaticFiles(directory=static_dir), name="static")
+        print(f"📁 Static files mounted from: {static_dir}")
+    else:
+        print(f"⚠️  Static directory not found: {static_dir}")
     
     @app.get("/health")
     async def health_check():
@@ -648,6 +654,89 @@ if FASTAPI_AVAILABLE:
             enhanced_context=response.enhanced_context,
             timestamp=response.timestamp
         )
+    
+    @app.post("/process")
+    async def process_ai_query(request: dict):
+        """Process a query using AI for natural language responses"""
+        try:
+            query = request.get('query', '')
+            if not query:
+                return {"success": False, "response": "Please provide a query"}
+            
+            # Log the incoming query
+            logger.info(f"📝 USER QUERY: '{query}'")
+            
+            # Get data source information
+            data_sources = [
+                "📊 Construction_Management_Data.xlsx",
+                "💰 Budget_Tracking.xlsx", 
+                "📅 Master_Schedule.xlsx",
+                "👥 Resource_Allocation.xlsx",
+                "🗂️ Project_Database.xlsx"
+            ]
+            
+            # Gather actual project data for AI context
+            data_context = None
+            query_lower = query.lower()
+            
+            # Always gather project data for project-related queries
+            if any(keyword in query_lower for keyword in ['project', 'budget', 'cost', 'schedule', 'status', 'all', 'list', 'show']):
+                try:
+                    # Get all project data
+                    search_result = await mcp_engine._handle_search_projects(
+                        MCPRequest(
+                            id="process-context",
+                            type=RequestType.SEARCH_PROJECTS,
+                            query="all projects",
+                            parameters={'filters': {}},
+                            timestamp=datetime.now()
+                        )
+                    )
+                    if search_result and 'results' in search_result:
+                        data_context = {"projects": search_result['results']}
+                        logger.info(f"📊 Gathered {len(search_result['results'])} projects for AI context")
+                except Exception as e:
+                    logger.warning(f"Failed to gather project data: {e}")
+            
+            # Enhanced context with data source information
+            enhanced_context = f"""Construction project management context.
+            
+Data Sources Being Used:
+{chr(10).join(data_sources)}
+
+This system manages multiple construction projects with comprehensive tracking of budgets, schedules, and resources."""
+            
+            # Use AI service for natural language response
+            if mcp_engine.ai_service:
+                ai_response = await mcp_engine.ai_service.process_construction_query(
+                    query=query,
+                    data_context=data_context,  # Now includes actual project data
+                    context=enhanced_context,
+                    query_type="general"
+                )
+                
+                response_text = ai_response.content if hasattr(ai_response, 'content') else str(ai_response)
+                
+                # Add data source footer to response
+                response_with_sources = f"""{response_text}
+
+---
+📂 **Data Sources Used:**
+{chr(10).join(['• ' + source for source in data_sources])}"""
+                
+                # Log the AI response
+                logger.info(f"🤖 AI RESPONSE: '{response_text[:200]}{'...' if len(response_text) > 200 else ''}'")
+                logger.info(f"📂 DATA SOURCES: {', '.join([s.split(' ', 1)[1] for s in data_sources])}")
+                
+                return {
+                    "success": True, 
+                    "response": response_with_sources
+                }
+            else:
+                return {"success": False, "response": "AI service not available"}
+                
+        except Exception as e:
+            return {"success": False, "response": f"Error: {str(e)}"}
     
     @app.websocket("/ws")
     async def websocket_endpoint(websocket: WebSocket):
@@ -721,16 +810,147 @@ if FASTAPI_AVAILABLE:
         """Serve the chat interface HTML file"""
         import os
         
-        chat_file = "chat_interface.html"
-        static_file = os.path.join("static", "chat_interface.html")
+        # Get the project root directory (parent of src)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         
-        # Try main directory first, then static directory
-        if os.path.exists(chat_file):
-            return FileResponse(chat_file, media_type="text/html")
-        elif os.path.exists(static_file):
-            return FileResponse(static_file, media_type="text/html")
-        else:
-            raise HTTPException(status_code=404, detail="Chat interface not found")
+        # Try multiple possible locations for the chat interface file
+        possible_paths = [
+            os.path.join(project_root, "static", "chat_interface.html"),
+            os.path.join(project_root, "chat_interface.html"),
+            "static/chat_interface.html",
+            "chat_interface.html"
+        ]
+        
+        for file_path in possible_paths:
+            if os.path.exists(file_path):
+                print(f"📄 Serving chat interface from: {file_path}")
+                # Add cache control headers to prevent caching issues
+                response = FileResponse(file_path, media_type="text/html")
+                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                response.headers["Pragma"] = "no-cache"
+                response.headers["Expires"] = "0"
+                return response
+        
+        print("⚠️ Static chat interface not found, using embedded fallback")
+        # If not found, return a simple HTML page with cache-busting
+        html_content = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Construction MCP AI Chat Interface</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+            <meta http-equiv="Pragma" content="no-cache">
+            <meta http-equiv="Expires" content="0">
+            <style>
+                body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+                .chat-container { max-width: 900px; margin: 0 auto; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                .header { background: #2c3e50; color: white; padding: 20px; border-radius: 10px 10px 0 0; }
+                .header h1 { margin: 0; font-size: 24px; }
+                .header p { margin: 5px 0 0 0; opacity: 0.8; }
+                .messages { height: 400px; overflow-y: auto; padding: 20px; border-bottom: 1px solid #eee; }
+                .message { margin: 15px 0; padding: 12px 16px; border-radius: 8px; max-width: 80%; }
+                .user { background: #3498db; color: white; text-align: right; margin-left: auto; }
+                .assistant { background: #ecf0f1; color: #2c3e50; margin-right: auto; }
+                .input-area { padding: 20px; display: flex; gap: 10px; }
+                input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 6px; font-size: 16px; }
+                input[type="text"]:focus { outline: none; border-color: #3498db; }
+                button { padding: 12px 24px; background: #3498db; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+                button:hover { background: #2980b9; }
+                button:disabled { background: #95a5a6; cursor: not-allowed; }
+                .status { padding: 10px 20px; text-align: center; background: #e8f5e8; color: #27ae60; font-size: 14px; }
+                .debug { padding: 5px 20px; text-align: center; background: #f8f9fa; color: #6c757d; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class="chat-container">
+                <div class="header">
+                    <h1>🏗️ Construction MCP AI Assistant</h1>
+                    <p>Ask about your construction projects, budgets, schedules, and more</p>
+                </div>
+                <div class="status">
+                    ✅ Connected to AI Service - Using /process endpoint for consistent responses
+                </div>
+                <div class="debug">
+                    Debug: All queries will be processed by AI service for consistent responses
+                </div>
+                <div id="messages" class="messages">
+                    <div class="message assistant">
+                        Hi! I'm your AI construction management assistant. I can help you with information about your projects, including the EGK HAMILTON project ($54M budget, 20% complete). All questions will get consistent AI-powered responses. What would you like to know?
+                    </div>
+                </div>
+                <div class="input-area">
+                    <input type="text" id="messageInput" placeholder="Ask about project status, budgets, earned value, schedules...">
+                    <button onclick="sendMessage()" id="sendBtn">Send</button>
+                </div>
+            </div>
+            <script>
+                async function sendMessage() {
+                    const input = document.getElementById('messageInput');
+                    const sendBtn = document.getElementById('sendBtn');
+                    const message = input.value.trim();
+                    if (!message) return;
+                    
+                    addMessage(message, 'user');
+                    input.value = '';
+                    sendBtn.disabled = true;
+                    sendBtn.textContent = 'AI Thinking...';
+                    
+                    try {
+                        console.log('Sending to /process endpoint:', message);
+                        const response = await fetch('/process', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'Cache-Control': 'no-cache'
+                            },
+                            body: JSON.stringify({ query: message })
+                        });
+                        const data = await response.json();
+                        console.log('Response from /process:', data);
+                        
+                        if (data.success && data.response) {
+                            addMessage(data.response, 'assistant');
+                        } else {
+                            addMessage(data.response || 'Sorry, I could not process your request. The AI service may be unavailable.', 'assistant');
+                        }
+                    } catch (error) {
+                        console.error('Error calling /process:', error);
+                        addMessage('Error connecting to AI service: ' + error.message, 'assistant');
+                    } finally {
+                        sendBtn.disabled = false;
+                        sendBtn.textContent = 'Send';
+                    }
+                }
+                
+                function addMessage(text, type) {
+                    const messages = document.getElementById('messages');
+                    const div = document.createElement('div');
+                    div.className = 'message ' + type;
+                    div.textContent = text;
+                    messages.appendChild(div);
+                    messages.scrollTop = messages.scrollHeight;
+                }
+                
+                document.getElementById('messageInput').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') sendMessage();
+                });
+                
+                // Auto-focus input
+                document.getElementById('messageInput').focus();
+                
+                // Add debug info
+                console.log('Chat interface loaded - using /process endpoint for all queries');
+            </script>
+        </body>
+        </html>
+        """
+        response = HTMLResponse(content=html_content)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
     
     @app.get("/logs_viewer.html")
     async def get_logs_viewer():
@@ -742,6 +962,11 @@ if FASTAPI_AVAILABLE:
             return FileResponse(static_file, media_type="text/html")
         else:
             raise HTTPException(status_code=404, detail="Logs viewer not found")
+    
+    @app.get("/")
+    async def root():
+        """Redirect to chat interface"""
+        return RedirectResponse(url="/chat_interface.html")
     
     @app.get("/favicon.ico")
     async def get_favicon():

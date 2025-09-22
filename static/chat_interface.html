@@ -236,6 +236,31 @@
             font-size: 12px;
         }
 
+        .formatted-response {
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .formatted-response strong {
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .formatted-response code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .formatted-response hr {
+            border: none;
+            border-top: 1px solid #dee2e6;
+            margin: 15px 0;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
@@ -335,7 +360,7 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:8000';
+        const API_BASE = '';  // Use relative URLs
         let isLoading = false;
 
         function handleKeyPress(event) {
@@ -364,10 +389,13 @@
             setLoadingState(true);
 
             try {
+                console.log('Sending query:', message);
                 const response = await queryMCP(message);
+                console.log('Received response:', response);
                 const formattedResponse = formatResponse(response);
                 addMessage('assistant', 'Construction MCP Assistant', formattedResponse);
             } catch (error) {
+                console.error('Error in sendMessage:', error);
                 addMessage('assistant', 'Construction MCP Assistant',
                     `<div class="error-message">Sorry, I encountered an error: ${error.message}</div>`);
             }
@@ -406,27 +434,62 @@
                 parameters: parameters
             };
 
-            const response = await fetch(`${API_BASE}/query`, {
+            console.log('Making fetch request to:', `${API_BASE}/process`);
+            console.log('Payload:', payload);
+
+            const response = await fetch(`${API_BASE}/process`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({query: query})
             });
 
+            console.log('Fetch response status:', response.status);
+            console.log('Fetch response ok:', response.ok);
+
             if (!response.ok) {
-                throw new Error(`API request failed: ${response.status}`);
+                const errorText = await response.text();
+                console.error('Fetch error response:', errorText);
+                throw new Error(`API request failed: ${response.status} - ${errorText}`);
             }
 
-            return await response.json();
+            const data = await response.json();
+            console.log('Parsed JSON response:', data);
+            return data;
         }
 
         function formatResponse(response) {
             if (!response.success) {
-                return `<div class="error-message">❌ Error: ${response.message}</div>`;
+                return `<div class="error-message">❌ Error: ${response.message || response.response || 'Unknown error'}</div>`;
             }
 
+            // Handle /process endpoint response format (has 'response' field)
+            if (response.response && typeof response.response === 'string') {
+                // Convert line breaks to HTML breaks and preserve formatting
+                const formattedResponse = response.response
+                    .replace(/\n/g, '<br>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')  // Convert **text** to <strong>text</strong>
+                    .replace(/^(\d+\.)/gm, '<br>$1')  // Add extra break before numbered items
+                    .replace(/^---/gm, '<hr>')  // Convert --- to horizontal rule
+                    .replace(/• (.*?)\.xlsx/g, '• <code>$1.xlsx</code>'); // Format file names
+                
+                return `
+                    <div class="success-message">
+                        🤖 AI Analysis Complete
+                    </div>
+                    <div class="ai-response">
+                        <h4>🎯 Result:</h4>
+                        <div class="formatted-response">${formattedResponse}</div>
+                    </div>
+                `;
+            }
+
+            // Handle /query endpoint response format (has 'data' field)
             const data = response.data;
+            if (!data) {
+                return `<div class="error-message">❌ No data in response</div>`;
+            }
 
             // Handle different response types
             if (data.results && Array.isArray(data.results)) {

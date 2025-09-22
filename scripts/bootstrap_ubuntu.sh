@@ -61,7 +61,7 @@ PY
 fi
 
 # Run tests
-python test_mcp.py || true
+python tests/test_mcp.py || true
 
 # Optionally start the server
 if [[ "$START_SERVER" == "true" ]]; then

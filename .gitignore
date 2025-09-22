@@ -1,11 +1,89 @@
-# Root gitignore for workspace
+# .gitignore for BuildBridge-MCP
 
-# Python venv at workspace root
-/.venv/
+# Credentials and sensitive data
+config/credentials.json
+*.key
+*.pem
+.env
+.env.local
 
-# Top-level credentials created by tests (ensure not committed)
-/config/credentials.json
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# OS and editor
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+construction-mcp-env/
+
+# IDE
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Cache and temporary files
+*.tmp
+*.temp
+.cache/
+temp/
+tmp/
+
+# Document index files
+data/document_index.json
+data/test_index.json
+
+# Downloaded Excel files
+data/downloads/
+data/temp/
+
+# Test output
+test_results/
+*.coverage
+.pytest_cache/
+
+# Local data (keep sample data)
+data/local/
+data/production/
+
+# Backup files
+*.bak
+*.backup
