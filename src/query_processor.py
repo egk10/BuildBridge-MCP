@@ -14,6 +14,8 @@ import pandas as pd
 from connectors.excel_connector import ExcelConnector
 from connectors.sharepoint_connector import SharePointConnector
 from connectors.document_indexer import DocumentIndexer
+from connectors.google_sheets_connector import GoogleSheetsConnector
+from schema_discovery import SchemaDiscovery
 from construction_prompts import get_construction_prompt, enhance_query_with_construction_context
 
 
@@ -22,7 +24,9 @@ class QueryProcessor:
     
     def __init__(self, excel_connector: ExcelConnector, 
                  sharepoint_connector: SharePointConnector,
-                 document_indexer: DocumentIndexer):
+                 document_indexer: DocumentIndexer,
+                 google_sheets_connector: GoogleSheetsConnector,
+                 config: Optional[Dict[str, Any]] = None):
         """
         Initialize query processor with data connectors
         
@@ -30,10 +34,17 @@ class QueryProcessor:
             excel_connector: Excel data connector
             sharepoint_connector: SharePoint lists connector
             document_indexer: Document search and indexing
+            google_sheets_connector: Google Sheets data connector
+            config: Configuration dictionary
         """
         self.excel_connector = excel_connector
         self.sharepoint_connector = sharepoint_connector
         self.document_indexer = document_indexer
+        self.google_sheets_connector = google_sheets_connector
+        self.config = config or {}
+        
+        # Initialize schema discovery
+        self.schema_discovery = SchemaDiscovery(self.config)
         
         # Define query patterns and keywords
         self.query_patterns = self._init_query_patterns()
@@ -214,11 +225,36 @@ class QueryProcessor:
         parsed = self.parse_query(query)
         params = parsed['parameters']
         
-        # Build search criteria
-        criteria = {}
+        # Try multiple data sources in priority order
+        all_results = []
         
-        if filters:
-            criteria.update(filters)
+        # 1. Try Excel/OneDrive
+        try:
+            excel_results = self._search_projects_excel(params, filters)
+            if excel_results:
+                all_results.extend(excel_results)
+        except Exception as e:
+            print(f"Warning: Excel search failed: {e}")
+        
+        # 2. Try Google Sheets
+        try:
+            sheets_results = self._search_projects_google_sheets(params, filters)
+            if sheets_results:
+                all_results.extend(sheets_results)
+        except Exception as e:
+            print(f"Warning: Google Sheets search failed: {e}")
+        
+        # 3. Try SharePoint
+        try:
+            sp_results = self._search_projects_sharepoint(params, filters)
+            if sp_results:
+                all_results.extend(sp_results)
+        except Exception as e:
+            print(f"Warning: SharePoint search failed: {e}")
+        
+    def _search_projects_excel(self, params: Dict[str, Any], filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """Search projects in Excel/OneDrive data"""
+        criteria = filters.copy() if filters else {}
         
         # Add parameters from query
         if 'status' in params:
@@ -226,27 +262,59 @@ class QueryProcessor:
         
         if 'budget_filter' in params:
             if params['budget_filter'] == 'over':
-                # Use Excel connector to find over-budget projects
                 return self._format_projects(self.excel_connector.get_projects_over_budget())
             elif params['budget_filter'] == 'under':
-                # Custom logic for under-budget projects
+                # Custom logic for under-budget projects could be added here
                 pass
         
         # Search in Excel data
-        try:
-            if criteria:
-                projects_df = self.excel_connector.search_projects_by_criteria(criteria)
-            else:
-                projects_df = self.excel_connector.get_project_data()
-            
-            return self._format_projects(projects_df)
-        except Exception as e:
-            # Fallback to SharePoint
-            try:
-                project_id = params.get('project_id')
-                return self.sharepoint_connector.get_projects_list(project_id=project_id)
-            except Exception as sp_error:
-                raise Exception(f"Failed to search projects: Excel error: {str(e)}, SharePoint error: {str(sp_error)}")
+        if criteria:
+            projects_df = self.excel_connector.search_projects_by_criteria(criteria)
+        else:
+            projects_df = self.excel_connector.get_project_data()
+        
+        return self._format_projects(projects_df)
+    
+    def _search_projects_google_sheets(self, params: Dict[str, Any], filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """Search projects in Google Sheets data"""
+        criteria = filters.copy() if filters else {}
+        
+        # Add parameters from query
+        if 'status' in params:
+            criteria['Status'] = params['status'].title()
+        
+        if 'budget_filter' in params:
+            if params['budget_filter'] == 'over':
+                return self._format_projects(self.google_sheets_connector.get_projects_over_budget())
+        
+        # Search in Google Sheets data
+        if criteria:
+            projects_df = self.google_sheets_connector.search_projects_by_criteria(criteria)
+        else:
+            projects_df = self.google_sheets_connector.get_project_data()
+        
+        return self._format_projects(projects_df)
+    
+    def _search_projects_sharepoint(self, params: Dict[str, Any], filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+        """Search projects in SharePoint data"""
+        project_id = params.get('project_id')
+        return self.sharepoint_connector.get_projects_list(project_id=project_id)
+    
+    def _deduplicate_results(self, results: List[Dict[str, Any]], id_field: str) -> List[Dict[str, Any]]:
+        """Remove duplicate results based on ID field"""
+        seen_ids = set()
+        unique_results = []
+        
+        for result in results:
+            result_id = result.get(id_field) or result.get(id_field.lower()) or result.get('id')
+            if result_id and result_id not in seen_ids:
+                seen_ids.add(result_id)
+                unique_results.append(result)
+            elif not result_id:
+                # If no ID, include it anyway (can't deduplicate)
+                unique_results.append(result)
+        
+        return unique_results
     
     def get_project_status(self, project_id: str) -> Dict[str, Any]:
         """
@@ -582,7 +650,6 @@ class QueryProcessor:
         
         return enhanced_response
     
-    # Helper formatting methods
     def _format_projects(self, projects_df: pd.DataFrame) -> List[Dict[str, Any]]:
         """Format projects DataFrame as list of dictionaries"""
         if projects_df.empty:

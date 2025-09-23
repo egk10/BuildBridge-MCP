@@ -17,6 +17,7 @@ from fastmcp import FastMCP
 from connectors.excel_connector import ExcelConnector
 from connectors.sharepoint_connector import SharePointConnector  
 from connectors.document_indexer import DocumentIndexer
+from connectors.google_sheets_connector import GoogleSheetsConnector
 from query_processor import QueryProcessor
 
 # Initialize MCP server
@@ -26,6 +27,7 @@ mcp = FastMCP("Construction Management MCP")
 excel_connector: Optional[ExcelConnector] = None
 sharepoint_connector: Optional[SharePointConnector] = None
 document_indexer: Optional[DocumentIndexer] = None
+google_sheets_connector: Optional[GoogleSheetsConnector] = None
 query_processor: Optional[QueryProcessor] = None
 
 def load_config() -> Dict[str, Any]:
@@ -42,7 +44,7 @@ def load_config() -> Dict[str, Any]:
 
 def initialize_connectors():
     """Initialize all data connectors"""
-    global excel_connector, sharepoint_connector, document_indexer, query_processor
+    global excel_connector, sharepoint_connector, document_indexer, google_sheets_connector, query_processor
     
     config = load_config()
     
@@ -55,7 +57,8 @@ def initialize_connectors():
     excel_connector = ExcelConnector(config)
     sharepoint_connector = SharePointConnector(config)
     document_indexer = DocumentIndexer(config)
-    query_processor = QueryProcessor(excel_connector, sharepoint_connector, document_indexer)
+    google_sheets_connector = GoogleSheetsConnector(config)
+    query_processor = QueryProcessor(excel_connector, sharepoint_connector, document_indexer, google_sheets_connector, config)
 
 @mcp.tool()
 def search_projects(query: str, filters: Optional[Dict[str, Any]] = None) -> str:
