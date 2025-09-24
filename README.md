@@ -84,34 +84,18 @@ curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/scripts/
    pip install -r requirements.txt
    ```
 
-2. Local Mode (no Azure required)
+2. **Easy Start Script** (Recommended)
    ```bash
-   # Copy template and enable local mode
-   copy config\credentials.json.template config\credentials.json  # Windows
-   # or: cp config/credentials.json.template config/credentials.json  # macOS/Linux
-   # Then open config/credentials.json and set:
-   #   "local_mode": true
-   #   "onedrive_folder": "data/sample"
+   # Automatically detects and activates your virtual environment
+   ./start_buildbridge.sh
    ```
 
-3. Test
+3. Manual Setup (if needed)
    ```bash
-   python tests/test_mcp.py
+   # Activate your virtual environment (supports .venv, venv, or buildbridge_venv)
+   source buildbridge_venv/bin/activate  # or .venv/bin/activate
+   python src/main.py
    ```
-
-4. Test the server (quick validation)
-   ```bash
-   bash scripts/start_server.sh --test
-   ```
-
-5. Start the MCP server (for MCP clients like VS Code/Cursor)
-   ```bash
-   bash scripts/start_server.sh
-   ```
-   
-   **Note**: The MCP server runs in stdio mode and waits for MCP client connections. It will appear to "hang" until connected to an MCP-compatible client like VS Code with the MCP extension.
-
-Want real SharePoint/OneDrive data? Disable local mode and add your Azure credentials; see `docs/setup.md`.
 
 ## � Ubuntu one-liner bootstrap
 
@@ -134,7 +118,12 @@ START_SERVER=true curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge
 
 ## 🧰 Helper scripts
 
-- `scripts/start_server.sh` — activate venv and run server
+- `start_buildbridge.sh` — **Recommended**: Auto-detects and activates venv, then starts MCP server
+   ```bash
+   ./start_buildbridge.sh          # Start server
+   ./start_buildbridge.sh --test   # Run initialization test
+   ```
+- `scripts/start_server.sh` — activate venv and run server (legacy)
    ```bash
    bash scripts/start_server.sh
    ```
