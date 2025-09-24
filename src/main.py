@@ -54,11 +54,49 @@ def initialize_connectors():
     if local_mode:
         config = {**config, 'local_mode': True}
 
-    excel_connector = ExcelConnector(config)
-    sharepoint_connector = SharePointConnector(config)
-    document_indexer = DocumentIndexer(config)
-    google_sheets_connector = GoogleSheetsConnector(config)
-    query_processor = QueryProcessor(excel_connector, sharepoint_connector, document_indexer, google_sheets_connector, config)
+    # Initialize Excel connector
+    try:
+        excel_connector = ExcelConnector(config)
+        print("✅ Excel connector initialized")
+    except Exception as e:
+        print(f"⚠️ Excel connector failed: {e}")
+        excel_connector = None
+    
+    # Initialize SharePoint connector
+    try:
+        sharepoint_connector = SharePointConnector(config)
+        print("✅ SharePoint connector initialized")
+    except Exception as e:
+        print(f"⚠️ SharePoint connector failed: {e}")
+        sharepoint_connector = None
+    
+    # Initialize document indexer
+    try:
+        document_indexer = DocumentIndexer(config)
+        print("✅ Document indexer initialized")
+    except Exception as e:
+        print(f"⚠️ Document indexer failed: {e}")
+        document_indexer = None
+    
+    # Initialize Google Sheets connector
+    try:
+        google_sheets_connector = GoogleSheetsConnector(config)
+        print("✅ Google Sheets connector initialized")
+    except Exception as e:
+        print(f"⚠️ Google Sheets connector failed: {e}")
+        google_sheets_connector = None
+    
+    # Initialize query processor (requires at least one connector)
+    if excel_connector or sharepoint_connector or google_sheets_connector:
+        try:
+            query_processor = QueryProcessor(excel_connector, sharepoint_connector, document_indexer, google_sheets_connector, config)
+            print("✅ Query processor initialized")
+        except Exception as e:
+            print(f"❌ Query processor failed: {e}")
+            query_processor = None
+    else:
+        print("❌ No connectors available - cannot initialize query processor")
+        query_processor = None
 
 @mcp.tool()
 def search_projects(query: str, filters: Optional[Dict[str, Any]] = None) -> str:

@@ -30,6 +30,14 @@ except ImportError:
     FASTAPI_AVAILABLE = False
     print("FastAPI not available. Run: pip install fastapi uvicorn websockets")
 
+# Data processing imports
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("Pandas not available. Run: pip install pandas")
+
 # MCP Integration
 import sys
 from pathlib import Path
@@ -49,6 +57,7 @@ def get_mcp_connectors():
     """Get the initialized MCP connectors"""
     try:
         from main import excel_connector, sharepoint_connector, document_indexer, query_processor
+        # Return None for any connector that failed to initialize
         return excel_connector, sharepoint_connector, document_indexer, query_processor
     except ImportError:
         return None, None, None, None
@@ -196,14 +205,33 @@ class ConstructionMCPEngine:
             # Load configuration
             self.config = load_config()
             
-            # Initialize MCP connectors
-            initialize_connectors()
+            # Check data source configuration
+            data_sources = self.config.get('data_sources', {})
+            logger.info("📊 Data Source Configuration:")
+            for source, config in data_sources.items():
+                enabled = config.get('enabled', False)
+                logger.info(f"   {source}: {'✅ ENABLED' if enabled else '❌ DISABLED'} - {config.get('description', '')}")
             
-            # Get the initialized connectors
-            self.excel_connector, self.sharepoint_connector, self.document_indexer, self.query_processor = get_mcp_connectors()
-            
-            if self.query_processor is None:
-                raise Exception("Failed to initialize query processor")
+            # Initialize MCP connectors based on enabled data sources
+            if data_sources.get('google_sheets', {}).get('enabled', True):  # Default to enabled for backward compatibility
+                initialize_connectors()
+                
+                # Get the initialized connectors
+                self.excel_connector, self.sharepoint_connector, self.document_indexer, self.query_processor = get_mcp_connectors()
+                
+                # Also get the Google Sheets connector
+                from main import google_sheets_connector
+                self.google_sheets_connector = google_sheets_connector
+                
+                if self.query_processor is None:
+                    logger.warning("⚠️ Query processor not available - some features may be limited")
+            else:
+                logger.info("ℹ️ Google Sheets data source disabled - using local mode only")
+                self.google_sheets_connector = None
+                self.excel_connector = None
+                self.sharepoint_connector = None
+                self.document_indexer = None
+                self.query_processor = None
             
             # Initialize AI service if API key is available
             ai_config = self.config.get('ai_service', {})
@@ -292,14 +320,275 @@ class ConstructionMCPEngine:
                 
             filters = request.parameters.get('filters', {})
             results = self.query_processor.search_projects(request.query, filters)
+            
+            # If query processor returns None or empty results, fall back to direct data gathering
+            if not results:
+                logger.info("Query processor returned no results, falling back to direct Google Sheets data gathering...")
+                results = await self._gather_google_sheets_projects()
+                
+                # Apply filters if specified
+                if filters.get('project_id'):
+                    requested_id = filters['project_id']
+                    results = [p for p in results if p.get('Project_ID') == requested_id]
+                    logger.info(f"Filtered results to project {requested_id}: {len(results)} projects")
+                
+                return {
+                    "query": request.query,
+                    "results": results or [],
+                    "count": len(results or []),
+                    "fallback": True
+                }
+            
+            # Apply filters to query processor results if needed
+            if filters.get('project_id'):
+                requested_id = filters['project_id']
+                results = [p for p in results if p.get('Project_ID') == requested_id]
+            
             return {
                 "query": request.query,
                 "results": results,
-                "count": len(results) if results else 0
+                "count": len(results)
             }
         except Exception as e:
             logger.error(f"Error in search_projects: {e}")
-            return {"error": str(e), "results": []}
+            # Fallback: try to gather data directly from Google Sheets
+            try:
+                logger.info("Falling back to direct Google Sheets data gathering...")
+                fallback_results = await self._gather_google_sheets_projects()
+                
+                # Apply filters if specified
+                if request.parameters.get('filters', {}).get('project_id'):
+                    requested_id = request.parameters['filters']['project_id']
+                    fallback_results = [p for p in fallback_results if p.get('Project_ID') == requested_id]
+                
+                return {
+                    "query": request.query,
+                    "results": fallback_results or [],
+                    "count": len(fallback_results or []),
+                    "fallback": True
+                }
+            except Exception as fallback_e:
+                logger.error(f"Fallback also failed: {fallback_e}")
+                return {"error": str(e), "results": []}
+    
+    async def _gather_google_sheets_projects(self) -> List[Dict[str, Any]]:
+        """Gather project data directly from Google Sheets"""
+        try:
+            # Check if Google Sheets is enabled
+            data_sources = self.config.get('data_sources', {})
+            if not data_sources.get('google_sheets', {}).get('enabled', True):
+                logger.info("ℹ️ Google Sheets data source disabled")
+                return []
+            
+            if not self.google_sheets_connector or self.google_sheets_connector.local_mode:
+                return []
+            
+            all_projects = []
+            
+            # Get project configurations from config
+            google_sheets_config = self.config.get('google_sheets', {})
+            projects_config = google_sheets_config.get('projects', {})
+            
+            logger.info(f"🔍 Found {len(projects_config)} projects in config: {list(projects_config.keys())}")
+            
+            # For each project, try to get data from the main project sheet
+            for project_key, sheet_id in projects_config.items():
+                logger.info(f"📊 Processing project {project_key} with sheet ID: {sheet_id}")
+                try:
+                    # Try to read from the main project sheet directly
+                    # Use a broad range to capture all data
+                    df = self.google_sheets_connector.read_sheet(
+                        sheet_id, 
+                        "A1:Z1000"  # Read the entire first sheet
+                    )
+                    
+                    logger.info(f"📊 Read DataFrame for {project_key}: shape={df.shape}")
+                    if not df.empty and len(df) > 0:
+                        logger.info(f"📊 First few rows of {project_key} data:")
+                        logger.info(f"{df.head(3)}")
+                        
+                        # Use the intelligent extraction method to parse complex sheet structures
+                        project_data = self._extract_project_info_from_sheet(df)
+                        if project_data:  # Only add if we successfully extracted data
+                            project_data['Project_ID'] = project_key
+                            project_data['source'] = f'Google Sheets: {project_key} project'
+                            project_data['sheet_id'] = sheet_id
+                            all_projects.append(project_data)
+                            logger.info(f"✅ Successfully gathered data for project {project_key}")
+                        else:
+                            logger.warning(f"Failed to extract project data from sheet for {project_key}")
+                    else:
+                        logger.warning(f"Empty or no data found for project {project_key}")
+                        
+                except Exception as e:
+                    logger.warning(f"Failed to get data for project {project_key}: {e}")
+                    continue
+            
+            logger.info(f"Successfully gathered {len(all_projects)} projects from Google Sheets")
+            return all_projects
+            
+        except Exception as e:
+            logger.error(f"Error gathering Google Sheets projects: {e}")
+            return []
+    
+    def _extract_project_info_from_sheet(self, df) -> Optional[Dict[str, Any]]:
+        """Extract project information from a complex Google Sheets DataFrame"""
+        try:
+            if df.empty or len(df) == 0:
+                logger.warning("DataFrame is empty")
+                return None
+            
+            logger.info(f"Extracting from DataFrame with shape: {df.shape}")
+            logger.info(f"Column names: {df.columns.tolist()}")
+            logger.info(f"First 5 rows:\n{df.head(5)}")
+            
+            # Try different extraction strategies
+            
+            # Strategy 1: Look for labeled data in columns (try multiple column combinations)
+            project_info = {}
+            for idx, row in df.iterrows():
+                # Skip empty rows
+                if row.isnull().all():
+                    continue
+                    
+                # Try different label column positions (0, 1, 2)
+                for label_col_idx in [0, 1, 2]:
+                    if len(row) > label_col_idx and pd.notna(row.iloc[label_col_idx]):
+                        label = str(row.iloc[label_col_idx]).strip()
+                        if not label:  # Skip empty labels
+                            continue
+                            
+                        logger.info(f"Found label at row {idx}, col {label_col_idx}: '{label}'")
+                        
+                        # Try different value column positions relative to label
+                        value_found = False
+                        for value_offset in [1, 2, 3]:  # Try next 1-3 columns
+                            value_col_idx = label_col_idx + value_offset
+                            if len(row) > value_col_idx and pd.notna(row.iloc[value_col_idx]):
+                                value = str(row.iloc[value_col_idx]).strip()
+                                if value:  # Only use non-empty values
+                                    logger.info(f"Found value at row {idx}, col {value_col_idx}: '{value}'")
+                                    value_found = True
+                                    break
+                        
+                        if not value_found:
+                            continue
+                            
+                        # Map common labels to standard fields
+                        label_lower = label.lower()
+                        logger.info(f"Checking label '{label}' (lower: '{label_lower}') against patterns")
+                        
+                        if 'project name' in label_lower and value:
+                            project_info['Project_Name'] = value
+                            logger.info(f"✅ Extracted Project_Name: {value}")
+                        elif ('budget' in label_lower or 'total budget' in label_lower) and value:
+                            # Try to extract numeric value
+                            import re
+                            budget_match = re.search(r'[\d,]+(?:\.\d+)?', value.replace('$', '').replace(',', ''))
+                            if budget_match:
+                                project_info['Total_Budget'] = float(budget_match.group().replace(',', ''))
+                                logger.info(f"✅ Extracted Total_Budget: {project_info['Total_Budget']}")
+                        elif ('progress' in label_lower or 'complete' in label_lower) and value:
+                            # Extract percentage
+                            progress_match = re.search(r'(\d+(?:\.\d+)?)%', value)
+                            if progress_match:
+                                project_info['Progress_Percent'] = float(progress_match.group(1))
+                                logger.info(f"✅ Extracted Progress_Percent: {project_info['Progress_Percent']}")
+                        elif 'status' in label_lower and value:
+                            project_info['Status'] = value
+                            logger.info(f"✅ Extracted Status: {value}")
+                        elif ('manager' in label_lower or 'project manager' in label_lower) and value:
+                            project_info['Project_Manager'] = value
+                            logger.info(f"✅ Extracted Project_Manager: {value}")
+                        elif 'location' in label_lower and value:
+                            project_info['Location'] = value
+                            logger.info(f"✅ Extracted Location: {value}")
+                        elif ('client' in label_lower or 'owner' in label_lower or 'proponent' in label_lower) and value:
+                            project_info['Client'] = value
+                            logger.info(f"✅ Extracted Client: {value}")
+                        elif 'architect' in label_lower and value:
+                            project_info['Architect'] = value
+                            logger.info(f"✅ Extracted Architect: {value}")
+                        
+                        # If we found a match, break to avoid duplicate processing
+                        if any(key in project_info for key in ['Project_Name', 'Client', 'Location', 'Architect']):
+                            break
+            
+            logger.info(f"Strategy 1 extracted: {project_info}")
+            
+            # If we found some data, return it
+            if project_info:
+                return project_info
+            
+            # Strategy 2: If no labeled data found, try first row as headers
+            if not project_info:
+                if len(df) > 1:
+                    # Assume first row is headers, second row is data
+                    headers = df.iloc[0].fillna('').astype(str).str.strip()
+                    data_row = df.iloc[1].fillna('').astype(str).str.strip()
+                    
+                    for i, header in enumerate(headers):
+                        if i < len(data_row) and header and data_row.iloc[i]:
+                            header_lower = header.lower()
+                            value = data_row.iloc[i]
+                            
+                            if 'project' in header_lower and 'name' in header_lower:
+                                project_info['Project_Name'] = value
+                            elif 'budget' in header_lower:
+                                # Try to extract numeric value
+                                import re
+                                budget_match = re.search(r'[\d,]+(?:\.\d+)?', value.replace('$', '').replace(',', ''))
+                                if budget_match:
+                                    project_info['Total_Budget'] = float(budget_match.group().replace(',', ''))
+                            elif 'progress' in header_lower:
+                                progress_match = re.search(r'(\d+(?:\.\d+)?)%', value)
+                                if progress_match:
+                                    project_info['Progress_Percent'] = float(progress_match.group(1))
+                            elif 'status' in header_lower:
+                                project_info['Status'] = value
+                            elif 'manager' in header_lower:
+                                project_info['Project_Manager'] = value
+                            elif 'location' in header_lower:
+                                project_info['Location'] = value
+                            elif 'client' in header_lower:
+                                project_info['Client'] = value
+            
+            # Strategy 3: Simple fallback - use first non-empty row as dict
+            if not project_info:
+                for idx, row in df.iterrows():
+                    row_dict = row.dropna().to_dict()
+                    if row_dict:
+                        # Try to map any found values to standard fields
+                        for key, value in row_dict.items():
+                            key_lower = str(key).lower()
+                            value_str = str(value).strip()
+                            
+                            if 'project' in key_lower and 'name' in key_lower:
+                                project_info['Project_Name'] = value_str
+                            elif 'budget' in key_lower:
+                                import re
+                                budget_match = re.search(r'[\d,]+(?:\.\d+)?', value_str.replace('$', '').replace(',', ''))
+                                if budget_match:
+                                    project_info['Total_Budget'] = float(budget_match.group().replace(',', ''))
+                            elif 'progress' in key_lower:
+                                progress_match = re.search(r'(\d+(?:\.\d+)?)%', value_str)
+                                if progress_match:
+                                    project_info['Progress_Percent'] = float(progress_match.group(1))
+                            elif 'status' in key_lower:
+                                project_info['Status'] = value_str
+                            elif 'manager' in key_lower:
+                                project_info['Project_Manager'] = value_str
+                            elif 'location' in key_lower:
+                                project_info['Location'] = value_str
+                            elif 'client' in key_lower:
+                                project_info['Client'] = value_str
+                        break
+            
+            return project_info if project_info else None
+            
+        except Exception as e:
+            logger.error(f"Error extracting project info from sheet: {e}")
+            return None
     
     async def _handle_project_status(self, request: MCPRequest) -> Dict[str, Any]:
         """Handle project status requests"""
@@ -666,14 +955,28 @@ if FASTAPI_AVAILABLE:
             # Log the incoming query
             logger.info(f"📝 USER QUERY: '{query}'")
             
-            # Get data source information
-            data_sources = [
-                "📊 Construction_Management_Data.xlsx",
-                "💰 Budget_Tracking.xlsx", 
-                "📅 Master_Schedule.xlsx",
-                "👥 Resource_Allocation.xlsx",
-                "🗂️ Project_Database.xlsx"
-            ]
+            # Get actual data sources being used based on configuration
+            data_sources = []
+            config_data_sources = mcp_engine.config.get('data_sources', {})
+            
+            if config_data_sources.get('google_sheets', {}).get('enabled', True):
+                data_sources.append("📊 Google Sheets Project Data")
+            if config_data_sources.get('excel_files', {}).get('enabled', False):
+                data_sources.extend([
+                    "📊 Construction_Management_Data.xlsx",
+                    "💰 Budget_Tracking.xlsx", 
+                    "📅 Master_Schedule.xlsx",
+                    "👥 Resource_Allocation.xlsx",
+                    "🗂️ Project_Database.xlsx"
+                ])
+            if config_data_sources.get('sharepoint', {}).get('enabled', False):
+                data_sources.append("🏢 Microsoft SharePoint Lists")
+            if config_data_sources.get('onedrive', {}).get('enabled', False):
+                data_sources.append("☁️ Microsoft OneDrive Files")
+            
+            # If no data sources are enabled, add a note
+            if not data_sources:
+                data_sources.append("⚠️ No data sources configured")
             
             # Gather actual project data for AI context
             data_context = None
@@ -682,19 +985,80 @@ if FASTAPI_AVAILABLE:
             # Always gather project data for project-related queries
             if any(keyword in query_lower for keyword in ['project', 'budget', 'cost', 'schedule', 'status', 'all', 'list', 'show']):
                 try:
-                    # Get all project data
-                    search_result = await mcp_engine._handle_search_projects(
-                        MCPRequest(
-                            id="process-context",
-                            type=RequestType.SEARCH_PROJECTS,
-                            query="all projects",
-                            parameters={'filters': {}},
-                            timestamp=datetime.now()
+                    # Extract specific project ID from query if mentioned
+                    project_id = None
+                    # Look for patterns like "project 72_perth", "72_perth project", "17175 Yonge Street project", etc.
+                    import re
+                    
+                    # Try multiple patterns to extract project identifiers
+                    project_patterns = [
+                        r'17175\s+yonge',  # Specific for 17175 Yonge
+                        r'72\s+perth',     # Specific for 72 Perth
+                        r'azure\s+road',   # Specific for Azure Road
+                        r'project\s+(\w+)',
+                        r'(\w+)\s+project',
+                        r'17175',          # Just the number
+                        r'yonge',          # Just yonge
+                        r'perth',          # Just perth
+                        r'azure'           # Just azure
+                    ]
+                    
+                    for pattern in project_patterns:
+                        match = re.search(pattern, query_lower)
+                        if match:
+                            extracted = match.group(1) if match.groups() else match.group(0)
+                            # Clean up the extracted text
+                            extracted = extracted.strip().replace(' ', '_').lower()
+                            
+                            # Map to standard project IDs
+                            if any(term in extracted for term in ['17175', 'yonge']):
+                                project_id = '17175_yonge_st'
+                                break
+                            elif any(term in extracted for term in ['72', 'perth']):
+                                project_id = '72_perth'
+                                break
+                            elif any(term in extracted for term in ['azure', 'road']):
+                                project_id = 'azure_road'
+                                break
+                            elif extracted in ['72_perth', '17175_yonge_st', 'azure_road']:
+                                project_id = extracted
+                                break
+                    
+                    if project_id:
+                        # Gather data for specific project only
+                        search_result = await mcp_engine._handle_search_projects(
+                            MCPRequest(
+                                id="process-context",
+                                type=RequestType.SEARCH_PROJECTS,
+                                query=f"project {project_id}",
+                                parameters={'filters': {'project_id': project_id}},
+                                timestamp=datetime.now()
+                            )
                         )
-                    )
-                    if search_result and 'results' in search_result:
-                        data_context = {"projects": search_result['results']}
-                        logger.info(f"📊 Gathered {len(search_result['results'])} projects for AI context")
+                        if search_result and 'results' in search_result and search_result['results']:
+                            # Filter results to only the requested project
+                            requested_project = next((p for p in search_result['results'] if p.get('Project_ID') == project_id), None)
+                            if requested_project:
+                                data_context = {"projects": [requested_project]}
+                                logger.info(f"📊 Gathered data for specific project {project_id}")
+                            else:
+                                logger.info(f"📊 No data found for project {project_id}")
+                        else:
+                            logger.info(f"📊 No data available for project {project_id}")
+                    else:
+                        # Fallback: gather all projects
+                        search_result = await mcp_engine._handle_search_projects(
+                            MCPRequest(
+                                id="process-context",
+                                type=RequestType.SEARCH_PROJECTS,
+                                query="all projects",
+                                parameters={'filters': {}},
+                                timestamp=datetime.now()
+                            )
+                        )
+                        if search_result and 'results' in search_result:
+                            data_context = {"projects": search_result['results']}
+                            logger.info(f"📊 Gathered {len(search_result['results'])} projects for AI context")
                 except Exception as e:
                     logger.warning(f"Failed to gather project data: {e}")
             
@@ -717,16 +1081,32 @@ This system manages multiple construction projects with comprehensive tracking o
                 
                 response_text = ai_response.content if hasattr(ai_response, 'content') else str(ai_response)
                 
-                # Add data source footer to response
-                response_with_sources = f"""{response_text}
-
+                # Add data source footer to response with actual sources used
+                actual_sources_used = []
+                if data_context and 'projects' in data_context:
+                    # Extract unique sources from project data
+                    sources = set()
+                    for project in data_context['projects']:
+                        if 'source' in project:
+                            sources.add(project['source'])
+                    actual_sources_used = list(sources)
+                
+                if actual_sources_used:
+                    source_footer = f"""
 ---
 📂 **Data Sources Used:**
+{chr(10).join(['• ' + source for source in actual_sources_used])}"""
+                else:
+                    source_footer = f"""
+---
+📂 **Data Sources Configured:**
 {chr(10).join(['• ' + source for source in data_sources])}"""
+                
+                response_with_sources = f"{response_text}{source_footer}"
                 
                 # Log the AI response
                 logger.info(f"🤖 AI RESPONSE: '{response_text[:200]}{'...' if len(response_text) > 200 else ''}'")
-                logger.info(f"📂 DATA SOURCES: {', '.join([s.split(' ', 1)[1] for s in data_sources])}")
+                logger.info(f"📂 DATA SOURCES: {', '.join(actual_sources_used) if actual_sources_used else ', '.join([s.split(' ', 1)[1] if ' ' in s else s for s in data_sources])}")
                 
                 return {
                     "success": True, 

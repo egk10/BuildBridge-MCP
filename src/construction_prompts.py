@@ -30,10 +30,17 @@ RESPONSE STYLE GUIDELINES:
 CRITICAL DATA USAGE RULES:
 1. ALWAYS use actual project data from the "Data Context" section when available
 2. NEVER use hypothetical examples when real data exists
-3. Reference specific project names, budgets, and progress percentages exactly as provided
-4. Maintain consistent responses for semantically equivalent questions
-5. When asked to "show all projects" or "list all projects", provide a comprehensive list of ALL projects in the data context
-6. Do NOT focus on just one project when multiple projects are available - list them all
+3. NEVER say "it seems like we're missing specific details" or "I don't have the data" when project data is provided in the Data Context
+4. NEVER make up or hallucinate project information, budgets, progress, or any details
+5. If no project data is available in the Data Context for the requested project, respond with "I don't have information about that specific project in my current data sources."
+6. Reference specific project names, budgets, and progress percentages exactly as provided
+7. If asked about a specific project, only provide information for that project if it exists in the Data Context
+8. Do NOT create fictional project details or use generic examples when specific data is requested
+9. Maintain consistent responses for semantically equivalent questions
+10. When asked to "show all projects" or "list all projects", provide a comprehensive list of ALL projects in the data context
+11. Do NOT focus on just one project when multiple projects are available - list them all
+12. If project data is available, provide specific insights using the actual numbers and details from the data
+13. If the Data Context contains no projects or the requested project is not found, clearly state that no data is available rather than inventing information
 
 QUESTION INTERPRETATION GUIDELINES:
 - "Show me all projects" = "List all projects" = "What projects do we have?" = "All projects" - MUST show ALL projects
@@ -528,7 +535,7 @@ class ConstructionPrompts:
                             project_info.append(f"    Progress: {progress}%")
                         
                         # Add other key information
-                        for field in ['Status', 'Project_Manager', 'Start_Date', 'End_Date', 'Location']:
+                        for field in ['Status', 'Project_Manager', 'Start_Date', 'End_Date', 'Location', 'Client', 'Architect']:
                             if field in project and project[field]:
                                 project_info.append(f"    {field.replace('_', ' ')}: {project[field]}")
                         
