@@ -479,6 +479,8 @@ class ConstructionPrompts:
         
         # Add structured data context if provided
         if data_context:
+            # DEBUG: Log what data context we're receiving
+            print(f"🐛 DEBUG: AI received data_context: {data_context}")
             prompt_parts.append(f"\n\nData Context:\n{self._format_data_context(data_context)}")
         
         # Add query-specific template if available
@@ -535,9 +537,21 @@ class ConstructionPrompts:
                             project_info.append(f"    Progress: {progress}%")
                         
                         # Add other key information
-                        for field in ['Status', 'Project_Manager', 'Start_Date', 'End_Date', 'Location', 'Client', 'Architect']:
+                        for field in ['Status', 'Project_Manager', 'Start_Date', 'End_Date', 'Location', 'Client', 'Architect', 
+                                    'Total_Units', 'Parking_Spots', 'Building_Area_Metric', 'Building_Area_Imperial',
+                                    'Levels_Above_Grade', 'Levels_Below_Grade', 'Project_Type', 'Tender_Closing']:
                             if field in project and project[field]:
-                                project_info.append(f"    {field.replace('_', ' ')}: {project[field]}")
+                                field_display = field.replace('_', ' ')
+                                if field == 'Total_Units':
+                                    project_info.append(f"    Units/Functional Units: {project[field]}")
+                                elif field == 'Parking_Spots':
+                                    project_info.append(f"    Parking Spots: {project[field]}")
+                                elif field == 'Building_Area_Metric':
+                                    project_info.append(f"    Building Area (sq m): {project[field]:,.0f}")
+                                elif field == 'Building_Area_Imperial':
+                                    project_info.append(f"    Building Area (sq ft): {project[field]:,.0f}")
+                                else:
+                                    project_info.append(f"    {field_display}: {project[field]}")
                         
                         formatted_parts.append("\n".join(project_info))
                         formatted_parts.append("")  # Add blank line between projects

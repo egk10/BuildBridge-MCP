@@ -319,6 +319,61 @@ class ConstructionMCPEngine:
                 raise Exception("Query processor not initialized")
                 
             filters = request.parameters.get('filters', {})
+            
+            # Extract specific project ID from query if mentioned
+            import re
+            query_lower = request.query.lower()
+            project_id = None
+            
+            print(f"🐛 PATTERN SEARCH DEBUG: Looking for patterns in query_lower: '{query_lower}'")
+            project_patterns = [
+                r'lakeside\s+residences',  # Specific for Lakeside Residences
+                r'17175\s+yonge',  # Specific for 17175 Yonge
+                r'72\s+perth',     # Specific for 72 Perth
+                r'azure\s+road',   # Specific for Azure Road
+                r'project\s+(\w+)',
+                r'(\w+)\s+project',
+                r'lakeside',       # Just lakeside
+                r'residences',     # Just residences
+                r'17175',          # Just the number
+                r'yonge',          # Just yonge
+                r'perth',          # Just perth
+                r'azure'           # Just azure
+            ]
+            
+            for pattern in project_patterns:
+                match = re.search(pattern, query_lower)
+                if match:
+                    extracted = match.group(1) if match.groups() else match.group(0)
+                    print(f"🐛 PATTERN DEBUG: Query '{query_lower}' matched pattern '{pattern}' -> extracted '{extracted}'")
+                    extracted = extracted.strip().replace(' ', '_').lower()
+                    
+                    # Map to standard project IDs
+                    if any(term in extracted for term in ['lakeside', 'residences']):
+                        project_id = '72_perth'
+                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '72_perth'")
+                        break
+                    elif any(term in extracted for term in ['17175', 'yonge']):
+                        project_id = '17175_yonge_st'
+                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '17175_yonge_st'")
+                        break
+                    elif any(term in extracted for term in ['72', 'perth']):
+                        project_id = '72_perth'
+                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '72_perth'")
+                        break
+                    elif any(term in extracted for term in ['azure', 'road']):
+                        project_id = 'azure_road'
+                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'azure_road'")
+                        break
+                    elif extracted in ['72_perth', '17175_yonge_st', 'azure_road']:
+                        project_id = extracted
+                        print(f"🐛 MAPPING DEBUG: Direct match '{extracted}' to project_id '{extracted}'")
+                        break
+            
+            # If we found a specific project ID, add it to filters
+            if project_id:
+                filters['project_id'] = project_id
+                print(f"🐛 FILTER DEBUG: Added project_id filter: '{project_id}'")
             results = self.query_processor.search_projects(request.query, filters)
             
             # If query processor returns None or empty results, fall back to direct data gathering
@@ -373,6 +428,7 @@ class ConstructionMCPEngine:
     
     async def _gather_google_sheets_projects(self) -> List[Dict[str, Any]]:
         """Gather project data directly from Google Sheets"""
+        print(f"🐛 DEBUG: _gather_google_sheets_projects called")
         try:
             # Check if Google Sheets is enabled
             data_sources = self.config.get('data_sources', {})
@@ -509,6 +565,48 @@ class ConstructionMCPEngine:
                         elif 'architect' in label_lower and value:
                             project_info['Architect'] = value
                             logger.info(f"✅ Extracted Architect: {value}")
+                        # NEW: Extract building and unit details
+                        elif ('functional units' in label_lower or 'units' in label_lower or 'number of units' in label_lower) and value:
+                            # Extract numeric value for units
+                            import re
+                            units_match = re.search(r'(\d+(?:,\d+)?)', value.replace(',', ''))
+                            if units_match:
+                                project_info['Total_Units'] = int(units_match.group(1).replace(',', ''))
+                                logger.info(f"✅ Extracted Total_Units: {project_info['Total_Units']}")
+                        elif 'parking' in label_lower and 'spots' in label_lower and value:
+                            # Extract parking spots
+                            parking_match = re.search(r'(\d+(?:,\d+)?)', value.replace(',', ''))
+                            if parking_match:
+                                project_info['Parking_Spots'] = int(parking_match.group(1).replace(',', ''))
+                                logger.info(f"✅ Extracted Parking_Spots: {project_info['Parking_Spots']}")
+                        elif 'building area' in label_lower and value:
+                            # Extract building area (metric or imperial)
+                            area_match = re.search(r'([\d,]+(?:\.\d+)?)', value.replace(',', ''))
+                            if area_match:
+                                area_value = float(area_match.group(1).replace(',', ''))
+                                if 'metric' in label_lower:
+                                    project_info['Building_Area_Metric'] = area_value
+                                    logger.info(f"✅ Extracted Building_Area_Metric: {area_value}")
+                                elif 'imperial' in label_lower:
+                                    project_info['Building_Area_Imperial'] = area_value
+                                    logger.info(f"✅ Extracted Building_Area_Imperial: {area_value}")
+                        elif ('levels' in label_lower or 'floors' in label_lower) and value:
+                            # Extract number of levels/floors
+                            levels_match = re.search(r'(\d+)', value)
+                            if levels_match:
+                                levels_value = int(levels_match.group(1))
+                                if 'above' in label_lower:
+                                    project_info['Levels_Above_Grade'] = levels_value
+                                    logger.info(f"✅ Extracted Levels_Above_Grade: {levels_value}")
+                                elif 'below' in label_lower:
+                                    project_info['Levels_Below_Grade'] = levels_value
+                                    logger.info(f"✅ Extracted Levels_Below_Grade: {levels_value}")
+                        elif 'description' in label_lower and 'project' in label_lower and value:
+                            project_info['Project_Type'] = value
+                            logger.info(f"✅ Extracted Project_Type: {value}")
+                        elif 'tender closing' in label_lower and value:
+                            project_info['Tender_Closing'] = value
+                            logger.info(f"✅ Extracted Tender_Closing: {value}")
                         
                         # If we found a match, break to avoid duplicate processing
                         if any(key in project_info for key in ['Project_Name', 'Client', 'Location', 'Architect']):
@@ -983,7 +1081,7 @@ if FASTAPI_AVAILABLE:
             query_lower = query.lower()
             
             # Always gather project data for project-related queries
-            if any(keyword in query_lower for keyword in ['project', 'budget', 'cost', 'schedule', 'status', 'all', 'list', 'show']):
+            if any(keyword in query_lower for keyword in ['project', 'budget', 'cost', 'schedule', 'status', 'all', 'list', 'show', 'lakeside', 'residences', 'yonge', 'azure', 'perth', 'about', 'tell']):
                 try:
                     # Extract specific project ID from query if mentioned
                     project_id = None
@@ -991,12 +1089,16 @@ if FASTAPI_AVAILABLE:
                     import re
                     
                     # Try multiple patterns to extract project identifiers
+                    print(f"🐛 PATTERN SEARCH DEBUG: Looking for patterns in query_lower: '{query_lower}'")
                     project_patterns = [
+                        r'lakeside\s+residences',  # Specific for Lakeside Residences
                         r'17175\s+yonge',  # Specific for 17175 Yonge
                         r'72\s+perth',     # Specific for 72 Perth
                         r'azure\s+road',   # Specific for Azure Road
                         r'project\s+(\w+)',
                         r'(\w+)\s+project',
+                        r'lakeside',       # Just lakeside
+                        r'residences',     # Just residences
                         r'17175',          # Just the number
                         r'yonge',          # Just yonge
                         r'perth',          # Just perth
@@ -1007,21 +1109,31 @@ if FASTAPI_AVAILABLE:
                         match = re.search(pattern, query_lower)
                         if match:
                             extracted = match.group(1) if match.groups() else match.group(0)
+                            # DEBUG: Log pattern matching
+                            print(f"🐛 PATTERN DEBUG: Query '{query_lower}' matched pattern '{pattern}' -> extracted '{extracted}'")
                             # Clean up the extracted text
                             extracted = extracted.strip().replace(' ', '_').lower()
                             
                             # Map to standard project IDs
-                            if any(term in extracted for term in ['17175', 'yonge']):
+                            if any(term in extracted for term in ['lakeside', 'residences']):
+                                project_id = '72_perth'
+                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '72_perth'")
+                                break
+                            elif any(term in extracted for term in ['17175', 'yonge']):
                                 project_id = '17175_yonge_st'
+                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '17175_yonge_st'")
                                 break
                             elif any(term in extracted for term in ['72', 'perth']):
                                 project_id = '72_perth'
+                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '72_perth'")
                                 break
                             elif any(term in extracted for term in ['azure', 'road']):
                                 project_id = 'azure_road'
+                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'azure_road'")
                                 break
                             elif extracted in ['72_perth', '17175_yonge_st', 'azure_road']:
                                 project_id = extracted
+                                print(f"🐛 MAPPING DEBUG: Direct match '{extracted}' to project_id '{extracted}'")
                                 break
                     
                     if project_id:
