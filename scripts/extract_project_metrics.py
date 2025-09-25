@@ -102,6 +102,20 @@ def _collect_metrics(project_cache: Dict) -> Dict[str, Metric]:
                 source_tab=tab.get("source_tab"),
             )
 
+        if contract_id == "gca_stats":
+            for key in [
+                "parking_below_grade",
+                "parking_above_grade",
+                "parking_total",
+            ]:
+                raw = values.get(key)
+                metrics[key] = Metric(
+                    key=key,
+                    raw=raw,
+                    value=_parse_numeric(raw),
+                    source_tab=tab.get("source_tab"),
+                )
+
     # Ensure keys exist even if absent in source data.
     for key in [
         "building_area_metric",
@@ -109,6 +123,9 @@ def _collect_metrics(project_cache: Dict) -> Dict[str, Metric]:
         "functional_units",
         "total_suites",
         "parking_stalls",
+        "parking_below_grade",
+        "parking_above_grade",
+        "parking_total",
     ]:
         metrics.setdefault(
             key,

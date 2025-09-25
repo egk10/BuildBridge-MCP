@@ -173,6 +173,33 @@
           "type": "value",
           "required": true,
           "labels": ["budget date", "budget date:"]
+        },
+        {
+          "key": "parking_below_grade",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "sub-total - below grade",
+            "total below grade gca"
+          ]
+        },
+        {
+          "key": "parking_above_grade",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "sub-total - above grade",
+            "total above grade gca"
+          ]
+        },
+        {
+          "key": "parking_total",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "total gca",
+            "total parking"
+          ]
         }
       ]
     },
