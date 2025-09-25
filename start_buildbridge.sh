@@ -24,19 +24,19 @@ elif [[ -d venv ]]; then
 fi
 
 if [[ -z "$VENV_FOUND" ]]; then
-    echo "❌ No virtual environment found. Please create one first."
-    echo "💡 Try one of these commands:"
-    echo "   python -m venv buildbridge_venv"
-    echo "   python -m venv .venv"
-    echo "   python -m venv venv"
-    echo ""
-    echo "Then activate and install dependencies:"
-    echo "   source buildbridge_venv/bin/activate  # (or .venv/bin/activate)"
-    echo "   pip install -r requirements.txt"
+    echo "❌ No virtual environment found. Please create one first." >&2
+    echo "💡 Try one of these commands:" >&2
+    echo "   python -m venv buildbridge_venv" >&2
+    echo "   python -m venv .venv" >&2
+    echo "   python -m venv venv" >&2
+    echo "" >&2
+    echo "Then activate and install dependencies:" >&2
+    echo "   source buildbridge_venv/bin/activate  # (or .venv/bin/activate)" >&2
+    echo "   pip install -r requirements.txt" >&2
     exit 1
 fi
 
-echo "✅ Found virtual environment: $VENV_FOUND"
+echo "✅ Found virtual environment: $VENV_FOUND" >&2
 
 # Activate virtual environment
 source "$VENV_PATH/bin/activate"
@@ -44,22 +44,22 @@ source "$VENV_PATH/bin/activate"
 # Set Python path to include src directory
 export PYTHONPATH="$(pwd)/src:${PYTHONPATH:-}"
 
-echo "🚀 Starting BuildBridge-MCP Server..."
-echo "📁 Working directory: $(pwd)"
-echo "🐍 Python executable: $(which python)"
-echo "📚 Python path: $PYTHONPATH"
-echo ""
-echo "Available MCP tools:"
-echo "- AI Query Processing: Ask questions about construction projects"
-echo "- Google Sheets Integration: Access live project data"
-echo "- Project Data Extraction: Flexible multi-sheet support"
-echo ""
-echo "Press Ctrl+C to stop the server"
-echo ""
+echo "🚀 Starting BuildBridge-MCP Server..." >&2
+echo "📁 Working directory: $(pwd)" >&2
+echo "🐍 Python executable: $(which python)" >&2
+echo "📚 Python path: $PYTHONPATH" >&2
+echo "" >&2
+echo "Available MCP tools:" >&2
+echo "- AI Query Processing: Ask questions about construction projects" >&2
+echo "- Google Sheets Integration: Access live project data" >&2
+echo "- Project Data Extraction: Flexible multi-sheet support" >&2
+echo "" >&2
+echo "Press Ctrl+C to stop the server" >&2
+echo "" >&2
 
 # Check for test mode argument
 if [[ "${1:-}" == "--test" ]]; then
-    echo "🧪 Running MCP server initialization test..."
+    echo "🧪 Running MCP server initialization test..." >&2
     START_TIME=$(date +%s.%3N)
     exec python src/main.py --test
 fi

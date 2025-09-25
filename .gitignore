@@ -2,6 +2,8 @@
 
 # Credentials and sensitive data
 config/credentials.json
+config/client_secret.json
+config/token.pickle
 *.key
 *.pem
 .env
@@ -38,6 +40,10 @@ ENV/
 env.bak/
 venv.bak/
 construction-mcp-env/
+buildbridge_env/
+buildbridge_venv/
+oauth_env/
+.venv/
 
 # IDE
 .vscode/settings.json
@@ -59,6 +65,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+server.log
 
 # Cache and temporary files
 *.tmp
@@ -80,9 +87,17 @@ test_results/
 *.coverage
 .pytest_cache/
 
+# Test and temporary scripts
+test_*.py
+complete_system_test.sh
+final_validation.py
+
 # Local data (keep sample data)
 data/local/
 data/production/
+
+# VS Code MCP configuration (local)
+vscode_mcp_config.json
 
 # Backup files
 *.bak
