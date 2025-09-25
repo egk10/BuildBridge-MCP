@@ -103,6 +103,127 @@ def load_config():
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(name)s: %(message)s')
 logger = logging.getLogger(__name__)
 
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_METRICS_PATH = PROJECT_ROOT / "cache" / "normalized" / "project_metrics.json"
+_PROJECT_METRICS_CACHE: Dict[str, Dict[str, Any]] = {}
+_PROJECT_METRICS_MTIME: Optional[float] = None
+
+_METRIC_FIELD_MAPPING = {
+    "building_area_metric": "Building_Area_Metric",
+    "building_area_imperial": "Building_Area_Imperial",
+    "functional_units": "Total_Units",
+    "total_suites": "Total_Suites",
+    "parking_total": "Parking_Total",
+    "parking_below_grade": "Parking_Below_Grade",
+    "parking_above_grade": "Parking_Above_Grade",
+    "parking_stalls": "Parking_Stalls",
+}
+
+
+def _normalize_project_id(project: Dict[str, Any]) -> Optional[str]:
+    """Return a normalized project identifier for metric lookups."""
+
+    for key in ("Project_ID", "project_id", "ProjectID", "id", "ProjectId"):
+        value = project.get(key)
+        if value:
+            return str(value).strip().lower()
+    return None
+
+
+def _extract_metric_value(metric_entry: Any) -> Optional[Any]:
+    """Return a numeric or string value from a metric entry."""
+
+    if isinstance(metric_entry, dict):
+        value = metric_entry.get("value")
+        if value is None:
+            raw = metric_entry.get("raw")
+            if isinstance(raw, str):
+                cleaned = raw.replace(",", "").strip()
+                try:
+                    if cleaned == "":
+                        return None
+                    if "." in cleaned:
+                        number = float(cleaned)
+                        return int(number) if number.is_integer() else number
+                    return int(cleaned)
+                except ValueError:
+                    return raw.strip() or None
+            return raw
+        return value
+    return metric_entry
+
+
+def load_project_metrics() -> Dict[str, Dict[str, Any]]:
+    """Load cached project metrics from normalized outputs."""
+
+    global _PROJECT_METRICS_CACHE, _PROJECT_METRICS_MTIME
+
+    try:
+        if not PROJECT_METRICS_PATH.exists():
+            _PROJECT_METRICS_CACHE = {}
+            _PROJECT_METRICS_MTIME = None
+            return {}
+
+        mtime = PROJECT_METRICS_PATH.stat().st_mtime
+        if _PROJECT_METRICS_MTIME == mtime and _PROJECT_METRICS_CACHE:
+            return _PROJECT_METRICS_CACHE
+
+        with PROJECT_METRICS_PATH.open() as fh:
+            payload = json.load(fh)
+
+        metrics_map: Dict[str, Dict[str, Any]] = {}
+        for entry in payload.get("projects", []):
+            project_key = entry.get("project_key")
+            project_metrics = entry.get("metrics", {})
+            if not project_key or not isinstance(project_metrics, dict):
+                continue
+            normalized_key = str(project_key).strip().lower()
+            metrics_map[normalized_key] = project_metrics
+
+        _PROJECT_METRICS_CACHE = metrics_map
+        _PROJECT_METRICS_MTIME = mtime
+        logger.debug(f"Loaded project metrics for {len(metrics_map)} projects")
+        return metrics_map
+
+    except Exception as exc:
+        logger.warning(f"Unable to load project metrics: {exc}")
+        return _PROJECT_METRICS_CACHE or {}
+
+
+def _apply_metric_fields(project: Dict[str, Any], metrics: Dict[str, Any]) -> None:
+    """Inject metric values into top-level project fields when empty."""
+
+    for metric_key, field_name in _METRIC_FIELD_MAPPING.items():
+        if field_name in project and project[field_name] not in (None, "", [], {}):
+            continue
+
+        value = _extract_metric_value(metrics.get(metric_key))
+        if value is not None:
+            project[field_name] = value
+
+
+def attach_metrics_to_projects(projects: List[Dict[str, Any]]) -> None:
+    """Enhance project dictionaries with cached metric data."""
+
+    if not projects:
+        return
+
+    metrics_map = load_project_metrics()
+    if not metrics_map:
+        return
+
+    for project in projects:
+        if not isinstance(project, dict):
+            continue
+        project_id = _normalize_project_id(project)
+        if not project_id:
+            continue
+        metrics = metrics_map.get(project_id)
+        if not metrics:
+            continue
+        project.setdefault("metrics", metrics)
+        _apply_metric_fields(project, metrics)
+
 # Global log storage for real-time viewing
 log_buffer = deque(maxlen=100)  # Keep last 100 log messages
 websocket_connections = set()
@@ -794,6 +915,7 @@ class ConstructionMCPEngine:
                 if search_result and 'results' in search_result:
                     # Pass all projects, not just the first few
                     data_context = {"projects": search_result['results']}
+                    attach_metrics_to_projects(data_context["projects"])
                 
                 # Process with AI
                 ai_response = await self.ai_service.process_construction_query(
@@ -900,6 +1022,7 @@ class ConstructionMCPEngine:
                         if search_result and 'results' in search_result:
                             # Pass all projects from the data
                             data_context = {"projects": search_result['results']}
+                            attach_metrics_to_projects(data_context["projects"])
                             logger.info(f"🤖 Gathered context data for {len(search_result['results'])} projects")
                 except Exception as e:
                     logger.warning(f"Failed to gather data context: {e}")
@@ -1152,6 +1275,7 @@ if FASTAPI_AVAILABLE:
                             requested_project = next((p for p in search_result['results'] if p.get('Project_ID') == project_id), None)
                             if requested_project:
                                 data_context = {"projects": [requested_project]}
+                                attach_metrics_to_projects(data_context["projects"])
                                 logger.info(f"📊 Gathered data for specific project {project_id}")
                             else:
                                 logger.info(f"📊 No data found for project {project_id}")
@@ -1170,6 +1294,7 @@ if FASTAPI_AVAILABLE:
                         )
                         if search_result and 'results' in search_result:
                             data_context = {"projects": search_result['results']}
+                            attach_metrics_to_projects(data_context["projects"])
                             logger.info(f"📊 Gathered {len(search_result['results'])} projects for AI context")
                 except Exception as e:
                     logger.warning(f"Failed to gather project data: {e}")

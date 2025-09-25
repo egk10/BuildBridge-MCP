@@ -287,6 +287,28 @@ CONSTRUCTION_CONTEXT = {
     }
 }
 
+PROJECT_METRIC_LABELS = {
+    "building_area_metric": "Building Area (sq m)",
+    "building_area_imperial": "Building Area (sq ft)",
+    "functional_units": "Functional Units",
+    "total_suites": "Total Suites",
+    "parking_below_grade": "Parking (Below Grade)",
+    "parking_above_grade": "Parking (Above Grade)",
+    "parking_total": "Total Parking",
+    "parking_stalls": "Parking Stalls",
+}
+
+PROJECT_METRIC_FIELD_MAPPING = {
+    "building_area_metric": "Building_Area_Metric",
+    "building_area_imperial": "Building_Area_Imperial",
+    "functional_units": "Total_Units",
+    "total_suites": "Total_Suites",
+    "parking_below_grade": "Parking_Below_Grade",
+    "parking_above_grade": "Parking_Above_Grade",
+    "parking_total": "Parking_Total",
+    "parking_stalls": "Parking_Stalls",
+}
+
 def get_construction_prompt(query_type: str, context_data: dict = None) -> str:
     """
     Get the appropriate construction-specific prompt based on query type.
@@ -447,6 +469,7 @@ class ConstructionPrompts:
         self.system_prompts = CONSTRUCTION_SYSTEM_PROMPTS
         self.query_templates = QUERY_TEMPLATES
         self.context = CONSTRUCTION_CONTEXT
+        self.metric_labels = PROJECT_METRIC_LABELS
     
     def get_system_prompt(self, query_type: str = "general") -> str:
         """Get system prompt for specific query type"""
@@ -506,6 +529,50 @@ class ConstructionPrompts:
         
         return "\n".join(prompt_parts)
     
+    def _format_metric_value(self, metric_entry):
+        """Return a human-friendly string for a metric entry."""
+
+        if not metric_entry:
+            return None
+
+        value = metric_entry.get("value") if isinstance(metric_entry, dict) else metric_entry
+        if value is None and isinstance(metric_entry, dict):
+            value = metric_entry.get("raw")
+
+        if value is None or value == "":
+            return None
+
+        if isinstance(value, (int, float)):
+            if isinstance(value, float):
+                if value.is_integer():
+                    return f"{int(value):,}"
+                return f"{value:,.2f}"
+            return f"{value:,}"
+
+        if isinstance(value, str):
+            cleaned = value.strip()
+            if not cleaned:
+                return None
+            # Attempt to convert numeric strings for consistency
+            normalized = cleaned.replace(",", "")
+            try:
+                number = float(normalized)
+                if number.is_integer():
+                    return f"{int(number):,}"
+                return f"{number:,.2f}"
+            except ValueError:
+                return cleaned
+
+        return str(value)
+
+    def _should_display_metric(self, metric_key: str, project: dict) -> bool:
+        """Determine if a metric should be displayed based on existing project fields."""
+
+        field_name = PROJECT_METRIC_FIELD_MAPPING.get(metric_key)
+        if not field_name:
+            return True
+        return not project.get(field_name)
+    
     def _format_data_context(self, data_context: dict) -> str:
         """Format structured data context for the prompt"""
         if not data_context:
@@ -538,7 +605,8 @@ class ConstructionPrompts:
                         
                         # Add other key information
                         for field in ['Status', 'Project_Manager', 'Start_Date', 'End_Date', 'Location', 'Client', 'Architect', 
-                                    'Total_Units', 'Parking_Spots', 'Building_Area_Metric', 'Building_Area_Imperial',
+                                    'Total_Units', 'Parking_Spots', 'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade',
+                                    'Parking_Stalls', 'Building_Area_Metric', 'Building_Area_Imperial',
                                     'Levels_Above_Grade', 'Levels_Below_Grade', 'Project_Type', 'Tender_Closing']:
                             if field in project and project[field]:
                                 field_display = field.replace('_', ' ')
@@ -546,12 +614,33 @@ class ConstructionPrompts:
                                     project_info.append(f"    Units/Functional Units: {project[field]}")
                                 elif field == 'Parking_Spots':
                                     project_info.append(f"    Parking Spots: {project[field]}")
+                                elif field == 'Parking_Total':
+                                    project_info.append(f"    Total Parking (stalls): {project[field]}")
+                                elif field == 'Parking_Below_Grade':
+                                    project_info.append(f"    Parking (Below Grade): {project[field]}")
+                                elif field == 'Parking_Above_Grade':
+                                    project_info.append(f"    Parking (Above Grade): {project[field]}")
+                                elif field == 'Parking_Stalls':
+                                    project_info.append(f"    Parking Stalls: {project[field]}")
                                 elif field == 'Building_Area_Metric':
                                     project_info.append(f"    Building Area (sq m): {project[field]:,.0f}")
                                 elif field == 'Building_Area_Imperial':
                                     project_info.append(f"    Building Area (sq ft): {project[field]:,.0f}")
                                 else:
                                     project_info.append(f"    {field_display}: {project[field]}")
+
+                        metrics = project.get('metrics')
+                        if isinstance(metrics, dict):
+                            metric_lines = []
+                            for metric_key, label in self.metric_labels.items():
+                                if not self._should_display_metric(metric_key, project):
+                                    continue
+                                metric_value = self._format_metric_value(metrics.get(metric_key))
+                                if metric_value:
+                                    metric_lines.append(f"    {label}: {metric_value}")
+                            if metric_lines:
+                                project_info.append("    Key Metrics:")
+                                project_info.extend(metric_lines)
                         
                         formatted_parts.append("\n".join(project_info))
                         formatted_parts.append("")  # Add blank line between projects
