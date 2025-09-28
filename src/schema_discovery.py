@@ -400,6 +400,23 @@ class SchemaDiscovery:
         # For now, always consider cache valid (implement TTL later)
         return True
 
+
+# --- Formula awareness scaffolding -------------------------------------------------
+
+def detect_circular_references(dependencies_graph: Dict[str, List[str]]) -> List[List[str]]:
+    """Return lists of nodes that participate in cycles (stub)."""
+    # TODO: replace placeholder with networkx.simple_cycles logic in Phase 2.
+    return []
+
+
+def validate_dependencies_exist(
+    dependencies_graph: Dict[str, List[str]],
+    known_cells: Set[str],
+) -> List[str]:
+    """Return missing cell references detected in dependency graph (stub)."""
+    # TODO: replace placeholder with set comparisons in Phase 2.
+    return []
+
     def _save_schema_to_cache(self, cache_key: str, schema: Dict[str, Any]):
         """Save schema to file cache"""
         cache_file = self.cache_dir / f"{cache_key}.json"

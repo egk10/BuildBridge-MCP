@@ -5,14 +5,21 @@ Concise checklist and starter scaffolding to implement formula-awareness for Bui
 
 ---
 
+## Current Progress (Prep — 2025-09-27)
+- [x] Created feature branch `feature/formula-awareness-phase1` for dedicated development.
+- [x] Added scaffolding modules (`src/connectors/enhanced_google_sheets_connector.py`, `src/models/formula_context.py`, `src/ai/formula_aware_ai_service.py`).
+- [x] Stubbed validation helpers in `src/schema_discovery.py` and placeholder tests/metrics/docs.
+- [x] Declared `networkx` dependency for upcoming graph work.
+- [x] Completed Phase 1 extraction logic (formula context builder, cache persistence, metrics instrumentation, tests).
+
 ## Quick Executive Checklist (Phase-driven)
 
 Phase 1 — Core Formula Extraction (Week 1)
-- [ ] Create EnhancedGoogleSheetsConnector (fetch formulas + values)
-- [ ] Extract sheet metadata, data validation, conditional formatting
-- [ ] Build dependency graph (networkx)
-- [ ] Persist normalized cache entries: {value, formula, dependencies, last_updated, provenance}
-- [ ] Add basic Prometheus metrics: formula_extraction_success_rate, formula_extraction_duration
+- [x] Create EnhancedGoogleSheetsConnector (fetch formulas + values)
+- [x] Extract sheet metadata, data validation, conditional formatting
+- [x] Build dependency graph (networkx)
+- [x] Persist normalized cache entries: {value, formula, dependencies, last_updated, provenance}
+- [x] Add basic Prometheus metrics: formula_extraction_success_rate, formula_extraction_duration
 - Exit criteria: extraction success rate ≥ 95% on pilot sheets; normalized cache present
 
 Phase 2 — Business Logic Analysis (Week 2)

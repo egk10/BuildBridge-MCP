@@ -91,6 +91,7 @@ test_results/
 test_*.py
 complete_system_test.sh
 final_validation.py
+!tests/test_*.py
 
 # Local data (keep sample data)
 data/local/
