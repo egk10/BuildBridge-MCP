@@ -12,6 +12,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import pandas as pd
 import re
+import networkx as nx
 
 from connectors.excel_connector import ExcelConnector
 from connectors.google_sheets_connector import GoogleSheetsConnector
@@ -404,18 +405,34 @@ class SchemaDiscovery:
 # --- Formula awareness scaffolding -------------------------------------------------
 
 def detect_circular_references(dependencies_graph: Dict[str, List[str]]) -> List[List[str]]:
-    """Return lists of nodes that participate in cycles (stub)."""
-    # TODO: replace placeholder with networkx.simple_cycles logic in Phase 2.
-    return []
+    """
+    Return list of cycles found in the dependency graph.
+    Each cycle is a list of node addresses.
+    """
+    # Create directed graph from adjacency list
+    G = nx.DiGraph(dependencies_graph)
+    
+    # Find all simple cycles
+    cycles = list(nx.simple_cycles(G))
+    
+    return cycles
 
 
 def validate_dependencies_exist(
     dependencies_graph: Dict[str, List[str]],
     known_cells: Set[str],
 ) -> List[str]:
-    """Return missing cell references detected in dependency graph (stub)."""
-    # TODO: replace placeholder with set comparisons in Phase 2.
-    return []
+    """
+    Return list of missing dependency addresses detected in dependency graph.
+    """
+    missing_deps = []
+    
+    for cell, deps in dependencies_graph.items():
+        for dep in deps:
+            if dep not in known_cells:
+                missing_deps.append(dep)
+    
+    return list(set(missing_deps))  # Remove duplicates
 
     def _save_schema_to_cache(self, cache_key: str, schema: Dict[str, Any]):
         """Save schema to file cache"""
@@ -469,3 +486,189 @@ def validate_dependencies_exist(
             summary['data_types'][data_type_count] = summary['data_types'].get(data_type_count, 0) + 1
 
         return summary
+
+
+class FormulaClassifier:
+    """
+    Classifies formulas into business rule categories for construction management.
+    """
+    
+    def __init__(self):
+        # Define formula patterns and their categories
+        self.category_patterns = {
+            'aggregation': {
+                'patterns': [r'\bSUM\b', r'\bAVERAGE\b', r'\bCOUNT\b', r'\bMAX\b', r'\bMIN\b', 
+                           r'\bSUMIF\b', r'\bCOUNTIF\b', r'\bAVERAGEIF\b'],
+                'description': 'Mathematical aggregation functions'
+            },
+            'lookup_reference': {
+                'patterns': [r'\bVLOOKUP\b', r'\bHLOOKUP\b', r'\bINDEX\b', r'\bMATCH\b', 
+                           r'\bXLOOKUP\b', r'\bLOOKUP\b'],
+                'description': 'Data lookup and reference functions'
+            },
+            'financial': {
+                'patterns': [r'\bNPV\b', r'\bIRR\b', r'\bPV\b', r'\bFV\b', r'\bPMT\b', 
+                           r'\bRATE\b', r'\bNPER\b'],
+                'description': 'Financial calculation functions'
+            },
+            'date_time': {
+                'patterns': [r'\bDATE\b', r'\bTIME\b', r'\bNOW\b', r'\bTODAY\b', r'\bDATEDIF\b', 
+                           r'\bDATEVALUE\b', r'\bDAY\b', r'\bMONTH\b', r'\bYEAR\b'],
+                'description': 'Date and time manipulation functions'
+            },
+            'logical': {
+                'patterns': [r'\bIF\b', r'\bAND\b', r'\bOR\b', r'\bNOT\b', r'\bIFERROR\b', 
+                           r'\bIFS\b', r'\bSWITCH\b'],
+                'description': 'Logical and conditional functions'
+            },
+            'text': {
+                'patterns': [r'\bCONCATENATE\b', r'\bLEFT\b', r'\bRIGHT\b', r'\bMID\b', 
+                           r'\bLEN\b', r'\bFIND\b', r'\bSEARCH\b', r'\bSUBSTITUTE\b'],
+                'description': 'Text manipulation functions'
+            },
+            'math': {
+                'patterns': [r'\bROUND\b', r'\bCEILING\b', r'\bFLOOR\b', r'\bABS\b', r'\bSQRT\b', 
+                           r'\bPOWER\b', r'\bLOG\b', r'\bEXP\b'],
+                'description': 'Mathematical operations'
+            },
+            'statistical': {
+                'patterns': [r'\bSTDEV\b', r'\bVAR\b', r'\bCORREL\b', r'\bCOVAR\b', 
+                           r'\bPERCENTILE\b', r'\bQUARTILE\b'],
+                'description': 'Statistical analysis functions'
+            },
+            'construction_specific': {
+                'patterns': [r'\bSUMPRODUCT\b', r'\bSUBTOTAL\b', r'\bOFFSET\b', r'\bINDIRECT\b'],
+                'description': 'Functions commonly used in construction project management'
+            }
+        }
+    
+    def classify_formula(self, formula: str) -> Dict[str, Any]:
+        """
+        Classify a single formula into business rule categories.
+        
+        Args:
+            formula: The formula string (without the = sign)
+            
+        Returns:
+            Dict with category, confidence, and description
+        """
+        formula_upper = formula.upper()
+        
+        for category, info in self.category_patterns.items():
+            for pattern in info['patterns']:
+                if re.search(pattern, formula_upper):
+                    return {
+                        'category': category,
+                        'confidence': 1.0,  # Exact match
+                        'description': info['description'],
+                        'matched_pattern': pattern
+                    }
+        
+        # Check for arithmetic operations
+        if any(op in formula_upper for op in ['+', '-', '*', '/']):
+            return {
+                'category': 'arithmetic',
+                'confidence': 0.8,
+                'description': 'Basic arithmetic operations',
+                'matched_pattern': None
+            }
+        
+        # Check for cell references (simple formulas)
+        if re.search(r'[A-Z]+\d+', formula_upper):
+            return {
+                'category': 'reference',
+                'confidence': 0.6,
+                'description': 'Cell reference operations',
+                'matched_pattern': None
+            }
+        
+        return {
+            'category': 'unknown',
+            'confidence': 0.0,
+            'description': 'Unclassified formula',
+            'matched_pattern': None
+        }
+    
+    def classify_formulas_batch(self, formulas: Dict[str, str]) -> Dict[str, Dict[str, Any]]:
+        """
+        Classify multiple formulas at once.
+        
+        Args:
+            formulas: Dict of cell_address -> formula_string
+            
+        Returns:
+            Dict of cell_address -> classification_result
+        """
+        classifications = {}
+        
+        for cell, formula in formulas.items():
+            # Remove leading = if present
+            clean_formula = formula.lstrip('=')
+            classifications[cell] = self.classify_formula(clean_formula)
+        
+        return classifications
+
+
+def export_dependency_graph(dependencies_graph: Dict[str, List[str]], 
+                          output_path: str, format: str = 'graphml') -> str:
+    """
+    Export dependency graph to various formats for visualization.
+    
+    Args:
+        dependencies_graph: Adjacency list of dependencies
+        output_path: Path to save the exported file
+        format: Export format ('graphml', 'dot', 'json')
+        
+    Returns:
+        Path to the exported file
+    """
+    G = nx.DiGraph(dependencies_graph)
+    
+    if format == 'graphml':
+        nx.write_graphml(G, f"{output_path}.graphml")
+        return f"{output_path}.graphml"
+    elif format == 'dot':
+        nx.nx_pydot.write_dot(G, f"{output_path}.dot")
+        return f"{output_path}.dot"
+    elif format == 'json':
+        # Export as JSON for custom visualization
+        graph_data = {
+            'nodes': list(G.nodes()),
+            'edges': [{'source': u, 'target': v} for u, v in G.edges()]
+        }
+        import json
+        with open(f"{output_path}.json", 'w') as f:
+            json.dump(graph_data, f, indent=2)
+        return f"{output_path}.json"
+    else:
+        raise ValueError(f"Unsupported format: {format}")
+
+
+def analyze_dependency_graph(dependencies_graph: Dict[str, List[str]]) -> Dict[str, Any]:
+    """
+    Analyze dependency graph for insights.
+    
+    Args:
+        dependencies_graph: Adjacency list of dependencies
+        
+    Returns:
+        Dict with graph analysis metrics
+    """
+    G = nx.DiGraph(dependencies_graph)
+    
+    analysis = {
+        'num_nodes': G.number_of_nodes(),
+        'num_edges': G.number_of_edges(),
+        'is_dag': nx.is_directed_acyclic_graph(G),
+        'cycles': list(nx.simple_cycles(G)) if not nx.is_directed_acyclic_graph(G) else [],
+        'strongly_connected_components': list(nx.strongly_connected_components(G)),
+        'in_degrees': dict(G.in_degree()),
+        'out_degrees': dict(G.out_degree()),
+        'isolates': list(nx.isolates(G)),
+        'density': nx.density(G)
+    }
+    
+    if nx.is_directed_acyclic_graph(G):
+        analysis['topological_sort'] = list(nx.topological_sort(G))
+    
+    return analysis

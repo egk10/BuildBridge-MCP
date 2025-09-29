@@ -15,6 +15,7 @@ import networkx as nx
 
 from connectors.google_sheets_connector import GoogleSheetsConnector
 from models.formula_context import FormulaContext
+from schema_discovery import FormulaClassifier, export_dependency_graph, analyze_dependency_graph
 from utils.formula_metrics import get_formula_metrics_recorder
 
 
@@ -477,4 +478,83 @@ class EnhancedGoogleSheetsConnector(GoogleSheetsConnector):
 			},
 			"missing_dependencies": [],
 			"formula_contexts": [],
+		}
+
+	# ------------------------------------------------------------------
+	# Phase 2: Business Logic Analysis methods
+
+	def classify_formulas_detailed(self, formulas: Dict[str, str]) -> Dict[str, Dict[str, Any]]:
+		"""
+		Classify formulas using the enhanced FormulaClassifier.
+		
+		Args:
+			formulas: Dict of cell_address -> formula_string
+			
+		Returns:
+			Detailed classifications with categories and confidence
+		"""
+		classifier = FormulaClassifier()
+		return classifier.classify_formulas_batch(formulas)
+
+	def export_dependency_graph(self, dependencies: Dict[str, List[str]], 
+							   output_path: str, format: str = 'graphml') -> str:
+		"""
+		Export dependency graph for visualization.
+		
+		Args:
+			dependencies: Dependency graph adjacency list
+			output_path: Base path for output file
+			format: Export format ('graphml', 'dot', 'json')
+			
+		Returns:
+			Path to exported file
+		"""
+		return export_dependency_graph(dependencies, output_path, format)
+
+	def analyze_dependencies(self, dependencies: Dict[str, List[str]]) -> Dict[str, Any]:
+		"""
+		Analyze dependency graph for insights and issues.
+		
+		Args:
+			dependencies: Dependency graph adjacency list
+			
+		Returns:
+			Analysis results including cycles, components, etc.
+		"""
+		return analyze_dependency_graph(dependencies)
+
+	def get_business_logic_summary(self, context: Dict[str, Any]) -> Dict[str, Any]:
+		"""
+		Generate summary of business logic from extracted context.
+		
+		Args:
+			context: Context dict from get_comprehensive_sheet_context
+			
+		Returns:
+			Summary with formula categories, cycles, missing deps, etc.
+		"""
+		formulas = context.get('formulas', {})
+		dependencies = context.get('dependencies', {})
+		missing_deps = context.get('missing_dependencies', [])
+		cycles = context.get('metadata', {}).get('dependency_cycles', [])
+		
+		# Get detailed classifications
+		detailed_classifications = self.classify_formulas_detailed(formulas)
+		
+		# Count categories
+		category_counts = {}
+		for classification in detailed_classifications.values():
+			category = classification['category']
+			category_counts[category] = category_counts.get(category, 0) + 1
+		
+		# Analyze dependencies
+		dep_analysis = self.analyze_dependencies(dependencies)
+		
+		return {
+			'total_formulas': len(formulas),
+			'formula_categories': category_counts,
+			'missing_dependencies': missing_deps,
+			'circular_references': cycles,
+			'dependency_analysis': dep_analysis,
+			'detailed_classifications': detailed_classifications
 		}

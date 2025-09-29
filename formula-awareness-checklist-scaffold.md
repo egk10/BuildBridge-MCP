@@ -5,16 +5,18 @@ Concise checklist and starter scaffolding to implement formula-awareness for Bui
 
 ---
 
-## Current Progress (Prep — 2025-09-27)
+## Current Progress (Phase 1 Complete — 2025-09-28)
 - [x] Created feature branch `feature/formula-awareness-phase1` for dedicated development.
 - [x] Added scaffolding modules (`src/connectors/enhanced_google_sheets_connector.py`, `src/models/formula_context.py`, `src/ai/formula_aware_ai_service.py`).
 - [x] Stubbed validation helpers in `src/schema_discovery.py` and placeholder tests/metrics/docs.
 - [x] Declared `networkx` dependency for upcoming graph work.
 - [x] Completed Phase 1 extraction logic (formula context builder, cache persistence, metrics instrumentation, tests).
+- [x] Pilot testing: 99.63% success on azure_road sheet; added cache/ to .gitignore to avoid large file commits.
+- [x] Committed and pushed Phase 1; created new branch `feature/formula-awareness-phase2` for Phase 2.
 
 ## Quick Executive Checklist (Phase-driven)
 
-Phase 1 — Core Formula Extraction (Week 1)
+Phase 1 — Core Formula Extraction (Week 1) ✅ COMPLETE
 - [x] Create EnhancedGoogleSheetsConnector (fetch formulas + values)
 - [x] Extract sheet metadata, data validation, conditional formatting
 - [x] Build dependency graph (networkx)
@@ -22,10 +24,10 @@ Phase 1 — Core Formula Extraction (Week 1)
 - [x] Add basic Prometheus metrics: formula_extraction_success_rate, formula_extraction_duration
 - Exit criteria: extraction success rate ≥ 95% on pilot sheets; normalized cache present
 
-Phase 2 — Business Logic Analysis (Week 2)
-- [ ] Classify formulas into business rule categories
-- [ ] Detect circular references and broken refs; add remediation guidance
-- [ ] Implement basic visualization/export of dependency graph
+Phase 2 — Business Logic Analysis (Week 2) ✅ COMPLETE
+- [x] Classify formulas into business rule categories (added FormulaClassifier with 10 categories)
+- [x] Detect circular references and broken refs; add remediation guidance (implemented detect_circular_references and validate_dependencies_exist)
+- [x] Implement basic visualization/export of dependency graph (added export_dependency_graph with graphml/dot/json formats)
 - Exit criteria: dependency graph accuracy > 90% on pilot set
 
 Phase 3 — AI Integration & What-if (Week 3)
