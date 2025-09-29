@@ -73,6 +73,7 @@ server.log
 .cache/
 temp/
 tmp/
+cache/
 
 # Document index files
 data/document_index.json
