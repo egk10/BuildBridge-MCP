@@ -43,6 +43,28 @@ BuildBridge-MCP/
 └── logs/                         # Log files
 ```
 
+## 🔒 Security Notice
+
+**⚠️ NEVER commit credential files to version control!**
+
+The following files contain sensitive information and are already in `.gitignore`:
+- `config/client_secret.json` - Google OAuth client secrets
+- `config/credentials.json` - API keys and service credentials  
+- `config/token.pickle` - OAuth access tokens
+- `.env` - Environment variables with API keys
+
+### Setup Instructions:
+1. Copy `config/credentials.json.template` to `config/credentials.json`
+2. Copy `.env.template` to `.env` 
+3. Fill in your actual credentials in the copied files
+4. The template files are safe to commit; your credential files are ignored
+
+### If you accidentally commit credentials:
+1. Remove files from git: `git rm --cached <file>`
+2. Use BFG Repo Cleaner to remove from history: `bfg --delete-files <filename>`
+3. Regenerate compromised credentials
+4. Force push the cleaned history
+
 ## Features
 
 - Natural language queries like "What's the status of Project ABC?"
