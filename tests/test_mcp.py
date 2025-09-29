@@ -67,11 +67,11 @@ def test_excel_connector_local():
             print(f"✓ Loaded budget data rows: {len(budget_df)}")
         
         print("Excel connector test passed!")
-        return True
+        assert True
         
     except Exception as e:
         print(f"✗ Excel connector test failed: {str(e)}")
-        return False
+        assert False, f"Excel connector test failed: {str(e)}"
 
 def test_query_processor():
     """Test the query processing engine"""
@@ -84,8 +84,9 @@ def test_query_processor():
         excel_mock = Mock()
         sharepoint_mock = Mock()
         document_mock = Mock()
+        google_sheets_mock = Mock()
         
-        processor = QueryProcessor(excel_mock, sharepoint_mock, document_mock)
+        processor = QueryProcessor(excel_mock, sharepoint_mock, document_mock, google_sheets_mock)
         
         # Test query parsing
         test_queries = [
@@ -101,11 +102,11 @@ def test_query_processor():
             print(f"✓ Parsed '{query}' → {parsed['type']} ({parsed['method']})")
         
         print("Query processor test passed!")
-        return True
+        assert True
         
     except Exception as e:
         print(f"✗ Query processor test failed: {str(e)}")
-        return False
+        assert False, f"Query processor test failed: {str(e)}"
 
 def test_document_indexer():
     """Test document indexing functionality"""
@@ -140,11 +141,11 @@ def test_document_indexer():
             print(f"✓ Search returned {len(results)} results")
         
         print("Document indexer test passed!")
-        return True
+        assert True
         
     except Exception as e:
         print(f"✗ Document indexer test failed: {str(e)}")
-        return False
+        assert False, f"Document indexer test failed: {str(e)}"
 
 def test_sample_queries():
     """Test sample construction management queries"""
@@ -168,19 +169,20 @@ def test_sample_queries():
         excel_mock = Mock()
         sharepoint_mock = Mock() 
         document_mock = Mock()
+        google_sheets_mock = Mock()
         
-        processor = QueryProcessor(excel_mock, sharepoint_mock, document_mock)
+        processor = QueryProcessor(excel_mock, sharepoint_mock, document_mock, google_sheets_mock)
         
         for query in sample_queries:
             parsed = processor.parse_query(query)
             print(f"✓ '{query}' → {parsed['type']} using {parsed['data_source']}")
         
         print("Sample queries test passed!")
-        return True
+        assert True
         
     except Exception as e:
         print(f"✗ Sample queries test failed: {str(e)}")
-        return False
+        assert False, f"Sample queries test failed: {str(e)}"
 
 def create_sample_credentials():
     """Create sample credentials file for testing"""
@@ -221,11 +223,11 @@ def create_sample_credentials():
         else:
             print("✓ Credentials file already exists")
         
-        return True
+        assert True
         
     except Exception as e:
         print(f"✗ Failed to create credentials file: {str(e)}")
-        return False
+        assert False, f"Failed to create credentials file: {str(e)}"
 
 def main():
     """Run all tests"""

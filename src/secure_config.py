@@ -12,6 +12,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,11 @@ class SecureConfig:
 
     def __init__(self, config_dir: Optional[Path] = None):
         self.config_dir = config_dir or Path(__file__).parent.parent / "config"
+        # Load .env file from project root
+        env_file = Path(__file__).parent.parent / ".env"
+        if env_file.exists():
+            load_dotenv(env_file)
+            logger.info(f"Loaded environment variables from {env_file}")
         self._config = None
 
     def load_config(self) -> Dict[str, Any]:

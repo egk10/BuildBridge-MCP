@@ -22,7 +22,6 @@ COPY src/ ./src/
 COPY config/ ./config/
 COPY data/ ./data/
 COPY .env ./
-COPY config/credentials.json ./credentials.json
 COPY src/production_mcp_integration.py .
 COPY *.py ./
 
