@@ -1,226 +1,172 @@
-# 🏗️ BuildBridge-MCP: Construction Intelligence Revolution
+# BuildBridge-MCP 🏗️
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-green.svg)](https://fastapi.tiangolo.com/)
-[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
+**Bridge your construction data with AI-powered natural language queries**
 
-**Transform Construction from Chaos to Intelligent Control**
+A Model Context Protocol (MCP) server that connects Excel files, SharePoint data, and construction documents into one intelligent interface. Ask questions in plain English and get instant insights from your construction projects.
 
-BuildBridge-MCP is an AI-powered construction management platform that revolutionizes how construction projects are managed, monitored, and optimized. By leveraging the Model Context Protocol (MCP) and advanced AI capabilities, we transform scattered construction data into actionable intelligence.
+## Overview
 
-## 🎯 **Value Proposition**
+BuildBridge-MCP enables natural language querying of construction management data stored across:
+- Excel files in OneDrive
+- SharePoint Lists
+- Local document repositories
 
-> **"The Construction Intelligence Revolution"** - Not just software, but the transformation of construction from an intuition-based craft to a data-driven science.
+Based on the architecture from [KDnuggets MCP Data Science Article](https://www.kdnuggets.com/built-an-mcp-to-automate-my-data-science-job).
 
-📊 **[Read Full Value Proposition →](VALUE_PROPOSITION.md)**
+## Architecture
 
-### **Key Benefits**
-- **80% reduction** in information search time
-- **60% reduction** in budget overruns through predictive intelligence
-- **$150,000+ annual value** per project manager
-- **25% improvement** in on-time, on-budget delivery
+The system consists of three main components:
 
-## 🚀 **Quick Start**
-
-### **1. Production Deployment (Recommended)**
-```bash
-git clone https://github.com/egk10/BuildBridge-MCP.git
-cd BuildBridge-MCP/construction-management-mcp
-docker-compose up -d
-```
-
-Access the platform:
-- **Chat Interface**: http://localhost:8081
-- **API Documentation**: http://localhost:8081/docs
-- **Real-time Logs**: http://localhost:8081/static/logs_viewer.html
-- **Monitoring**: http://localhost:3003 (Grafana)
-
-### **2. Development Setup**
-```bash
-cd construction-management-mcp
-python -m venv construction_env
-source construction_env/bin/activate  # Linux/Mac
-# construction_env\Scripts\activate  # Windows
-pip install -r requirements-production.txt
-python production_mcp_integration.py
-```
-
-## 🏗️ **What We Solve**
-
-### **The Construction Industry Crisis**
-- **70% of projects** go over budget
-- **60% finish** behind schedule
-- **$1.6 trillion lost** annually to poor productivity
-- **40% of manager time** spent hunting for information
-
-### **Our Solution: AI-Powered Construction Intelligence**
-
-#### **🔧 Unified Intelligence Platform**
-- **Single Source of Truth**: All construction data unified
-- **Natural Language Interface**: Ask questions in plain English
-- **Real-Time Integration**: Live data from all project systems
-- **Construction Context**: AI understands construction terminology
-
-#### **🔮 Predictive Intelligence Engine**
-- **Early Warning Systems**: Issues identified before they become problems
-- **Predictive Analytics**: AI forecasts budget, schedule, and risk trends
-- **Root Cause Analysis**: Understand why problems occur
-- **Optimization Recommendations**: AI suggests best corrective actions
-
-## 🔧 **Features**
-
-### **🎯 Core Capabilities**
-- **Multi-Source Data Integration**: Excel, SharePoint, ERP systems
-- **Natural Language Queries**: "What's our budget variance this month?"
-- **Real-Time Monitoring**: Live project status and alerts
-- **Predictive Analytics**: Budget and schedule forecasting
-- **Mobile-First Design**: Field access to all project intelligence
-- **Secure Enterprise Deployment**: Production-ready with Docker
-
-### **📊 Advanced Analytics**
-- Budget variance analysis and forecasting
-- Schedule optimization recommendations
-- Resource allocation insights
-- Risk assessment and mitigation strategies
-- Performance benchmarking across projects
-
-### **🔍 Sample Questions You Can Ask**
-- *"What projects are at risk of going over budget?"*
-- *"Show me the schedule variance for Project Alpha"*
-- *"Which resources are overallocated this month?"*
-- *"What's the profit margin trend for our commercial projects?"*
-- *"Generate a status report for the executive team"*
+1. **Excel Data Connector** - Processes Excel files with project data, budgets, schedules
+2. **SharePoint Connector** - Accesses SharePoint lists and document libraries
+3. **Query Processing Engine** - Understands natural language and routes to appropriate data sources
 
 ## 📋 **Project Structure**
 
 ```
 BuildBridge-MCP/
 ├── VALUE_PROPOSITION.md          # Complete business case and market analysis
-├── construction-management-mcp/   # Main project directory
-│   ├── PROJECT_PLAN.md           # 6-phase development roadmap
-│   ├── production_mcp_integration.py  # FastAPI backend with real-time logging
-│   ├── docker-compose.yml        # Production deployment stack
-│   ├── static/                   # Web interfaces
-│   │   ├── chat_interface.html   # Main chat interface
-│   │   └── logs_viewer.html      # Real-time AI transparency
-│   ├── data/sample/               # Sample construction data
-│   ├── src/                      # Core MCP implementation
-│   ├── docs/                     # Technical documentation
-│   └── scripts/                  # Utility scripts
+├── src/                          # Core MCP implementation
+│   ├── main.py                   # Main MCP server
+│   ├── connectors/               # Data connectors
+│   ├── query_processor.py        # Natural language query processing
+│   └── ai_service.py             # AI integration service
+├── tests/                        # Test files
+├── examples/                     # Demo and example scripts
+├── docs/                         # Technical documentation
+├── scripts/                      # Utility scripts
+├── config/                       # Configuration files
+├── data/                         # Sample data and datasets
+├── static/                       # Web interface files
+├── deploy/                       # Deployment configurations
+├── ssl/                          # SSL certificates
+└── logs/                         # Log files
 ```
 
-## 🎖️ **Technical Architecture**
+## Features
 
-### **Production Stack**
-- **Backend**: FastAPI with Python 3.8+
-- **Frontend**: Professional HTML/CSS/JavaScript chat interface
-- **Database**: PostgreSQL for data persistence
-- **Cache**: Redis for high-performance queries
-- **Monitoring**: Prometheus + Grafana dashboards
-- **Deployment**: Docker with nginx load balancer
-- **Security**: HTTPS/TLS, enterprise-grade authentication
+- Natural language queries like "What's the status of Project ABC?"
+- Budget analysis and cost tracking
+- Schedule monitoring and milestone tracking
+- Resource allocation insights
+- Compliance and safety report generation
 
-### **AI Integration**
-- **Model Context Protocol (MCP)**: Structured AI communication
-- **Real-Time Logging**: Complete AI transparency with WebSocket streaming
-- **Construction-Specific Prompts**: Industry-trained AI responses
-- **Extensible Architecture**: Ready for OpenAI, Anthropic, or local LLM integration
+## Getting Started
 
-## 📈 **ROI Calculator**
+See `docs/setup.md` for detailed setup instructions.
 
-### **For Project Managers**
-- **Time Savings**: 24 hours/week recovered (60% reduction in admin)
-- **Project Performance**: 25% improvement in delivery success
-- **Annual Value**: $150,000+ per project manager
+## Example Queries
 
-### **For Construction Companies**
-- **Profit Margin**: 15-20% improvement through better cost control
-- **Risk Reduction**: 40% fewer budget overruns and delays
-- **Scalability**: Manage 30% more projects with same resources
-- **Annual Value**: $2.5M+ for mid-size construction company
+- "Show me all projects that are over budget this month"
+- "What's the completion percentage for the downtown office building?"
+- "List all safety incidents from the last quarter"
+- "Which subcontractors are working on active projects?"
+- "Generate a status report for projects ending this month"
 
-## 🚀 **Roadmap**
 
-### **📋 [Complete Development Plan →](construction-management-mcp/PROJECT_PLAN.md)**
+## 🚦 Quick Start on New Hardware
 
-#### **Phase 1: AI Integration Foundation** (Current)
-- ✅ OpenAI API integration for immediate AI capabilities
-- ✅ Enhanced security and authentication
-- ✅ Mobile-responsive interface optimization
-- ✅ Advanced query processing and context management
+See [docs/copilot-continue.md](docs/copilot-continue.md) for step-by-step setup and Copilot Chat resume instructions.
 
-#### **Phase 2: Enterprise Deployment** (Next 4 weeks)
-- Advanced security and multi-tenancy
-- Enterprise integration capabilities
-- Custom deployment options
-- Advanced analytics dashboard
+Or use the Ubuntu one-liner:
+```bash
+curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/scripts/bootstrap_ubuntu.sh | bash
+```
 
-#### **Phase 3: Advanced Intelligence** (Weeks 9-12)
-- Predictive analytics engine
-- IoT and sensor integration
-- Advanced reporting and visualization
-- Mobile app development
+---
 
-## 🔐 **Security & Compliance**
+## 🚀 Quick Start
 
-- **Enterprise-Grade Security**: TLS encryption, secure authentication
-- **Data Privacy**: GDPR compliant, data residency options
-- **Role-Based Access**: Granular permissions and access controls
-- **Audit Trail**: Complete activity logging and compliance reporting
+1. Clone and install
+   ```bash
+   git clone https://github.com/egk10/BuildBridge-MCP.git
+   cd BuildBridge-MCP
+   pip install -r requirements.txt
+   ```
 
-## 📚 **Documentation**
+2. **Easy Start Script** (Recommended)
+   ```bash
+   # Automatically detects and activates your virtual environment
+   ./start_buildbridge.sh
+   ```
 
-- **[Value Proposition](VALUE_PROPOSITION.md)**: Complete business case and market analysis
-- **[Project Plan](construction-management-mcp/PROJECT_PLAN.md)**: 6-phase development roadmap
-- **[Production Guide](construction-management-mcp/docs/PRODUCTION_GUIDE.md)**: Deployment and operations
-- **[API Documentation](http://localhost:8081/docs)**: Interactive API explorer (when running)
+3. Manual Setup (if needed)
+   ```bash
+   # Activate your virtual environment (supports .venv, venv, or buildbridge_venv)
+   source buildbridge_venv/bin/activate  # or .venv/bin/activate
+   python src/main.py
+   ```
 
-## 🤝 **Contributing**
+## � Ubuntu one-liner bootstrap
 
-We welcome contributions! Please see our contributing guidelines and code of conduct.
+On a fresh Ubuntu Desktop machine, run this to clone, create a venv, install deps, enable local mode, run tests, and optionally start the server:
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+```bash
+curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/scripts/bootstrap_ubuntu.sh | bash
+```
 
-## 📄 **License**
+Environment variables (optional):
+- REPO_URL: repo to clone (default: https://github.com/egk10/BuildBridge-MCP.git)
+- BRANCH: branch to use (default: main)
+- DIR: target dir (default: BuildBridge-MCP)
+- START_SERVER: set to true to start server after setup (default: false)
+
+Example starting server automatically:
+```bash
+START_SERVER=true curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/scripts/bootstrap_ubuntu.sh | bash
+```
+
+## 🧰 Helper scripts
+
+- `start_buildbridge.sh` — **Recommended**: Auto-detects and activates venv, then starts MCP server
+   ```bash
+   ./start_buildbridge.sh          # Start server
+   ./start_buildbridge.sh --test   # Run initialization test
+   ```
+- `scripts/start_server.sh` — activate venv and run server (legacy)
+   ```bash
+   bash scripts/start_server.sh
+   ```
+
+## �📊 Features
+
+- **Natural Language Queries**: Ask questions in plain English
+- **Multi-Source Integration**: Excel, SharePoint, and document libraries
+- **Real-Time Data**: Live access to your construction management data
+- **Intelligent Search**: AI-powered document and data discovery
+- **Comprehensive Reports**: Budget analysis, project status, safety reports
+
+## 🏗️ Architecture
+
+Built on the Model Context Protocol (MCP) framework, BuildBridge-MCP consists of:
+
+1. **Excel Connector** - Processes Excel files with project data, budgets, schedules
+2. **SharePoint Connector** - Accesses SharePoint lists and document libraries  
+3. **Document Indexer** - Intelligent search across construction documents
+4. **Query Processor** - Natural language understanding and routing
+
+## 📁 Sample Data
+
+The repository includes realistic sample construction data:
+- 7 construction projects with budgets and timelines
+- Task schedules and resource allocations
+- Budget tracking with variance analysis
+- Ready-to-test project scenarios
+
+## 🤝 Contributing
+
+We welcome contributions! Please read our contributing guidelines and submit pull requests for any improvements.
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🎯 **Success Metrics**
+## 🙏 Acknowledgments
 
-### **Technical KPIs**
-- **Response Time**: <2 seconds for complex queries
-- **Uptime**: 99.9% availability SLA
-- **Data Accuracy**: >95% consistency across sources
-- **User Adoption**: 10,000+ construction professionals by 2026
+- Based on the MCP architecture from [KDnuggets Data Science MCP Article](https://www.kdnuggets.com/built-an-mcp-to-automate-my-data-science-job)
+- Built with [FastMCP](https://github.com/jxnl/fastmcp) framework
+- Inspired by the need for better construction data accessibility
 
-### **Business Impact**
-- **$1B+ cost savings** generated for customers
-- **Industry Recognition**: Award-winning construction technology
-- **Global Reach**: International expansion and market leadership
+## Continue Copilot Chat on new hardware
 
-## 🌟 **Awards & Recognition**
-
-*BuildBridge-MCP is positioned to become the industry standard for construction intelligence and project management.*
-
----
-
-## 🚀 **Get Started Today**
-
-Ready to transform your construction operations from reactive chaos to proactive intelligence?
-
-```bash
-git clone https://github.com/egk10/BuildBridge-MCP.git
-cd BuildBridge-MCP/construction-management-mcp
-docker-compose up -d
-```
-
-**Visit**: http://localhost:8081 and start asking questions about your construction projects!
-
----
-
-**🏗️ Building the Future of Construction, One Intelligent Decision at a Time** 🚀
+See `docs/copilot-continue.md` for a quick, copy-paste checklist to rehydrate your environment and resume this chat on another machine.

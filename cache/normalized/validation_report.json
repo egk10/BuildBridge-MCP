@@ -1,0 +1,635 @@
+{
+  "generated_at": "2025-09-28T02:44:52.364227+00:00",
+  "results": [
+    {
+      "project_key": "72_perth",
+      "sheet_id": "1iYDWJx_HSIzo6ORRDOTwkcfy-g0waKnu36THO7E52_k",
+      "tabs": [
+        {
+          "contract_id": "project_summary",
+          "source_tab": "Project Summary-ROM",
+          "values": {
+            "project_name": "72 Perth Avenue",
+            "client_name": "Castlepoint Numa",
+            "location": "Toronto, ON",
+            "budget_date": "Friday, June 14, 2024"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 27
+        },
+        {
+          "contract_id": "project_info",
+          "source_tab": "Project Info.",
+          "values": {
+            "unit_of_measure": null,
+            "pursuit_number": "20029",
+            "shift_premium": "0.00%",
+            "risk_assessment": "0.00%",
+            "building_area_metric": "19,917",
+            "building_area_imperial": "214,384",
+            "functional_units": "211",
+            "parking_stalls": null
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 68
+        },
+        {
+          "contract_id": "gca_stats",
+          "source_tab": "GCA Stats",
+          "values": {
+            "project_name": "72 Perth Avenue",
+            "location": "Toronto, ON",
+            "architect": "Studio JCI",
+            "budget_date": "14-Jun-24",
+            "parking_below_grade": "31",
+            "parking_above_grade": "13",
+            "parking_total": "44"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 53
+        },
+        {
+          "contract_id": "general_cond_summary",
+          "source_tab": "General Cond Summary",
+          "values": {
+            "project_name": "72 Perth Avenue",
+            "client_name": "Castlepoint Numa",
+            "consultant": "Studio JCI",
+            "location": "72 Perth Avenue"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 37
+        },
+        {
+          "contract_id": "staff_rates",
+          "source_tab": "SKYGRiD Staff Rates",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "hourly_rate_column": true,
+            "monthly_rate_column": false
+          },
+          "errors": [],
+          "raw_row_count": 63
+        },
+        {
+          "contract_id": "gc_incl",
+          "source_tab": "GC Incl",
+          "values": {},
+          "presence": {
+            "project_management": true,
+            "staff_travel": true,
+            "security_procedures": true,
+            "site_communications": true
+          },
+          "errors": [],
+          "raw_row_count": 59
+        },
+        {
+          "contract_id": "document_list",
+          "source_tab": "Document List",
+          "values": {
+            "project_name": "72 Perth Avenue",
+            "client_name": "Castlepoint Numa",
+            "consultant": "Studio JCI",
+            "location": "Toronto, ON",
+            "budget_date": "June 14, 2024"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 25
+        },
+        {
+          "contract_id": "suite_count",
+          "source_tab": "Suite Count",
+          "values": {
+            "total_suites": "211"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 47
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "Above Grade - East",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "Above Grade",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "budget_group_breakdown",
+          "source_tab": "Below Grade - West - TANK",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "trade_column": false,
+            "quantity_column": true,
+            "unit_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "budget_group_breakdown",
+          "source_tab": "Below Grade",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "trade_column": false,
+            "quantity_column": true,
+            "unit_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        }
+      ],
+      "errors": [],
+      "warnings": [
+        "Tab 'exec_summary' not found for project '72_perth'"
+      ]
+    },
+    {
+      "project_key": "17175_yonge_st",
+      "sheet_id": "1L6pKSAvq2_yN6SmQ11l80Q9jHJYG3dx_iLHffUJyDfU",
+      "tabs": [
+        {
+          "contract_id": "project_summary",
+          "source_tab": "Project Summary",
+          "values": {
+            "project_name": "24021 - 17175 Yonge St",
+            "client_name": "Trinity Coptic Foundation",
+            "location": "17175 Yonge St Newmarket, Ontario",
+            "budget_date": "September 27, 2024"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 153
+        },
+        {
+          "contract_id": "project_info",
+          "source_tab": "Project Info",
+          "values": {
+            "unit_of_measure": null,
+            "pursuit_number": "#",
+            "shift_premium": "0.00%",
+            "risk_assessment": "0.00%",
+            "building_area_metric": "25,004",
+            "building_area_imperial": "269,141",
+            "functional_units": "208",
+            "parking_stalls": null
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 68
+        },
+        {
+          "contract_id": "exec_summary",
+          "source_tab": "Exec Summary",
+          "values": {
+            "project_name": "24021 - 17175 Yonge St",
+            "client_name": "Trinity Coptic Foundation",
+            "location": "17175 Yonge St Newmarket, Ontario",
+            "summary_date": "September 27, 2024"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 31
+        },
+        {
+          "contract_id": "gca_stats",
+          "source_tab": "GCA Stats",
+          "values": {
+            "project_name": "24021 - 17175 Yonge St",
+            "location": "17175 Yonge St Newmarket, Ontario",
+            "architect": "WZMH Architects",
+            "budget_date": "27-Sep-24",
+            "parking_below_grade": null,
+            "parking_above_grade": null,
+            "parking_total": null
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "general_cond_summary",
+          "source_tab": "General Cond Summary",
+          "values": {
+            "project_name": "24021 - 17175 Yonge St",
+            "client_name": "Trinity Coptic Foundation",
+            "consultant": "WZMH Architects",
+            "location": "24021 - 17175 Yonge St"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 31
+        },
+        {
+          "contract_id": "staff_rates",
+          "source_tab": "SKYGRiD Staff Rates",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "hourly_rate_column": true,
+            "monthly_rate_column": false
+          },
+          "errors": [],
+          "raw_row_count": 63
+        },
+        {
+          "contract_id": "gc_incl",
+          "source_tab": "GC Incl",
+          "values": {},
+          "presence": {
+            "project_management": true,
+            "staff_travel": true,
+            "security_procedures": true,
+            "site_communications": true
+          },
+          "errors": [],
+          "raw_row_count": 59
+        },
+        {
+          "contract_id": "document_list",
+          "source_tab": "Document List",
+          "values": {
+            "project_name": "24021 - 17175 Yonge St",
+            "client_name": "Trinity Coptic Foundation",
+            "consultant": "WZMH Architects",
+            "location": "17175 Yonge St Newmarket, Ontario",
+            "budget_date": "September 27, 2024"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 14
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "AG Parking",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "AG Res1",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "AG Res2",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "AG Res3",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "budget_group_breakdown",
+          "source_tab": "BG1",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "trade_column": false,
+            "quantity_column": true,
+            "unit_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "budget_group_breakdown",
+          "source_tab": "BG2",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "trade_column": false,
+            "quantity_column": true,
+            "unit_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "budget_group_breakdown",
+          "source_tab": "BG3",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "trade_column": false,
+            "quantity_column": true,
+            "unit_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        }
+      ],
+      "errors": [],
+      "warnings": [
+        "Tab 'suite_count' not found for project '17175_yonge_st'"
+      ]
+    },
+    {
+      "project_key": "azure_road",
+      "sheet_id": "1pYlXf2-Je0uhxXkU_xWkIpLGXwvMP6SFM6oP-mL9BEg",
+      "tabs": [
+        {
+          "contract_id": "project_summary",
+          "source_tab": "Project Summary",
+          "values": {
+            "project_name": "6071 Azure Road",
+            "client_name": "LDHT Holdings",
+            "location": "Richmond, British Columbia",
+            "budget_date": "December 20, 2024"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 145
+        },
+        {
+          "contract_id": "project_info",
+          "source_tab": "Project Info",
+          "values": {
+            "unit_of_measure": null,
+            "pursuit_number": "#",
+            "shift_premium": "0.00%",
+            "risk_assessment": "0.00%",
+            "building_area_metric": "34,962",
+            "building_area_imperial": "376,332",
+            "functional_units": "330",
+            "parking_stalls": null
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 68
+        },
+        {
+          "contract_id": "exec_summary",
+          "source_tab": "Exec Summary",
+          "values": {
+            "project_name": "6071 Azure Road",
+            "client_name": "LDHT Holdings",
+            "location": "Richmond, British Columbia",
+            "summary_date": "December 20, 2024"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 28
+        },
+        {
+          "contract_id": "gca_stats",
+          "source_tab": "GCA Stats",
+          "values": {
+            "project_name": "6071 Azure Road",
+            "location": "Richmond, British Columbia",
+            "architect": "HNPA Architecture + Planning",
+            "budget_date": "20-Dec-24",
+            "parking_below_grade": null,
+            "parking_above_grade": null,
+            "parking_total": null
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "general_cond_summary",
+          "source_tab": "General Cond Summary",
+          "values": {
+            "project_name": "6071 Azure Road",
+            "client_name": "LDHT Holdings",
+            "consultant": "HNPA Architecture + Planning",
+            "location": "6071 Azure Road"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 31
+        },
+        {
+          "contract_id": "staff_rates",
+          "source_tab": "SKYGRiD Staff Rates",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "hourly_rate_column": true,
+            "monthly_rate_column": false
+          },
+          "errors": [],
+          "raw_row_count": 63
+        },
+        {
+          "contract_id": "gc_incl",
+          "source_tab": "GC Incl",
+          "values": {},
+          "presence": {
+            "project_management": true,
+            "staff_travel": true,
+            "security_procedures": true,
+            "site_communications": true
+          },
+          "errors": [],
+          "raw_row_count": 59
+        },
+        {
+          "contract_id": "document_list",
+          "source_tab": "Document List",
+          "values": {
+            "project_name": "6071 Azure Road",
+            "client_name": "LDHT Holdings",
+            "consultant": "HNPA Architecture + Planning",
+            "location": "Richmond, British Columbia",
+            "budget_date": "December 20, 2024"
+          },
+          "presence": {},
+          "errors": [],
+          "raw_row_count": 14
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "AG Parking",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "AG - A",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "AG - B",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "area_group_breakdown",
+          "source_tab": "AG - C",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "quantity_column": true,
+            "unit_column": true,
+            "rate_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "budget_group_breakdown",
+          "source_tab": "BG1",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "trade_column": false,
+            "quantity_column": true,
+            "unit_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "budget_group_breakdown",
+          "source_tab": "BG2",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "trade_column": false,
+            "quantity_column": true,
+            "unit_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        },
+        {
+          "contract_id": "budget_group_breakdown",
+          "source_tab": "BG3",
+          "values": {},
+          "presence": {
+            "description_column": true,
+            "trade_column": false,
+            "quantity_column": true,
+            "unit_column": true,
+            "amount_column": true,
+            "group_total_row": true
+          },
+          "errors": [],
+          "raw_row_count": 200
+        }
+      ],
+      "errors": [],
+      "warnings": [
+        "Tab 'suite_count' not found for project 'azure_road'"
+      ]
+    }
+  ]
+}

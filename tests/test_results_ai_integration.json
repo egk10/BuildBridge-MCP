@@ -1,0 +1,50 @@
+{
+  "timestamp": 1758581188.6442723,
+  "total_tests": 8,
+  "passed": 8,
+  "failed": 0,
+  "success_rate": 100.0,
+  "total_time": 8.938684940338135,
+  "results": [
+    {
+      "category": "Environment Setup",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "category": "AI Service Initialization",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "category": "Construction Prompts",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "category": "AI Query Processing",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "category": "Token Tracking",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "category": "Error Handling",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "category": "Production Integration",
+      "status": "PASSED",
+      "error": null
+    },
+    {
+      "category": "End-to-End Workflow",
+      "status": "PASSED",
+      "error": null
+    }
+  ]
+}

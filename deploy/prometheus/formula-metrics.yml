@@ -1,0 +1,7 @@
+# Placeholder metric names for formula awareness observability.
+metrics:
+  - formula_extraction_success_rate
+  - formula_extraction_duration_seconds
+  - circular_reference_count
+  - formula_change_frequency
+  - dependency_graph_health
