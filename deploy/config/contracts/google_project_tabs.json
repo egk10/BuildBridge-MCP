@@ -1,0 +1,454 @@
+{
+  "description": "Validation contract for Google Sheets project workbooks (Azure Road, 72 Perth, 17175 Yonge St)",
+  "data_source": "google_sheets",
+  "tab_contracts": [
+    {
+      "id": "project_summary",
+      "required": true,
+      "tab_names": [
+        "Project Summary",
+        "Project Summary-ROM"
+      ],
+      "fields": [
+        {
+          "key": "project_name",
+          "type": "value",
+          "required": true,
+          "labels": ["project", "project:"]
+        },
+        {
+          "key": "client_name",
+          "type": "value",
+          "required": true,
+          "labels": ["client", "client:"]
+        },
+        {
+          "key": "location",
+          "type": "value",
+          "required": true,
+          "labels": ["location", "location:"]
+        },
+        {
+          "key": "budget_date",
+          "type": "value",
+          "required": false,
+          "labels": ["date", "date:", "budget date", "budget date:"]
+        }
+      ]
+    },
+    {
+      "id": "project_info",
+      "required": true,
+      "tab_names": [
+        "Project Info",
+        "Project Info."
+      ],
+      "fields": [
+        {
+          "key": "unit_of_measure",
+          "type": "value",
+          "required": false,
+          "labels": ["unit of measure"]
+        },
+        {
+          "key": "pursuit_number",
+          "type": "value",
+          "required": true,
+          "labels": ["pursuit#", "pursuit", "project #", "project number"]
+        },
+        {
+          "key": "shift_premium",
+          "type": "value",
+          "required": true,
+          "labels": ["shift premium"]
+        },
+        {
+          "key": "risk_assessment",
+          "type": "value",
+          "required": true,
+          "labels": ["risk assessment", "risk assessment %"]
+        },
+        {
+          "key": "building_area_metric",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "exact building area (metric)",
+            "gross building area (metric)",
+            "building area (metric)"
+          ]
+        },
+        {
+          "key": "building_area_imperial",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "exact building area (imperial)",
+            "gross building area (imperial)",
+            "building area (imperial)"
+          ]
+        },
+        {
+          "key": "functional_units",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "number of functional units",
+            "functional units",
+            "total functional units"
+          ]
+        },
+        {
+          "key": "parking_stalls",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "parking stalls",
+            "number of parking stalls",
+            "total parking stalls"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "exec_summary",
+      "required": false,
+      "tab_names": [
+        "Exec Summary"
+      ],
+      "fields": [
+        {
+          "key": "project_name",
+          "type": "value",
+          "required": true,
+          "labels": ["project", "project:"]
+        },
+        {
+          "key": "client_name",
+          "type": "value",
+          "required": true,
+          "labels": ["client", "client:"]
+        },
+        {
+          "key": "location",
+          "type": "value",
+          "required": true,
+          "labels": ["location", "location:"]
+        },
+        {
+          "key": "summary_date",
+          "type": "value",
+          "required": false,
+          "labels": ["date", "date:"]
+        }
+      ]
+    },
+    {
+      "id": "gca_stats",
+      "required": true,
+      "tab_names": [
+        "GCA Stats"
+      ],
+      "fields": [
+        {
+          "key": "project_name",
+          "type": "value",
+          "required": true,
+          "labels": ["project", "project:"]
+        },
+        {
+          "key": "location",
+          "type": "value",
+          "required": true,
+          "labels": ["location", "location:"]
+        },
+        {
+          "key": "architect",
+          "type": "value",
+          "required": true,
+          "labels": ["architect", "architect:"]
+        },
+        {
+          "key": "budget_date",
+          "type": "value",
+          "required": true,
+          "labels": ["budget date", "budget date:"]
+        },
+        {
+          "key": "parking_below_grade",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "sub-total - below grade",
+            "total below grade gca"
+          ]
+        },
+        {
+          "key": "parking_above_grade",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "sub-total - above grade",
+            "total above grade gca"
+          ]
+        },
+        {
+          "key": "parking_total",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "total gca",
+            "total parking"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "general_cond_summary",
+      "required": true,
+      "tab_names": [
+        "General Cond Summary"
+      ],
+      "fields": [
+        {
+          "key": "project_name",
+          "type": "value",
+          "required": true,
+          "labels": ["project"]
+        },
+        {
+          "key": "client_name",
+          "type": "value",
+          "required": true,
+          "labels": ["client"]
+        },
+        {
+          "key": "consultant",
+          "type": "value",
+          "required": true,
+          "labels": ["consultant"]
+        },
+        {
+          "key": "location",
+          "type": "value",
+          "required": true,
+          "labels": ["location"]
+        }
+      ]
+    },
+    {
+      "id": "staff_rates",
+      "required": false,
+      "tab_names": [
+        "Staff Rates",
+        "SKYGRiD Staff Rates"
+      ],
+      "fields": [
+        {
+          "key": "description_column",
+          "type": "presence",
+          "required": true,
+          "labels": ["description"]
+        },
+        {
+          "key": "hourly_rate_column",
+          "type": "presence",
+          "required": true,
+          "labels": ["hourly", "hourly recommended", "2020"]
+        },
+        {
+          "key": "monthly_rate_column",
+          "type": "presence",
+          "required": false,
+          "labels": ["monthly", "monthly recommended"]
+        }
+      ]
+    },
+    {
+      "id": "gc_incl",
+      "required": true,
+      "tab_names": [
+        "GC Incl"
+      ],
+      "fields": [
+        {
+          "key": "project_management",
+          "type": "presence",
+          "required": true,
+          "labels": ["project management and supervision", "project management"]
+        },
+        {
+          "key": "staff_travel",
+          "type": "presence",
+          "required": true,
+          "labels": ["staff travel"]
+        },
+        {
+          "key": "security_procedures",
+          "type": "presence",
+          "required": true,
+          "labels": ["security", "security  procedures"]
+        },
+        {
+          "key": "site_communications",
+          "type": "presence",
+          "required": false,
+          "labels": ["site communications"]
+        }
+      ]
+    },
+    {
+      "id": "document_list",
+      "required": true,
+      "tab_names": [
+        "Document List"
+      ],
+      "fields": [
+        {
+          "key": "project_name",
+          "type": "value",
+          "required": true,
+          "labels": ["project", "project:"]
+        },
+        {
+          "key": "client_name",
+          "type": "value",
+          "required": true,
+          "labels": ["client", "client:"]
+        },
+        {
+          "key": "consultant",
+          "type": "value",
+          "required": true,
+          "labels": ["consultant", "consultant:"]
+        },
+        {
+          "key": "location",
+          "type": "value",
+          "required": true,
+          "labels": ["location", "location:"]
+        },
+        {
+          "key": "budget_date",
+          "type": "value",
+          "required": false,
+          "labels": ["budget date", "budget date:"]
+        }
+      ]
+    },
+    {
+      "id": "suite_count",
+      "required": false,
+      "tab_names": [
+        "Suite Count"
+      ],
+      "fields": [
+        {
+          "key": "total_suites",
+          "type": "value",
+          "required": false,
+          "labels": [
+            "sub-total tower suite",
+            "total",
+            "total suites",
+            "total - bldg"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "area_group_breakdown",
+      "required": true,
+      "allow_multiple": true,
+      "match": {
+        "type": "regex",
+        "pattern": "^(AG\\b|Area\\s*Group|Above\\s*Grade)"
+      },
+      "fields": [
+        {
+          "key": "description_column",
+          "type": "presence",
+          "required": true,
+          "labels": ["description", "scope description"]
+        },
+        {
+          "key": "quantity_column",
+          "type": "presence",
+          "required": false,
+          "labels": ["qty", "quantity"]
+        },
+        {
+          "key": "unit_column",
+          "type": "presence",
+          "required": false,
+          "labels": ["unit", "uom"]
+        },
+        {
+          "key": "rate_column",
+          "type": "presence",
+          "required": false,
+          "labels": ["unit rate", "unit price", "rate"]
+        },
+        {
+          "key": "amount_column",
+          "type": "presence",
+          "required": true,
+          "labels": ["amount", "value", "extended", "total"]
+        },
+        {
+          "key": "group_total_row",
+          "type": "presence",
+          "required": false,
+          "labels": ["group total", "total", "subtotal"]
+        }
+      ]
+    },
+    {
+      "id": "budget_group_breakdown",
+      "required": true,
+      "allow_multiple": true,
+      "match": {
+        "type": "regex",
+        "pattern": "^(BG|Budget\\s*Group|Below\\s*Grade)"
+      },
+      "fields": [
+        {
+          "key": "description_column",
+          "type": "presence",
+          "required": true,
+          "labels": ["description", "scope description"]
+        },
+        {
+          "key": "trade_column",
+          "type": "presence",
+          "required": false,
+          "labels": ["trade", "division"]
+        },
+        {
+          "key": "quantity_column",
+          "type": "presence",
+          "required": false,
+          "labels": ["qty", "quantity"]
+        },
+        {
+          "key": "unit_column",
+          "type": "presence",
+          "required": false,
+          "labels": ["unit", "uom"]
+        },
+        {
+          "key": "amount_column",
+          "type": "presence",
+          "required": true,
+          "labels": ["amount", "value", "extended", "total"]
+        },
+        {
+          "key": "group_total_row",
+          "type": "presence",
+          "required": false,
+          "labels": ["group total", "total", "subtotal"]
+        }
+      ]
+    }
+  ]
+}

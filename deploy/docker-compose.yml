@@ -1,8 +1,8 @@
-version: '3.8'
-
 services:
   construction-mcp:
-    build: .
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
     ports:
       - "8002:8000"
     environment:

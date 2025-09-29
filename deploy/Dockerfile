@@ -21,7 +21,9 @@ RUN pip install --no-cache-dir -r requirements-production.txt
 COPY src/ ./src/
 COPY config/ ./config/
 COPY data/ ./data/
-COPY production_mcp_integration.py .
+COPY .env ./
+COPY config/credentials.json ./credentials.json
+COPY src/production_mcp_integration.py .
 COPY *.py ./
 
 # Create non-root user

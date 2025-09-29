@@ -32,7 +32,7 @@ query_processor: Optional[QueryProcessor] = None
 
 def load_config() -> Dict[str, Any]:
     """Load configuration from credentials.json"""
-    config_path = Path(__file__).parent.parent / "config" / "credentials.json"
+    config_path = Path(__file__).parent.parent / "credentials.json"
     if not config_path.exists():
         raise FileNotFoundError(
             f"Configuration file not found: {config_path}\n"

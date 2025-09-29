@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction MCP - Real-time Logs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .logs-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-height: 80vh;
+        }
+
+        .logs-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logs-header h2 {
+            font-size: 1.5rem;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.connected {
+            background: #2ed573;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .logs-controls {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .logs-content {
+            height: 60vh;
+            overflow-y: auto;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .log-entry {
+            padding: 8px 20px;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            transition: background-color 0.2s ease;
+        }
+
+        .log-entry:hover {
+            background: #f8f9fa;
+        }
+
+        .log-entry.new {
+            background: #e8f5e8;
+            animation: highlight 1s ease-out;
+        }
+
+        @keyframes highlight {
+            0% { background: #d4edda; }
+            100% { background: transparent; }
+        }
+
+        .log-timestamp {
+            color: #6c757d;
+            font-size: 11px;
+            min-width: 140px;
+            white-space: nowrap;
+        }
+
+        .log-level {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .log-level.INFO {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .log-level.ERROR {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .log-level.WARNING {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .log-level.DEBUG {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .log-message {
+            flex: 1;
+            word-wrap: break-word;
+        }
+
+        .log-logger {
+            color: #495057;
+            font-size: 11px;
+            min-width: 120px;
+        }
+
+        .filter-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .no-logs {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .logs-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .logs-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .filter-input {
+                width: 100%;
+            }
+
+            .log-entry {
+                flex-direction: column;
+                gap: 5px;
+                font-size: 12px;
+            }
+
+            .log-timestamp,
+            .log-logger {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏗️ Construction MCP Logs</h1>
+            <p>Real-time system monitoring and AI processing insights</p>
+        </div>
+
+        <div class="logs-container">
+            <div class="logs-header">
+                <h2>Live System Logs</h2>
+                <div class="connection-status">
+                    <span id="connection-text">Disconnected</span>
+                    <div id="status-indicator" class="status-indicator"></div>
+                </div>
+            </div>
+
+            <div class="logs-controls">
+                <button id="clear-logs" class="btn btn-secondary">Clear Logs</button>
+                <button id="pause-auto-scroll" class="btn btn-primary">Pause Auto-scroll</button>
+                <input type="text" id="filter-input" class="filter-input" placeholder="Filter logs...">
+                <div class="stats">
+                    <span>Total: <span id="total-logs">0</span></span>
+                    <span>Filtered: <span id="filtered-logs">0</span></span>
+                </div>
+            </div>
+
+            <div id="logs-content" class="logs-content">
+                <div class="no-logs">
+                    <p>🔄 Connecting to log stream...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LogsViewer {
+            constructor() {
+                this.ws = null;
+                this.logs = [];
+                this.filteredLogs = [];
+                this.autoScroll = true;
+                this.filterText = '';
+                
+                this.logsContent = document.getElementById('logs-content');
+                this.statusIndicator = document.getElementById('status-indicator');
+                this.connectionText = document.getElementById('connection-text');
+                this.totalLogsSpan = document.getElementById('total-logs');
+                this.filteredLogsSpan = document.getElementById('filtered-logs');
+                this.filterInput = document.getElementById('filter-input');
+                
+                this.initializeEventListeners();
+                this.connect();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('clear-logs').addEventListener('click', () => {
+                    this.clearLogs();
+                });
+
+                document.getElementById('pause-auto-scroll').addEventListener('click', (e) => {
+                    this.autoScroll = !this.autoScroll;
+                    e.target.textContent = this.autoScroll ? 'Pause Auto-scroll' : 'Resume Auto-scroll';
+                    e.target.className = this.autoScroll ? 'btn btn-primary' : 'btn btn-secondary';
+                });
+
+                this.filterInput.addEventListener('input', (e) => {
+                    this.filterText = e.target.value.toLowerCase();
+                    this.filterLogs();
+                });
+            }
+
+            connect() {
+                const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const wsUrl = `${protocol}//${window.location.host}/ws/logs`;
+                
+                this.ws = new WebSocket(wsUrl);
+                
+                this.ws.onopen = () => {
+                    console.log('✅ Connected to logs WebSocket');
+                    this.updateConnectionStatus(true);
+                };
+                
+                this.ws.onmessage = (event) => {
+                    try {
+                        const logEntry = JSON.parse(event.data);
+                        if (logEntry.type !== 'ping') {
+                            this.addLogEntry(logEntry);
+                        }
+                    } catch (error) {
+                        console.error('Error parsing log entry:', error);
+                    }
+                };
+                
+                this.ws.onclose = () => {
+                    console.log('❌ WebSocket connection closed');
+                    this.updateConnectionStatus(false);
+                    // Attempt to reconnect after 3 seconds
+                    setTimeout(() => this.connect(), 3000);
+                };
+                
+                this.ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    this.updateConnectionStatus(false);
+                };
+            }
+
+            updateConnectionStatus(connected) {
+                if (connected) {
+                    this.statusIndicator.classList.add('connected');
+                    this.connectionText.textContent = 'Connected';
+                } else {
+                    this.statusIndicator.classList.remove('connected');
+                    this.connectionText.textContent = 'Disconnected';
+                }
+            }
+
+            addLogEntry(logEntry) {
+                this.logs.push(logEntry);
+                
+                // Keep only last 500 logs to prevent memory issues
+                if (this.logs.length > 500) {
+                    this.logs = this.logs.slice(-500);
+                }
+                
+                this.filterLogs();
+            }
+
+            filterLogs() {
+                if (this.filterText === '') {
+                    this.filteredLogs = [...this.logs];
+                } else {
+                    this.filteredLogs = this.logs.filter(log => 
+                        log.message.toLowerCase().includes(this.filterText) ||
+                        log.level.toLowerCase().includes(this.filterText) ||
+                        log.logger.toLowerCase().includes(this.filterText)
+                    );
+                }
+                
+                this.renderLogs();
+                this.updateStats();
+            }
+
+            renderLogs() {
+                if (this.filteredLogs.length === 0) {
+                    this.logsContent.innerHTML = '<div class="no-logs"><p>No logs to display</p></div>';
+                    return;
+                }
+
+                const logsHTML = this.filteredLogs.map(log => this.createLogEntryHTML(log)).join('');
+                this.logsContent.innerHTML = logsHTML;
+                
+                if (this.autoScroll) {
+                    this.logsContent.scrollTop = this.logsContent.scrollHeight;
+                }
+            }
+
+            createLogEntryHTML(log) {
+                const timestamp = new Date(log.timestamp).toLocaleTimeString();
+                return `
+                    <div class="log-entry new">
+                        <div class="log-timestamp">${timestamp}</div>
+                        <div class="log-level ${log.level}">${log.level}</div>
+                        <div class="log-logger">${log.logger}</div>
+                        <div class="log-message">${this.escapeHtml(log.message)}</div>
+                    </div>
+                `;
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            clearLogs() {
+                this.logs = [];
+                this.filteredLogs = [];
+                this.renderLogs();
+                this.updateStats();
+            }
+
+            updateStats() {
+                this.totalLogsSpan.textContent = this.logs.length;
+                this.filteredLogsSpan.textContent = this.filteredLogs.length;
+            }
+        }
+
+        // Initialize the logs viewer when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new LogsViewer();
+        });
+    </script>
+</body>
+</html>
