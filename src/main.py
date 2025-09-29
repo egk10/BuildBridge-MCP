@@ -2,7 +2,7 @@
 """
 Construction Management MCP Server
 
-A Model Context Protocol server for automating construction management 
+A Model Context Protocol server for automating construction management
 data analysis using Excel files and SharePoint data.
 """
 
@@ -15,7 +15,7 @@ import fastmcp
 from fastmcp import FastMCP
 
 from connectors.excel_connector import ExcelConnector
-from connectors.sharepoint_connector import SharePointConnector  
+from connectors.sharepoint_connector import SharePointConnector
 from connectors.document_indexer import DocumentIndexer
 from connectors.google_sheets_connector import GoogleSheetsConnector
 from query_processor import QueryProcessor
@@ -31,16 +31,74 @@ google_sheets_connector: Optional[GoogleSheetsConnector] = None
 query_processor: Optional[QueryProcessor] = None
 
 def load_config() -> Dict[str, Any]:
-    """Load configuration from credentials.json"""
+    """
+    Load configuration using secure config manager.
+
+    Priority order:
+    1. Environment variables (most secure)
+    2. Local config files (fallback for development)
+    3. Template defaults (failsafe)
+
+    For migration: Existing code continues to work unchanged.
+    """
+    try:
+        # Try new secure config system first
+        from secure_config import load_secure_config
+        secure_config = load_secure_config()
+
+        # Convert secure config format to legacy format for backward compatibility
+        config = {}
+
+        # Google OAuth
+        if secure_config['google'].client_id:
+            config.update({
+                'client_id': secure_config['google'].client_id,
+                'client_secret': secure_config['google'].client_secret,
+                'tenant_id': secure_config['google'].project_id,
+            })
+
+        # Google Sheets
+        if secure_config['google_sheets'].projects:
+            config['google_sheets'] = {
+                'projects': secure_config['google_sheets'].projects
+            }
+
+        # OpenAI
+        if secure_config['openai'].api_key:
+            config['ai_service'] = {
+                'openai_api_key': secure_config['openai'].api_key,
+                'model': secure_config['openai'].model,
+                'max_tokens': secure_config['openai'].max_tokens,
+                'temperature': secure_config['openai'].temperature,
+                'max_retries': secure_config['openai'].max_retries,
+            }
+
+        # App settings
+        config['local_mode'] = secure_config['app'].local_mode
+        config['log_level'] = secure_config['app'].log_level
+
+        # If we got a complete config from secure system, return it
+        if config:
+            print("✅ Configuration loaded from secure config system")
+            return config
+
+    except Exception as e:
+        print(f"⚠️  Secure config failed, falling back to legacy method: {e}")
+
+    # Fallback to legacy method for backward compatibility
     config_path = Path(__file__).parent.parent / "credentials.json"
     if not config_path.exists():
         raise FileNotFoundError(
             f"Configuration file not found: {config_path}\n"
-            "Please copy credentials.json.template to credentials.json and fill in your details."
+            "Please copy credentials.json.template to credentials.json and fill in your details.\n"
+            "Or set up environment variables (see .env.template and docs/SECURITY_CONFIG_GUIDE.md)"
         )
-    
+
     with open(config_path, 'r') as f:
-        return json.load(f)
+        config = json.load(f)
+
+    print("⚠️  Using legacy configuration loading. Consider migrating to environment variables.")
+    return config
 
 def initialize_connectors():
     """Initialize all data connectors"""

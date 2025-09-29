@@ -63,17 +63,82 @@ def get_mcp_connectors():
         return None, None, None, None, None
 
 def load_config():
-    """Load configuration from credentials.json and .env file"""
+    """
+    Load configuration using secure config manager with environment variable priority.
+
+    Priority order:
+    1. Environment variables (most secure)
+    2. Secure config manager (unified approach)
+    3. Local config files (fallback for development)
+    4. Template defaults (failsafe)
+
+    For migration: Existing code continues to work unchanged.
+    """
+    try:
+        # Try new secure config system first
+        from secure_config import load_secure_config
+        secure_config = load_secure_config()
+
+        # Convert secure config format to legacy format for backward compatibility
+        config = {}
+
+        # Google OAuth
+        if secure_config['google'].client_id:
+            config.update({
+                'client_id': secure_config['google'].client_id,
+                'client_secret': secure_config['google'].client_secret,
+                'tenant_id': secure_config['google'].project_id,
+            })
+
+        # Google Sheets
+        if secure_config['google_sheets'].projects:
+            config['google_sheets'] = {
+                'projects': secure_config['google_sheets'].projects
+            }
+
+        # OpenAI
+        if secure_config['openai'].api_key:
+            config['ai_service'] = {
+                'openai_api_key': secure_config['openai'].api_key,
+                'model': secure_config['openai'].model,
+                'max_tokens': secure_config['openai'].max_tokens,
+                'temperature': secure_config['openai'].temperature,
+                'max_retries': secure_config['openai'].max_retries,
+            }
+
+        # App settings
+        config['local_mode'] = secure_config['app'].local_mode
+        config['log_level'] = secure_config['app'].log_level
+
+        # Data sources configuration (for backward compatibility)
+        config['data_sources'] = {
+            'google_sheets': {
+                'enabled': bool(secure_config['google_sheets'].projects),
+                'description': 'Google Sheets project data'
+            },
+            'excel_files': {'enabled': False},
+            'sharepoint': {'enabled': False},
+            'onedrive': {'enabled': False}
+        }
+
+        if config:
+            logger.info("✅ Configuration loaded from secure config system")
+            return config
+
+    except Exception as e:
+        logger.warning(f"⚠️  Secure config failed, falling back to legacy method: {e}")
+
+    # Fallback to legacy method for backward compatibility
     # Load environment variables from .env file
     from dotenv import load_dotenv
     import os
-    
+
     # Load .env file if it exists
     env_path = Path(__file__).parent.parent / ".env"  # Project root .env file
     if env_path.exists():
         load_dotenv(env_path)
         logger.info("✅ Loaded environment variables from .env file")
-    
+
     config_path = Path(__file__).parent.parent / "credentials.json"
     try:
         with open(config_path, 'r') as f:
@@ -81,7 +146,7 @@ def load_config():
             # Handle environment variable substitution
             config_content = config_content.replace('${OPENAI_API_KEY}', os.getenv('OPENAI_API_KEY', ''))
             config = json.loads(config_content)
-            
+
             # Override with environment variables if set
             if 'ai_service' in config:
                 ai_config = config['ai_service']
@@ -90,10 +155,11 @@ def load_config():
                 ai_config['max_tokens'] = int(os.getenv('AI_MAX_TOKENS', ai_config.get('max_tokens', 2000)))
                 ai_config['temperature'] = float(os.getenv('AI_TEMPERATURE', ai_config.get('temperature', 0.1)))
                 ai_config['max_retries'] = int(os.getenv('AI_MAX_RETRIES', ai_config.get('max_retries', 3)))
-            
+
             # Override other settings
             config['local_mode'] = os.getenv('LOCAL_MODE', str(config.get('local_mode', True))).lower() == 'true'
-            
+
+            logger.warning("⚠️  Using legacy configuration loading. Consider migrating to environment variables.")
             return config
     except Exception as e:
         logger.error(f"Failed to load config: {e}")
