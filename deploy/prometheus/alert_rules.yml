@@ -1,0 +1,119 @@
+groups:
+  - name: formula_awareness_alerts
+    rules:
+      # Formula extraction failures
+      - alert: FormulaExtractionFailureRateHigh
+        expr: rate(formula_extraction_success_rate[5m]) < 0.95
+        for: 5m
+        labels:
+          severity: warning
+          service: formula-awareness
+        annotations:
+          summary: "Formula extraction success rate is below 95%"
+          description: "Formula extraction success rate is {{ $value }}% over the last 5 minutes. Expected: >= 95%"
+          runbook_url: "https://docs.buildbridge.com/runbooks/formula-awareness#extraction-failures"
+
+      - alert: FormulaExtractionFailureRateCritical
+        expr: rate(formula_extraction_success_rate[10m]) < 0.90
+        for: 10m
+        labels:
+          severity: critical
+          service: formula-awareness
+        annotations:
+          summary: "Formula extraction success rate critically low"
+          description: "Formula extraction success rate is {{ $value }}% over the last 10 minutes. Expected: >= 90%"
+          runbook_url: "https://docs.buildbridge.com/runbooks/formula-awareness#extraction-failures"
+
+      # Circular reference alerts
+      - alert: CircularReferencesDetected
+        expr: circular_reference_count > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: formula-awareness
+        annotations:
+          summary: "Circular references detected in spreadsheet formulas"
+          description: "{{ $value }} circular reference(s) detected. Check dependency graphs for cycles."
+          runbook_url: "https://docs.buildbridge.com/runbooks/formula-awareness#circular-references"
+
+      - alert: HighCircularReferenceCount
+        expr: circular_reference_count > 5
+        for: 5m
+        labels:
+          severity: critical
+          service: formula-awareness
+        annotations:
+          summary: "High number of circular references detected"
+          description: "{{ $value }} circular references detected. This may indicate spreadsheet design issues."
+          runbook_url: "https://docs.buildbridge.com/runbooks/formula-awareness#circular-references"
+
+      # Dependency graph health
+      - alert: DependencyGraphUnhealthy
+        expr: dependency_graph_health < 0.9
+        for: 5m
+        labels:
+          severity: warning
+          service: formula-awareness
+        annotations:
+          summary: "Dependency graph health degraded"
+          description: "Dependency graph health score is {{ $value }}. Expected: >= 0.9"
+          runbook_url: "https://docs.buildbridge.com/runbooks/formula-awareness#dependency-health"
+
+      # Formula extraction duration alerts
+      - alert: FormulaExtractionSlow
+        expr: histogram_quantile(0.95, rate(formula_extraction_duration_seconds_bucket[5m])) > 30
+        for: 5m
+        labels:
+          severity: warning
+          service: formula-awareness
+        annotations:
+          summary: "Formula extraction is running slow"
+          description: "95th percentile formula extraction duration is {{ $value }}s. Expected: < 30s"
+          runbook_url: "https://docs.buildbridge.com/runbooks/formula-awareness#performance"
+
+      # AI accuracy alerts
+      - alert: AIAccuracyDegraded
+        expr: ai_formula_accuracy < 0.75
+        for: 10m
+        labels:
+          severity: warning
+          service: formula-awareness
+        annotations:
+          summary: "AI formula query accuracy degraded"
+          description: "AI formula query accuracy is {{ $value }}. Expected: >= 0.75 (75%)"
+          runbook_url: "https://docs.buildbridge.com/runbooks/formula-awareness#ai-accuracy"
+
+  - name: system_alerts
+    rules:
+      # Service health
+      - alert: BuildBridgeMCPDown
+        expr: up{job="buildbridge-mcp"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: buildbridge-mcp
+        annotations:
+          summary: "BuildBridge MCP service is down"
+          description: "BuildBridge MCP has been down for more than 1 minute."
+
+      # Database connectivity
+      - alert: PostgresDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL has been down for more than 1 minute."
+
+      # Cache connectivity
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          service: cache
+        annotations:
+          summary: "Redis cache is down"
+          description: "Redis has been down for more than 1 minute."
