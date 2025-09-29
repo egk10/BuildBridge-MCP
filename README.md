@@ -43,6 +43,29 @@ BuildBridge-MCP/
 └── logs/                         # Log files
 ```
 
+## 🔒 Security Notice
+
+**⚠️ NEVER commit credential files to version control!**
+
+The following files contain sensitive information and are already in `.gitignore`:
+- `.env` - Environment variables with API keys
+- `config/client_secret.json` - Google OAuth credentials
+- `config/credentials.json` - Service account keys and project configs
+- `config/token.pickle` - OAuth access tokens
+
+### Setup Instructions:
+1. Copy `.env.template` to `.env` and fill in your credentials
+2. For development, you can still use local config files as fallback
+3. For production, use environment variables only
+
+### Security Documentation:
+See [`docs/SECURITY_CONFIG_GUIDE.md`](docs/SECURITY_CONFIG_GUIDE.md) for comprehensive security configuration and best practices.
+
+### If you accidentally commit credentials:
+1. Remove files from git: `git rm --cached <file>`
+2. Use BFG Repo Cleaner to remove from history: `bfg --delete-files <filename>`
+3. Regenerate compromised credentials
+
 ## Features
 
 - Natural language queries like "What's the status of Project ABC?"
@@ -75,27 +98,62 @@ curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/scripts/
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Production Deployment
 
-1. Clone and install
+BuildBridge-MCP supports secure production deployment using Docker and environment variables.
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Production Google OAuth credentials
+- Production OpenAI API key
+- SSL certificates (optional but recommended)
+
+### Quick Production Deploy
+
+1. **Configure Environment**
    ```bash
-   git clone https://github.com/egk10/BuildBridge-MCP.git
-   cd BuildBridge-MCP
-   pip install -r requirements.txt
+   # Copy production template
+   cp .env.production.template .env
+   
+   # Edit with your production credentials
+   nano .env
    ```
 
-2. **Easy Start Script** (Recommended)
+2. **Deploy with One Command**
    ```bash
-   # Automatically detects and activates your virtual environment
-   ./start_buildbridge.sh
+   cd deploy
+   ./deploy-production.sh
    ```
 
-3. Manual Setup (if needed)
-   ```bash
-   # Activate your virtual environment (supports .venv, venv, or buildbridge_venv)
-   source buildbridge_venv/bin/activate  # or .venv/bin/activate
-   python src/main.py
-   ```
+### Production Services
+- **BuildBridge-MCP API**: `http://localhost:8002`
+- **Nginx Reverse Proxy**: `http://localhost:8081`
+- **Grafana Dashboard**: `http://localhost:3003` (admin/admin)
+- **Prometheus Metrics**: `http://localhost:9092`
+
+### Environment Variables Required
+See `.env.production.template` for all required variables including:
+- Google OAuth credentials
+- Google Sheets project IDs
+- OpenAI API configuration
+- Database and Redis settings
+- SSL certificate paths
+
+### Security Features
+- ✅ Environment variable priority over local files
+- ✅ No sensitive data in Docker images
+- ✅ Automatic SSL/TLS support
+- ✅ Health checks and monitoring
+- ✅ Production logging and metrics
+
+### Management Commands
+```bash
+cd deploy
+docker-compose logs -f           # View logs
+docker-compose restart          # Restart services
+docker-compose down             # Stop deployment
+docker-compose pull && docker-compose up -d  # Update
+```
 
 ## � Ubuntu one-liner bootstrap
 

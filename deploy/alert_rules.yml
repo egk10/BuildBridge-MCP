@@ -1,0 +1,68 @@
+groups:
+  - name: mcp-health
+    rules:
+      - alert: MCPServiceDown
+        expr: up{job="mcp"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: mcp
+        annotations:
+          summary: "MCP service is down"
+          description: "MCP service has been down for more than 5 minutes"
+
+      - alert: MCPHighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="mcp"}[5m])) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: mcp
+        annotations:
+          summary: "MCP high response time"
+          description: "95th percentile response time > 5s for 10 minutes"
+
+  - name: database-health
+    rules:
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database is down"
+          description: "PostgreSQL database has been down for more than 2 minutes"
+
+  - name: redis-health
+    rules:
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "Redis cache has been down for more than 2 minutes"
+
+  - name: system-health
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage > 90% for 10 minutes"
+
+      - alert: HighMemoryUsage
+        expr: (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage > 90% for 5 minutes"

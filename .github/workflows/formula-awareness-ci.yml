@@ -1,0 +1,255 @@
+name: Formula Awareness CI
+
+on:
+  push:
+    branches: [ main, develop, feature/formula-awareness-* ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/test_formula_extraction.py'
+      - 'scripts/test_what_if_simulation.py'
+      - 'requirements*.txt'
+      - '.github/workflows/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'scripts/test_formula_extraction.py'
+      - 'scripts/test_what_if_simulation.py'
+      - 'requirements*.txt'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+
+    - name: Run formula extraction tests
+      run: |
+        python -m pytest scripts/test_formula_extraction.py -v --tb=short
+      env:
+        PYTHONPATH: src
+
+    - name: Run what-if simulation tests
+      run: |
+        python -m pytest scripts/test_what_if_simulation.py -v --tb=short
+      env:
+        PYTHONPATH: src
+
+    - name: Run unit tests
+      run: |
+        python -m pytest tests/ -v --tb=short --cov=src --cov-report=xml
+      env:
+        PYTHONPATH: src
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install linting dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+
+    - name: Run flake8
+      run: flake8 src/ tests/ scripts/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+    - name: Run black check
+      run: black --check --diff src/ tests/ scripts/
+
+    - name: Run isort check
+      run: isort --check-only --diff src/ tests/ scripts/
+
+    - name: Run mypy
+      run: mypy src/ --ignore-missing-imports
+
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install security dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+
+    - name: Run bandit security scan
+      run: bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Run safety check
+      run: safety check --output json || true
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+
+  formula-awareness-validation:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Validate formula extraction metrics
+      run: |
+        python -c "
+        # Validate that formula extraction tests pass exit criteria
+        import sys
+        import subprocess
+
+        result = subprocess.run([
+            'python', '-m', 'pytest',
+            'scripts/test_formula_extraction.py',
+            '-v', '--tb=no', '-q'
+        ], capture_output=True, text=True, env={'PYTHONPATH': 'src'})
+
+        if result.returncode != 0:
+            print('❌ Formula extraction tests failed')
+            print(result.stdout)
+            print(result.stderr)
+            sys.exit(1)
+
+        print('✅ Formula extraction tests passed')
+        "
+      env:
+        PYTHONPATH: src
+
+    - name: Validate what-if simulation functionality
+      run: |
+        python -c "
+        # Validate what-if simulation works
+        import sys
+        import subprocess
+
+        result = subprocess.run([
+            'python', '-m', 'pytest',
+            'scripts/test_what_if_simulation.py',
+            '-v', '--tb=no', '-q'
+        ], capture_output=True, text=True, env={'PYTHONPATH': 'src'})
+
+        if result.returncode != 0:
+            print('❌ What-if simulation tests failed')
+            print(result.stdout)
+            print(result.stderr)
+            sys.exit(1)
+
+        print('✅ What-if simulation tests passed')
+        "
+      env:
+        PYTHONPATH: src
+
+    - name: Validate Prometheus metrics
+      run: |
+        python -c "
+        # Check that metrics are properly defined
+        import yaml
+        import sys
+
+        with open('deploy/prometheus/formula-metrics.yml', 'r') as f:
+            metrics_config = yaml.safe_load(f)
+
+        required_metrics = [
+            'formula_extraction_success_rate',
+            'formula_extraction_duration_seconds',
+            'circular_reference_count',
+            'dependency_graph_health'
+        ]
+
+        defined_metrics = metrics_config.get('metrics', [])
+
+        missing_metrics = [m for m in required_metrics if m not in defined_metrics]
+
+        if missing_metrics:
+            print(f'❌ Missing required metrics: {missing_metrics}')
+            sys.exit(1)
+
+        print('✅ All required metrics defined')
+        "
+
+    - name: Validate alerting rules
+      run: |
+        python -c "
+        # Check that alerting rules are properly configured
+        import yaml
+        import sys
+
+        with open('deploy/prometheus/alert_rules.yml', 'r') as f:
+            alert_config = yaml.safe_load(f)
+
+        required_alerts = [
+            'FormulaExtractionFailureRateHigh',
+            'CircularReferencesDetected',
+            'DependencyGraphUnhealthy'
+        ]
+
+        defined_alerts = []
+        for group in alert_config.get('groups', []):
+            for rule in group.get('rules', []):
+                if 'alert' in rule:
+                    defined_alerts.append(rule['alert'])
+
+        missing_alerts = [a for a in required_alerts if a not in defined_alerts]
+
+        if missing_alerts:
+            print(f'❌ Missing required alerts: {missing_alerts}')
+            sys.exit(1)
+
+        print('✅ All required alerts configured')
+        "

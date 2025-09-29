@@ -21,9 +21,8 @@ def test_server_startup():
         # Start the server process
         cmd = [
             "bash", "-c", 
-            f"cd {project_dir} && source construction_env/bin/activate && python src/main.py"
+            f"cd {project_dir} && source buildbridge_venv/bin/activate && python src/main.py"
         ]
-        
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
@@ -49,17 +48,17 @@ def test_server_startup():
                 process.kill()
                 stdout, stderr = process.communicate()
             
-            return True
+            assert True
         else:
             # Process died quickly - there's an error
             stdout, stderr = process.communicate()
             print(f"❌ Server failed to start!")
             print(f"📋 Error output: {stderr}")
-            return False
+            assert False, "Server failed to start"
             
     except Exception as e:
         print(f"❌ Error testing server: {e}")
-        return False
+        assert False, f"Error testing server: {e}"
 
 def test_imports():
     """Test that all imports work correctly"""
@@ -85,11 +84,11 @@ def test_imports():
         from query_processor import QueryProcessor
         print("✅ Query processor imported successfully")
         
-        return True
+        assert True
         
     except Exception as e:
         print(f"❌ Import error: {e}")
-        return False
+        assert False, f"Import error: {e}"
 
 def test_enhanced_prompts():
     """Test the enhanced construction prompts"""
@@ -115,13 +114,13 @@ def test_enhanced_prompts():
             print("✅ Query enhancement working")
         else:
             print("❌ Query enhancement not working")
-            return False
+            assert False, "Query enhancement not working"
             
-        return True
+        assert True
         
     except Exception as e:
         print(f"❌ Enhanced prompts error: {e}")
-        return False
+        assert False, f"Enhanced prompts error: {e}"
 
 def main():
     """Run all tests"""

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "construction-management": {
+      "command": "python",
+      "args": ["src/main.py"],
+      "cwd": ".",
+      "env": {
+        "PYTHONPATH": "src"
+      }
+    }
+  }
+}

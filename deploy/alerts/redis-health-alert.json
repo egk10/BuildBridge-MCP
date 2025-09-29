@@ -1,0 +1,45 @@
+{
+  "name": "Redis Health",
+  "ruleGroup": "redis-health",
+  "rules": [
+    {
+      "alert": "RedisDown",
+      "expr": "up{job=\"redis\"} == 0",
+      "for": "2m",
+      "labels": {
+        "severity": "critical",
+        "service": "redis"
+      },
+      "annotations": {
+        "summary": "Redis is down",
+        "description": "Redis cache has been down for more than 2 minutes"
+      }
+    },
+    {
+      "alert": "RedisHighMemoryUsage",
+      "expr": "redis_memory_used_bytes / redis_memory_max_bytes > 0.9",
+      "for": "5m",
+      "labels": {
+        "severity": "warning",
+        "service": "redis"
+      },
+      "annotations": {
+        "summary": "Redis high memory usage",
+        "description": "Redis memory usage > 90% for 5 minutes"
+      }
+    },
+    {
+      "alert": "RedisHighConnectionCount",
+      "expr": "redis_connected_clients > 100",
+      "for": "5m",
+      "labels": {
+        "severity": "warning",
+        "service": "redis"
+      },
+      "annotations": {
+        "summary": "High Redis connections",
+        "description": "Redis has more than 100 connected clients for 5 minutes"
+      }
+    }
+  ]
+}

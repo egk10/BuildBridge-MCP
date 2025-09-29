@@ -56,32 +56,97 @@ except ImportError:
 def get_mcp_connectors():
     """Get the initialized MCP connectors"""
     try:
-        from main import excel_connector, sharepoint_connector, document_indexer, query_processor
+        from main import excel_connector, sharepoint_connector, document_indexer, query_processor, google_sheets_connector
         # Return None for any connector that failed to initialize
-        return excel_connector, sharepoint_connector, document_indexer, query_processor
+        return excel_connector, sharepoint_connector, document_indexer, query_processor, google_sheets_connector
     except ImportError:
-        return None, None, None, None
+        return None, None, None, None, None
 
 def load_config():
-    """Load configuration from credentials.json and .env file"""
+    """
+    Load configuration using secure config manager with environment variable priority.
+
+    Priority order:
+    1. Environment variables (most secure)
+    2. Secure config manager (unified approach)
+    3. Local config files (fallback for development)
+    4. Template defaults (failsafe)
+
+    For migration: Existing code continues to work unchanged.
+    """
+    try:
+        # Try new secure config system first
+        from secure_config import load_secure_config
+        secure_config = load_secure_config()
+
+        # Convert secure config format to legacy format for backward compatibility
+        config = {}
+
+        # Google OAuth
+        if secure_config['google'].client_id:
+            config.update({
+                'client_id': secure_config['google'].client_id,
+                'client_secret': secure_config['google'].client_secret,
+                'tenant_id': secure_config['google'].project_id,
+            })
+
+        # Google Sheets
+        if secure_config['google_sheets'].projects:
+            config['google_sheets'] = {
+                'projects': secure_config['google_sheets'].projects
+            }
+
+        # OpenAI
+        if secure_config['openai'].api_key:
+            config['ai_service'] = {
+                'openai_api_key': secure_config['openai'].api_key,
+                'model': secure_config['openai'].model,
+                'max_tokens': secure_config['openai'].max_tokens,
+                'temperature': secure_config['openai'].temperature,
+                'max_retries': secure_config['openai'].max_retries,
+            }
+
+        # App settings
+        config['local_mode'] = secure_config['app'].local_mode
+        config['log_level'] = secure_config['app'].log_level
+
+        # Data sources configuration (for backward compatibility)
+        config['data_sources'] = {
+            'google_sheets': {
+                'enabled': bool(secure_config['google_sheets'].projects),
+                'description': 'Google Sheets project data'
+            },
+            'excel_files': {'enabled': False},
+            'sharepoint': {'enabled': False},
+            'onedrive': {'enabled': False}
+        }
+
+        if config:
+            logger.info("✅ Configuration loaded from secure config system")
+            return config
+
+    except Exception as e:
+        logger.warning(f"⚠️  Secure config failed, falling back to legacy method: {e}")
+
+    # Fallback to legacy method for backward compatibility
     # Load environment variables from .env file
     from dotenv import load_dotenv
     import os
-    
+
     # Load .env file if it exists
     env_path = Path(__file__).parent.parent / ".env"  # Project root .env file
     if env_path.exists():
         load_dotenv(env_path)
         logger.info("✅ Loaded environment variables from .env file")
-    
-    config_path = Path(__file__).parent.parent / "config" / "credentials.json"
+
+    config_path = Path(__file__).parent.parent / "credentials.json"
     try:
         with open(config_path, 'r') as f:
             config_content = f.read()
             # Handle environment variable substitution
             config_content = config_content.replace('${OPENAI_API_KEY}', os.getenv('OPENAI_API_KEY', ''))
             config = json.loads(config_content)
-            
+
             # Override with environment variables if set
             if 'ai_service' in config:
                 ai_config = config['ai_service']
@@ -90,10 +155,11 @@ def load_config():
                 ai_config['max_tokens'] = int(os.getenv('AI_MAX_TOKENS', ai_config.get('max_tokens', 2000)))
                 ai_config['temperature'] = float(os.getenv('AI_TEMPERATURE', ai_config.get('temperature', 0.1)))
                 ai_config['max_retries'] = int(os.getenv('AI_MAX_RETRIES', ai_config.get('max_retries', 3)))
-            
+
             # Override other settings
             config['local_mode'] = os.getenv('LOCAL_MODE', str(config.get('local_mode', True))).lower() == 'true'
-            
+
+            logger.warning("⚠️  Using legacy configuration loading. Consider migrating to environment variables.")
             return config
     except Exception as e:
         logger.error(f"Failed to load config: {e}")
@@ -338,7 +404,7 @@ class ConstructionMCPEngine:
                 initialize_connectors()
                 
                 # Get the initialized connectors
-                self.excel_connector, self.sharepoint_connector, self.document_indexer, self.query_processor = get_mcp_connectors()
+                self.excel_connector, self.sharepoint_connector, self.document_indexer, self.query_processor, self.google_sheets_connector = get_mcp_connectors()
                 
                 # Also get the Google Sheets connector
                 from main import google_sheets_connector
@@ -627,111 +693,50 @@ class ConstructionMCPEngine:
                 # Skip empty rows
                 if row.isnull().all():
                     continue
-                    
-                # Try different label column positions (0, 1, 2)
-                for label_col_idx in [0, 1, 2]:
-                    if len(row) > label_col_idx and pd.notna(row.iloc[label_col_idx]):
-                        label = str(row.iloc[label_col_idx]).strip()
-                        if not label:  # Skip empty labels
-                            continue
-                            
-                        logger.info(f"Found label at row {idx}, col {label_col_idx}: '{label}'")
-                        
-                        # Try different value column positions relative to label
-                        value_found = False
-                        for value_offset in [1, 2, 3]:  # Try next 1-3 columns
-                            value_col_idx = label_col_idx + value_offset
-                            if len(row) > value_col_idx and pd.notna(row.iloc[value_col_idx]):
-                                value = str(row.iloc[value_col_idx]).strip()
-                                if value:  # Only use non-empty values
-                                    logger.info(f"Found value at row {idx}, col {value_col_idx}: '{value}'")
-                                    value_found = True
-                                    break
-                        
-                        if not value_found:
-                            continue
-                            
-                        # Map common labels to standard fields
-                        label_lower = label.lower()
-                        logger.info(f"Checking label '{label}' (lower: '{label_lower}') against patterns")
-                        
-                        if 'project name' in label_lower and value:
-                            project_info['Project_Name'] = value
-                            logger.info(f"✅ Extracted Project_Name: {value}")
-                        elif ('budget' in label_lower or 'total budget' in label_lower) and value:
-                            # Try to extract numeric value
-                            import re
-                            budget_match = re.search(r'[\d,]+(?:\.\d+)?', value.replace('$', '').replace(',', ''))
-                            if budget_match:
-                                project_info['Total_Budget'] = float(budget_match.group().replace(',', ''))
-                                logger.info(f"✅ Extracted Total_Budget: {project_info['Total_Budget']}")
-                        elif ('progress' in label_lower or 'complete' in label_lower) and value:
-                            # Extract percentage
-                            progress_match = re.search(r'(\d+(?:\.\d+)?)%', value)
-                            if progress_match:
-                                project_info['Progress_Percent'] = float(progress_match.group(1))
-                                logger.info(f"✅ Extracted Progress_Percent: {project_info['Progress_Percent']}")
-                        elif 'status' in label_lower and value:
-                            project_info['Status'] = value
-                            logger.info(f"✅ Extracted Status: {value}")
-                        elif ('manager' in label_lower or 'project manager' in label_lower) and value:
-                            project_info['Project_Manager'] = value
-                            logger.info(f"✅ Extracted Project_Manager: {value}")
-                        elif 'location' in label_lower and value:
-                            project_info['Location'] = value
-                            logger.info(f"✅ Extracted Location: {value}")
-                        elif ('client' in label_lower or 'owner' in label_lower or 'proponent' in label_lower) and value:
-                            project_info['Client'] = value
-                            logger.info(f"✅ Extracted Client: {value}")
-                        elif 'architect' in label_lower and value:
-                            project_info['Architect'] = value
-                            logger.info(f"✅ Extracted Architect: {value}")
-                        # NEW: Extract building and unit details
-                        elif ('functional units' in label_lower or 'units' in label_lower or 'number of units' in label_lower) and value:
-                            # Extract numeric value for units
-                            import re
-                            units_match = re.search(r'(\d+(?:,\d+)?)', value.replace(',', ''))
-                            if units_match:
-                                project_info['Total_Units'] = int(units_match.group(1).replace(',', ''))
-                                logger.info(f"✅ Extracted Total_Units: {project_info['Total_Units']}")
-                        elif 'parking' in label_lower and 'spots' in label_lower and value:
-                            # Extract parking spots
-                            parking_match = re.search(r'(\d+(?:,\d+)?)', value.replace(',', ''))
-                            if parking_match:
-                                project_info['Parking_Spots'] = int(parking_match.group(1).replace(',', ''))
-                                logger.info(f"✅ Extracted Parking_Spots: {project_info['Parking_Spots']}")
-                        elif 'building area' in label_lower and value:
-                            # Extract building area (metric or imperial)
-                            area_match = re.search(r'([\d,]+(?:\.\d+)?)', value.replace(',', ''))
-                            if area_match:
-                                area_value = float(area_match.group(1).replace(',', ''))
-                                if 'metric' in label_lower:
-                                    project_info['Building_Area_Metric'] = area_value
-                                    logger.info(f"✅ Extracted Building_Area_Metric: {area_value}")
-                                elif 'imperial' in label_lower:
-                                    project_info['Building_Area_Imperial'] = area_value
-                                    logger.info(f"✅ Extracted Building_Area_Imperial: {area_value}")
-                        elif ('levels' in label_lower or 'floors' in label_lower) and value:
-                            # Extract number of levels/floors
-                            levels_match = re.search(r'(\d+)', value)
-                            if levels_match:
-                                levels_value = int(levels_match.group(1))
-                                if 'above' in label_lower:
-                                    project_info['Levels_Above_Grade'] = levels_value
-                                    logger.info(f"✅ Extracted Levels_Above_Grade: {levels_value}")
-                                elif 'below' in label_lower:
-                                    project_info['Levels_Below_Grade'] = levels_value
-                                    logger.info(f"✅ Extracted Levels_Below_Grade: {levels_value}")
-                        elif 'description' in label_lower and 'project' in label_lower and value:
-                            project_info['Project_Type'] = value
-                            logger.info(f"✅ Extracted Project_Type: {value}")
-                        elif 'tender closing' in label_lower and value:
-                            project_info['Tender_Closing'] = value
-                            logger.info(f"✅ Extracted Tender_Closing: {value}")
-                        
-                        # If we found a match, break to avoid duplicate processing
-                        if any(key in project_info for key in ['Project_Name', 'Client', 'Location', 'Architect']):
-                            break
+
+                # Try to extract data from label-value format (Column A = label, Columns B-D = values)
+                if len(row) >= 2:
+                    label_cell = str(row.iloc[0]).strip() if not pd.isna(row.iloc[0]) else ""
+                    if label_cell and ':' in label_cell:
+                        label = label_cell.replace(':', '').strip().lower()
+
+                        # Get value from the next non-empty cell in columns B-D
+                        value = ""
+                        for col_idx in range(1, min(4, len(row))):  # Check columns B, C, D
+                            cell_value = str(row.iloc[col_idx]).strip() if not pd.isna(row.iloc[col_idx]) else ""
+                            if cell_value and cell_value != "":
+                                value = cell_value
+                                break
+
+                        if value:
+                            logger.info(f"✅ Extracted {label}: {value}")
+
+                            # Map to standard project fields
+                            if 'project name' in label:
+                                project_info['Project_Name'] = value
+                            elif 'proponent' in label or 'client' in label or 'owner' in label:
+                                project_info['Client'] = value
+                            elif 'location' in label or 'address' in label:
+                                project_info['Location'] = value
+                            elif 'architect' in label:
+                                project_info['Architect'] = value
+                            elif 'manager' in label or 'project manager' in label:
+                                project_info['Project_Manager'] = value
+                            elif 'status' in label:
+                                project_info['Status'] = value
+                            elif 'budget' in label or 'total budget' in label:
+                                # Try to extract numeric value
+                                import re
+                                budget_match = re.search(r'[\d,]+(?:\.\d+)?', value.replace('$', '').replace(',', ''))
+                                if budget_match:
+                                    project_info['Total_Budget'] = float(budget_match.group().replace(',', ''))
+                            elif 'progress' in label or 'complete' in label:
+                                # Extract percentage
+                                progress_match = re.search(r'(\d+(?:\.\d+)?)%', value)
+                                if progress_match:
+                                    project_info['Progress_Percent'] = float(progress_match.group(1))
+                            elif 'description' in label or 'type' in label:
+                                project_info['Project_Type'] = value
             
             logger.info(f"Strategy 1 extracted: {project_info}")
             

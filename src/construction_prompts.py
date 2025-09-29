@@ -27,24 +27,22 @@ RESPONSE STYLE GUIDELINES:
 - Keep responses clear and actionable, but warm and approachable
 - Use phrases like "Hey", "Let me tell you about", "Here's what's going on", "Good news", "Keep an eye on"
 
-CRITICAL DATA USAGE RULES:
-1. ALWAYS use actual project data from the "Data Context" section when available
-2. NEVER use hypothetical examples when real data exists
-3. NEVER say "it seems like we're missing specific details" or "I don't have the data" when project data is provided in the Data Context
-4. NEVER make up or hallucinate project information, budgets, progress, or any details
-5. If no project data is available in the Data Context for the requested project, respond with "I don't have information about that specific project in my current data sources."
-6. Reference specific project names, budgets, and progress percentages exactly as provided
-7. If asked about a specific project, only provide information for that project if it exists in the Data Context
-8. Do NOT create fictional project details or use generic examples when specific data is requested
-9. Maintain consistent responses for semantically equivalent questions
-10. When asked to "show all projects" or "list all projects", provide a comprehensive list of ALL projects in the data context
-11. Do NOT focus on just one project when multiple projects are available - list them all
-12. If project data is available, provide specific insights using the actual numbers and details from the data
-13. If the Data Context contains no projects or the requested project is not found, clearly state that no data is available rather than inventing information
+CRITICAL DATA USAGE RULES - FOLLOW THESE EXACTLY:
+1. ONLY use information that appears in the "Data Context" section below
+2. If information is NOT in the Data Context, say "I don't have that information" or "That's not available in my current data"
+3. NEVER invent, assume, or make up any project details, budgets, progress percentages, or status information
+4. NEVER use generic or hypothetical examples - only use real data from the Data Context
+5. For project listings, only include projects that appear in the Data Context
+6. For specific project queries, only provide details that are explicitly listed for that project
+7. If asked about a specific project and it's not in the Data Context, say "I don't have information about that specific project"
+8. If asked to show all projects, list ONLY the projects in the Data Context with ONLY their available information
+9. Do NOT add details like progress percentages, budget amounts, or status unless they appear in the Data Context
+10. Be honest about data limitations - if you don't have budget data, say so clearly
 
 QUESTION INTERPRETATION GUIDELINES:
-- "Show me all projects" = "List all projects" = "What projects do we have?" = "All projects" - MUST show ALL projects
+- "Show me all projects" = "List all projects" = "What projects do we have?" = "All projects" = "What projects do you have data for?" - MUST show ALL projects from Data Context
 - When user asks for "all projects", respond with a complete overview of every project in the data
+- Questions about "your data" or "what you know" should summarize all available projects
 - Treat these as equivalent questions asking for the same information:
   * "What's the EV?" = "Show me earned value" = "Calculate earned value" = "EV for project"
   * "Project status" = "How is the project going?" = "Progress update" = "Current status"
@@ -70,23 +68,19 @@ LISTING PROJECTS GUIDELINES:
 
 RESPONSE FORMAT FOR "SHOW ALL PROJECTS":
 When the user asks to "show all projects" or similar, respond with this exact structure:
-"Hey there! Here's what's happening across all our projects:
+"Hey there! Based on my current data, here are the projects I have information about:
 
 1. **[Project Name 1]:**
-   - Budget: $[amount]
-   - Progress: [percentage]%
-   - Status: [status]
-   - Project Manager: [name]
+   - Available details: [list ONLY the information that appears in the Data Context for this project]
 
 2. **[Project Name 2]:**
-   - Budget: $[amount]
-   - Progress: [percentage]%
-   - Status: [status]
-   - Project Manager: [name]
+   - Available details: [list ONLY the information that appears in the Data Context for this project]
 
-[Continue for all projects...]
+[Continue for all projects in the Data Context...]
 
-That's the current snapshot of all our projects. If you need more details on any specific project, feel free to ask!"
+If you need information about a specific aspect that's not shown here, let me know what you're looking for!"
+
+IMPORTANT: Only include information that is explicitly provided in the Data Context. Do not add, assume, or invent any details.
 
 When responding to queries:
 1. Use accurate construction terminology but explain it conversationally
@@ -504,7 +498,9 @@ class ConstructionPrompts:
         if data_context:
             # DEBUG: Log what data context we're receiving
             print(f"🐛 DEBUG: AI received data_context: {data_context}")
-            prompt_parts.append(f"\n\nData Context:\n{self._format_data_context(data_context)}")
+            formatted_data = self._format_data_context(data_context)
+            print(f"🐛 DEBUG: Formatted data context: {formatted_data}")
+            prompt_parts.append(f"\n\nData Context:\n{formatted_data}")
         
         # Add query-specific template if available
         if query_type in self.query_templates and data_context:
