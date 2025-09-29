@@ -1,0 +1,45 @@
+{
+  "name": "MCP Service Health",
+  "ruleGroup": "mcp-health",
+  "rules": [
+    {
+      "alert": "MCPServiceDown",
+      "expr": "up{job=\"mcp\"} == 0",
+      "for": "5m",
+      "labels": {
+        "severity": "critical",
+        "service": "mcp"
+      },
+      "annotations": {
+        "summary": "MCP service is down",
+        "description": "MCP service has been down for more than 5 minutes"
+      }
+    },
+    {
+      "alert": "MCPHighResponseTime",
+      "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"mcp\"}[5m])) > 5",
+      "for": "10m",
+      "labels": {
+        "severity": "warning",
+        "service": "mcp"
+      },
+      "annotations": {
+        "summary": "MCP high response time",
+        "description": "95th percentile response time > 5s for 10 minutes"
+      }
+    },
+    {
+      "alert": "MCPLowSuccessRate",
+      "expr": "rate(http_requests_total{job=\"mcp\",status!~\"2..\"}[5m]) / rate(http_requests_total{job=\"mcp\"}[5m]) > 0.05",
+      "for": "5m",
+      "labels": {
+        "severity": "warning",
+        "service": "mcp"
+      },
+      "annotations": {
+        "summary": "MCP low success rate",
+        "description": "Error rate > 5% for 5 minutes"
+      }
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "System Health",
+  "ruleGroup": "system-health",
+  "rules": [
+    {
+      "alert": "HighCPUUsage",
+      "expr": "100 - (avg by(instance) (irate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100) > 90",
+      "for": "10m",
+      "labels": {
+        "severity": "warning",
+        "service": "system"
+      },
+      "annotations": {
+        "summary": "High CPU usage",
+        "description": "CPU usage > 90% for 10 minutes"
+      }
+    },
+    {
+      "alert": "HighMemoryUsage",
+      "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 > 90",
+      "for": "5m",
+      "labels": {
+        "severity": "warning",
+        "service": "system"
+      },
+      "annotations": {
+        "summary": "High memory usage",
+        "description": "Memory usage > 90% for 5 minutes"
+      }
+    },
+    {
+      "alert": "LowDiskSpace",
+      "expr": "(node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100 < 10",
+      "for": "5m",
+      "labels": {
+        "severity": "critical",
+        "service": "system"
+      },
+      "annotations": {
+        "summary": "Low disk space",
+        "description": "Disk space < 10% available for 5 minutes"
+      }
+    },
+    {
+      "alert": "HighNetworkTraffic",
+      "expr": "rate(node_network_receive_bytes_total[5m]) > 100000000",
+      "for": "10m",
+      "labels": {
+        "severity": "info",
+        "service": "system"
+      },
+      "annotations": {
+        "summary": "High network traffic",
+        "description": "Network receive rate > 100MB/s for 10 minutes"
+      }
+    }
+  ]
+}
