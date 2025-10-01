@@ -1,0 +1,25 @@
+{
+  "17175_yonge_st": {
+    "project_summary": {
+      "sheet_name": "Project Summary",
+      "range": "A1:AZ200",
+      "parsers": [
+        "extract_summary_metrics"
+      ]
+    },
+    "gca_stats": {
+      "sheet_name": "GCA Stats",
+      "range": "A1:BI200",
+      "parsers": [
+        "extract_gca_metrics"
+      ]
+    },
+    "below_grade": {
+      "sheet_name": "Below Grade 1 Detail",
+      "range": "A1:R200",
+      "parsers": [
+        "extract_division_costs"
+      ]
+    }
+  }
+}

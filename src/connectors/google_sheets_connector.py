@@ -11,7 +11,7 @@ import pickle
 import pandas as pd
 from typing import Dict, List, Any, Optional
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import urllib.parse
 import webbrowser
@@ -23,6 +23,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
+from parsers.google_sheet_manifest_parsers import (
+    PARSER_REGISTRY,
+    ParserResult,
+)
+from normalizers.project_metrics import write_project_metrics_summary
 
 
 class GoogleSheetsConnector:
@@ -36,21 +42,51 @@ class GoogleSheetsConnector:
             config: Configuration dictionary with Google API credentials
         """
         self.config = config
-        
+
         # Resolve paths relative to project root (parent of src directory)
         project_root = Path(__file__).parent.parent.parent
+
+        self.google_client_id = config.get('google_client_id') or config.get('client_id')
+        self.google_client_secret = config.get('google_client_secret') or config.get('client_secret')
+        self.google_project_id = config.get('google_project_id') or config.get('tenant_id')
+        self.google_auth_method = (config.get('google_auth_method') or 'oauth').lower()
+        self.oauth_client_config = config.get('google_oauth_client_config')
+
         self.credentials_file = config.get('google_credentials_file')
+        self._credentials_file_exists = False
         if self.credentials_file:
-            self.credentials_file = str(project_root / self.credentials_file)
-        
+            creds_path = Path(self.credentials_file)
+            if not creds_path.is_absolute():
+                creds_path = (project_root / self.credentials_file).resolve()
+            self._credentials_file_exists = creds_path.exists()
+            self.credentials_file = str(creds_path)
+
         self.service_account_file = config.get('google_service_account_file')
+        self._service_account_file_exists = False
         if self.service_account_file:
-            self.service_account_file = str(project_root / self.service_account_file)
-            
+            service_path = Path(self.service_account_file)
+            if not service_path.is_absolute():
+                service_path = (project_root / self.service_account_file).resolve()
+            self._service_account_file_exists = service_path.exists()
+            self.service_account_file = str(service_path)
+
         self.google_sheets = config.get('google_sheets', {})
+        self.google_sheets_defaults = config.get('google_sheets_defaults', {})
+
+        manifest_file = config.get('project_manifest_file', 'config/project_manifest.json')
+        manifest_path = Path(manifest_file)
+        if not manifest_path.is_absolute():
+            manifest_path = (project_root / manifest_path).resolve()
+        self.project_manifest_file = manifest_path
+        self.project_manifest = self._load_project_manifest()
+
+        self._project_root = project_root
+        self._normalized_cache_dir = project_root / 'cache' / 'normalized'
+        self._project_metrics_file = self._normalized_cache_dir / 'project_metrics.json'
+
         self.token_file = config.get('google_token_file', 'token.pickle')
-        if not self.token_file.startswith('/'):
-            self.token_file = str(project_root / self.token_file)
+        if not str(self.token_file).startswith('/'):
+            self.token_file = str((project_root / self.token_file).resolve())
 
         # Scopes for Google Sheets and Drive access
         self.scopes = [
@@ -59,10 +95,21 @@ class GoogleSheetsConnector:
         ]
 
         # Local mode toggle
-        self.local_mode = bool(
-            config.get('local_mode') or
-            (not self.credentials_file and not self.service_account_file)
+        explicit_local_mode = config.get('local_mode')
+        computed_local_mode = not (
+            self._service_account_file_exists or
+            self._credentials_file_exists or
+            self.oauth_client_config or
+            (self.google_client_id and self.google_client_secret)
         )
+        if explicit_local_mode is None:
+            self.local_mode = computed_local_mode
+        else:
+            self.local_mode = bool(explicit_local_mode)
+
+        # Ensure we have an OAuth client config if credentials are supplied via env
+        if not self.oauth_client_config and self.google_client_id and self.google_client_secret:
+            self.oauth_client_config = self._build_env_oauth_config()
 
         # Authentication type
         self.auth_type = self._determine_auth_type()
@@ -103,12 +150,120 @@ class GoogleSheetsConnector:
 
     def _determine_auth_type(self) -> str:
         """Determine which authentication method to use"""
-        if self.service_account_file and os.path.exists(self.service_account_file):
+        if self._service_account_file_exists:
             return 'service_account'
-        elif self.credentials_file and os.path.exists(self.credentials_file):
+        if self._credentials_file_exists or self.oauth_client_config:
             return 'oauth'
-        else:
-            return 'none'
+        return 'none'
+
+    def _load_project_manifest(self) -> Dict[str, Any]:
+        """Load the project manifest file if available."""
+        try:
+            if self.project_manifest_file and self.project_manifest_file.exists():
+                with open(self.project_manifest_file, 'r', encoding='utf-8') as fp:
+                    manifest = json.load(fp)
+                    if isinstance(manifest, dict):
+                        return manifest
+                    print("Warning: project_manifest.json did not contain an object; ignoring")
+        except Exception as exc:
+            print(f"Warning: Failed to load project manifest: {exc}")
+        return {}
+
+    def reload_project_manifest(self) -> None:
+        """Reload the manifest file from disk."""
+        self.project_manifest = self._load_project_manifest()
+
+    def list_manifest_projects(self) -> List[str]:
+        """List all project IDs defined in the manifest."""
+        return sorted(self.project_manifest.keys())
+
+    def get_manifest_entry(self, project_id: str) -> Dict[str, Any]:
+        """Return the manifest entry for a given project."""
+        entry = self.project_manifest.get(project_id)
+        if not entry:
+            raise ValueError(f"Project '{project_id}' not found in project manifest")
+        return entry
+
+    def _normalized_cache_path(self, project_id: str) -> Path:
+        safe_key = str(project_id).strip().lower()
+        return self._normalized_cache_dir / f"{safe_key}.json"
+
+    def rebuild_project_metrics_summary(self) -> Dict[str, Any]:
+        """Regenerate the aggregated project metrics summary file."""
+        return write_project_metrics_summary(
+            self._normalized_cache_dir,
+            self._project_metrics_file,
+        )
+
+    def refresh_manifest_project(
+        self,
+        project_id: str,
+        force_refresh: bool = False,
+        rebuild_metrics: bool = True,
+    ) -> Dict[str, Any]:
+        """Fetch manifest-driven data and persist it to the normalized cache."""
+
+        parser_result = self.fetch_project_manifest_data(project_id, force_refresh=force_refresh)
+        payload = {
+            "project_key": project_id,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "project": parser_result.project,
+            "tabs": parser_result.tabs,
+        }
+
+        cache_path = self._normalized_cache_path(project_id)
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        with cache_path.open("w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=2)
+
+        if rebuild_metrics:
+            try:
+                self.rebuild_project_metrics_summary()
+            except Exception as exc:
+                print(f"Warning: failed to rebuild project metrics summary: {exc}")
+
+        return payload
+
+    def refresh_manifest_projects(
+        self,
+        project_ids: Optional[List[str]] = None,
+        force_refresh: bool = False,
+    ) -> List[Dict[str, Any]]:
+        """Refresh cached manifest outputs for multiple projects."""
+
+        if project_ids is None:
+            project_ids = self.list_manifest_projects()
+
+        payloads: List[Dict[str, Any]] = []
+        for project_id in project_ids:
+            payloads.append(
+                self.refresh_manifest_project(
+                    project_id,
+                    force_refresh=force_refresh,
+                    rebuild_metrics=False,
+                )
+            )
+
+        try:
+            self.rebuild_project_metrics_summary()
+        except Exception as exc:
+            print(f"Warning: failed to rebuild project metrics summary: {exc}")
+
+        return payloads
+
+    def get_manifest_project_cache(
+        self,
+        project_id: str,
+        force_refresh: bool = False,
+    ) -> Dict[str, Any]:
+        """Return cached manifest data for a project, refreshing if necessary."""
+
+        cache_path = self._normalized_cache_path(project_id)
+        if force_refresh or not cache_path.exists():
+            return self.refresh_manifest_project(project_id, force_refresh=True)
+
+        with cache_path.open(encoding="utf-8") as fh:
+            return json.load(fh)
 
     def _init_service(self):
         """Initialize Google API services based on authentication type"""
@@ -297,6 +452,62 @@ class GoogleSheetsConnector:
             raise Exception(f"Google Sheets API error: {err}")
         except Exception as e:
             raise Exception(f"Failed to read Google Sheet {actual_sheet_id}: {str(e)}")
+
+    def fetch_project_manifest_data(
+        self,
+        project_id: str,
+        force_refresh: bool = False,
+    ) -> ParserResult:
+        """Fetch and parse project data defined in the manifest."""
+
+        manifest_entry = self.get_manifest_entry(project_id)
+
+        try:
+            sheet_reference = f"projects.{project_id}"
+            actual_sheet_id = self._resolve_sheet_id(sheet_reference)
+        except Exception:
+            projects_config = self.google_sheets.get('projects', {})
+            if project_id not in projects_config:
+                raise ValueError(
+                    f"Project '{project_id}' missing from google_sheets.projects configuration"
+                )
+            actual_sheet_id = projects_config[project_id]
+
+        combined_tabs: List[Dict[str, Any]] = []
+        combined_project: Dict[str, Any] = {}
+
+        for section_key, section in manifest_entry.items():
+            sheet_name = section.get('sheet_name')
+            range_spec = section.get('range')
+            parsers = section.get('parsers', [])
+
+            if not sheet_name or not range_spec:
+                print(f"Warning: Manifest section '{section_key}' missing sheet name or range")
+                continue
+
+            range_name = f"{sheet_name}!{range_spec}"
+            df = self.read_sheet(actual_sheet_id, range_name, force_refresh=force_refresh)
+
+            if df.empty:
+                print(f"Warning: Received empty DataFrame for {project_id} {sheet_name}")
+
+            for parser_name in parsers:
+                parser = PARSER_REGISTRY.get(parser_name)
+                if not parser:
+                    raise ValueError(
+                        f"Parser '{parser_name}' referenced in manifest is not registered"
+                    )
+
+                parsed = parser(df.copy(), project_id)
+                section_tabs = parsed.get('tabs') or []
+                section_project = parsed.get('project') or {}
+
+                combined_tabs.extend(section_tabs)
+                for key, value in section_project.items():
+                    if value is not None:
+                        combined_project[key] = value
+
+        return ParserResult(tabs=combined_tabs, project=combined_project)
 
     def get_project_data(self, project_id: Optional[str] = None) -> pd.DataFrame:
         """
