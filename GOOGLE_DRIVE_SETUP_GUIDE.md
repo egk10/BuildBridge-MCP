@@ -210,6 +210,28 @@ To change authentication methods or refresh tokens:
 2. Delete `config/token.pickle` (if using OAuth)
 3. Re-run `./setup_google_drive.sh`
 
+### 🔁 Quick Token Refresh (Redo Flow)
+
+If the Google Cloud console shows a rotated client secret or you see `No valid Google OAuth tokens` in tests, use this streamlined flow:
+
+```bash
+# 1. Remove the stale token
+rm config/token.pickle
+
+# 2. Launch the interactive OAuth helper
+buildbridge_env/bin/python scripts/google_oauth_flow.py
+```
+
+The helper prints a Google authorization URL. Open it in your browser, approve access, then paste the `code=` value back into the terminal. The script saves a fresh token to `config/token.pickle` and exits.
+
+Finally, rerun your validation tests:
+
+```bash
+RUN_GOOGLE_INTEGRATION_TESTS=1 PYTHONPATH=src buildbridge_env/bin/pytest test_google_drive.py -v
+```
+
+> ✅ Tip: The helper sets `local_mode` while exchanging credentials, so it won’t make sheets API calls until you run the tests.
+
 ## 📞 Support
 
 If you encounter issues:
