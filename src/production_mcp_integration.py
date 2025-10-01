@@ -83,18 +83,30 @@ def load_config():
         config = {}
 
         # Google OAuth
-        if secure_config['google'].client_id:
-            config.update({
-                'client_id': secure_config['google'].client_id,
-                'client_secret': secure_config['google'].client_secret,
-                'tenant_id': secure_config['google'].project_id,
-            })
+        google_config = secure_config['google']
+        if google_config:
+            google_fields = {
+                'google_client_id': google_config.client_id,
+                'google_client_secret': google_config.client_secret,
+                'google_project_id': google_config.project_id,
+                'google_credentials_file': google_config.sheets_credentials_file,
+                'google_token_file': google_config.token_file,
+                'google_auth_method': google_config.auth_method,
+            }
+            config.update({k: v for k, v in google_fields.items() if v})
+            if google_config.oauth_client_config:
+                config['google_oauth_client_config'] = google_config.oauth_client_config
 
         # Google Sheets
-        if secure_config['google_sheets'].projects:
-            config['google_sheets'] = {
-                'projects': secure_config['google_sheets'].projects
-            }
+        sheets_config = secure_config['google_sheets']
+        if sheets_config.projects or sheets_config.sheets:
+            google_sheets_payload: Dict[str, Any] = {'projects': sheets_config.projects}
+            google_sheets_payload.update(sheets_config.sheets)
+            config['google_sheets'] = google_sheets_payload
+            if sheets_config.default_summary_range:
+                config['google_sheets_defaults'] = {
+                    'project_summary_range': sheets_config.default_summary_range
+                }
 
         # OpenAI
         if secure_config['openai'].api_key:

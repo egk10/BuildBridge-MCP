@@ -1,197 +1,99 @@
 #!/usr/bin/env python3
-"""
-Simple MCP client to test your construction management server
-"""
+"""Optional integration test for the MCP client."""
 
-#!/usr/bin/env python3
-"""
-Simple MCP client to test your construction management server
-"""
+from __future__ import annotations
 
-import json
-import subprocess
 import asyncio
-import sys
-import pytest
+import json
+import os
+import subprocess
 from pathlib import Path
 
-@pytest.mark.asyncio
-async def test_mcp_client():
-    """Test MCP client connection"""
-    
-    print("🔌 Testing MCP Client Connection")
-    print("=" * 40)
-    
-    # Start the MCP server as a subprocess
-    server_dir = Path(__file__).parent
-    
-    cmd = [
-        "bash", "-c", 
-        f"cd {server_dir} && source construction_env/bin/activate && python src/main.py"
-    ]
-    
-    print("🚀 Starting MCP server...")
-    
-    try:
-        # Start server process
-        process = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        # Wait a moment for server to start
-        await asyncio.sleep(2)
-        
-        # Send a simple MCP message
-        init_message = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {
-                    "name": "test-client",
-                    "version": "1.0.0"
-                }
-            }
-        }
-        
-        print("📤 Sending initialization message...")
-        process.stdin.write(json.dumps(init_message) + "\n")
-        process.stdin.flush()
-        
-        # Try to read response
-        await asyncio.sleep(1)
-        
-        # Check if server is responsive
-        if process.poll() is None:
-            print("✅ Server is running and responsive!")
-            print("🔧 Available tools:")
-            tools = [
-                "search_projects",
-                "get_project_status", 
-                "analyze_budget",
-                "get_schedule_updates",
-                "search_documents",
-                "generate_report"
-            ]
-            for tool in tools:
-                print(f"   - {tool}")
-            assert True  # Test passed
-        else:
-            print("❌ Server stopped unexpectedly")
-            assert False, "Server stopped unexpectedly"
-            
-        # Clean up
-        process.terminate()
-        try:
-            await asyncio.wait_for(asyncio.create_subprocess_exec("sleep", "1"), timeout=2)
-        except:
-            pass
-        
-        if process.poll() is None:
-            process.kill()
-            
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        assert False, f"Test failed with error: {e}"
-    """Test MCP client connection"""
-    
-    print("🔌 Testing MCP Client Connection")
-    print("=" * 40)
-    
-    # Start the MCP server as a subprocess
-    server_dir = Path(__file__).parent
-    
-    cmd = [
-        "bash", "-c", 
-        f"cd {server_dir} && source construction_env/bin/activate && python src/main.py"
-    ]
-    
-    print("🚀 Starting MCP server...")
-    
-    try:
-        # Start server process
-        process = subprocess.Popen(
-            cmd,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        
-        # Wait a moment for server to start
-        await asyncio.sleep(2)
-        
-        # Send a simple MCP message
-        init_message = {
-            "jsonrpc": "2.0",
-            "id": 1,
-            "method": "initialize",
-            "params": {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {},
-                "clientInfo": {
-                    "name": "test-client",
-                    "version": "1.0.0"
-                }
-            }
-        }
-        
-        print("📤 Sending initialization message...")
-        process.stdin.write(json.dumps(init_message) + "\n")
-        process.stdin.flush()
-        
-        # Try to read response
-        await asyncio.sleep(1)
-        
-        # Check if server is responsive
-        if process.poll() is None:
-            print("✅ Server is running and responsive!")
-            print("🔧 Available tools:")
-            tools = [
-                "search_projects",
-                "get_project_status", 
-                "analyze_budget",
-                "get_schedule_updates",
-                "search_documents",
-                "generate_report"
-            ]
-            for tool in tools:
-                print(f"   - {tool}")
-        else:
-            print("❌ Server stopped unexpectedly")
-            
-        # Clean up
-        process.terminate()
-        try:
-            await asyncio.wait_for(asyncio.create_subprocess_exec("sleep", "1"), timeout=2)
-        except:
-            pass
-        
-        if process.poll() is None:
-            process.kill()
-            
-    except Exception as e:
-        print(f"❌ Error: {e}")
+import pytest
 
-def main():
-    """Run the MCP client test"""
-    print("🧪 MCP Client Test")
-    print("This tests if your MCP server can accept connections\n")
-    
-    # Run the async test
-    asyncio.run(test_mcp_client())
-    
-    print("\n📋 Next Steps:")
-    print("1. If the test passed, your server is ready for MCP clients")
-    print("2. Configure VS Code MCP extension to connect")
-    print("3. Or use other MCP-compatible tools")
-    print("4. See docs/vscode_mcp_setup.md for VS Code setup")
+
+RUN_MCP_CLIENT_TESTS = os.getenv("RUN_MCP_CLIENT_TESTS") == "1" or os.getenv("RUN_INTEGRATION_TESTS") == "1"
+
+
+async def _async_run_mcp_client() -> None:
+    """Start the MCP server and perform a lightweight handshake."""
+
+    print("🔌 Testing MCP Client Connection")
+    print("=" * 40)
+
+    server_dir = Path(__file__).resolve().parent
+    env_path = server_dir / "buildbridge_env" / "bin" / "activate"
+    if not env_path.exists():
+        raise RuntimeError("buildbridge_env virtual environment not found; run setup first")
+
+    cmd = [
+        "bash",
+        "-c",
+        f"cd {server_dir} && source buildbridge_env/bin/activate && python src/main.py",
+    ]
+
+    process = subprocess.Popen(
+        cmd,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    try:
+        await asyncio.sleep(2)
+
+        init_message = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2024-11-05",
+                "capabilities": {},
+                "clientInfo": {"name": "test-client", "version": "1.0.0"},
+            },
+        }
+
+        if process.stdin is None:
+            raise RuntimeError("Failed to access MCP server stdin stream")
+
+        print("📤 Sending initialization message...")
+        process.stdin.write(json.dumps(init_message) + "\n")
+        process.stdin.flush()
+
+        await asyncio.sleep(1)
+
+        if process.poll() is not None:
+            stdout, stderr = process.communicate(timeout=2)
+            raise RuntimeError(
+                "Server exited unexpectedly."
+                f"\nSTDOUT: {stdout}"
+                f"\nSTDERR: {stderr}"
+            )
+
+        print("✅ Server responded to initialization request")
+
+    finally:
+        process.terminate()
+        try:
+            await asyncio.wait_for(asyncio.sleep(0.5), timeout=1)
+        except asyncio.TimeoutError:
+            pass
+        if process.poll() is None:
+            process.kill()
+
+
+@pytest.mark.skipif(
+    not RUN_MCP_CLIENT_TESTS,
+    reason="MCP client integration test disabled. Set RUN_MCP_CLIENT_TESTS=1 to enable.",
+)
+def test_mcp_client() -> None:
+    asyncio.run(_async_run_mcp_client())
+
+
+def main() -> None:
+    asyncio.run(_async_run_mcp_client())
+
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import sys
 from datetime import UTC, datetime
@@ -12,12 +11,15 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-sys.path.append(str(ROOT_DIR / "src"))
 
-from connectors.google_sheets_connector import GoogleSheetsConnector  # noqa: E402
-from utils.google_sheet_parser import ParsedSheet, parse_sheet  # noqa: E402
+import json
 
-CONFIG_PATH = ROOT_DIR / "config" / "credentials.json"
+from dotenv import load_dotenv
+
+from src.connectors.google_sheets_connector import GoogleSheetsConnector  # noqa: E402
+from src.secure_config import SecureConfig  # noqa: E402
+from src.utils.google_sheet_parser import ParsedSheet, parse_sheet  # noqa: E402
+
 CONTRACT_PATH = ROOT_DIR / "config" / "contracts" / "google_project_tabs.json"
 NORMALIZED_DIR = ROOT_DIR / "cache" / "normalized"
 
@@ -27,8 +29,8 @@ class ValidationError(Exception):
 
 
 def load_config() -> Dict:
-    with open(CONFIG_PATH) as fh:
-        return json.load(fh)
+    load_dotenv(ROOT_DIR / ".env", override=True)
+    return SecureConfig().build_legacy_config()
 
 
 def load_contract() -> Dict:

@@ -8,11 +8,11 @@ import sys
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
-from connectors.enhanced_google_sheets_connector import (  # type: ignore
-    EnhancedGoogleSheetsConnector,
-)
+from src.connectors.enhanced_google_sheets_connector import EnhancedGoogleSheetsConnector
 
 
 SAMPLE_RESPONSE = {

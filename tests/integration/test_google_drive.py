@@ -1,26 +1,27 @@
 #!/usr/bin/env python3
-"""
-Test script for Google Drive authentication and basic functionality
-"""
+"""Test script for Google Drive authentication and basic functionality."""
 
-import sys
 import os
-import json
-sys.path.insert(0, 'src')
+from pathlib import Path
 
-from connectors.google_sheets_connector import GoogleSheetsConnector
+import pytest
+from dotenv import load_dotenv
+
+from src.connectors.google_sheets_connector import GoogleSheetsConnector
+from src.secure_config import SecureConfig
+
+
+RUN_GOOGLE_TESTS = os.getenv("RUN_GOOGLE_INTEGRATION_TESTS") == "1" or os.getenv("RUN_INTEGRATION_TESTS") == "1"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 def test_google_drive_auth():
     """Test Google Drive authentication"""
     print("🔐 Testing Google Drive authentication...")
+    if not RUN_GOOGLE_TESTS:
+        pytest.skip("Google Drive integration test disabled. Set RUN_GOOGLE_INTEGRATION_TESTS=1 to enable.")
 
-    # Load config
-    try:
-        with open('config/credentials.json', 'r') as f:
-            config = json.load(f)
-    except FileNotFoundError:
-        print("❌ config/credentials.json not found")
-        return False
+    load_dotenv(PROJECT_ROOT / ".env", override=False)
+    config = SecureConfig().build_legacy_config()
 
     # Test authentication
     connector = GoogleSheetsConnector(config)
@@ -36,13 +37,11 @@ def test_google_drive_auth():
 def test_sheets_access():
     """Test basic Google Sheets access"""
     print("\n📊 Testing Google Sheets access...")
+    if not RUN_GOOGLE_TESTS:
+        pytest.skip("Google Sheets integration test disabled. Set RUN_GOOGLE_INTEGRATION_TESTS=1 to enable.")
 
-    try:
-        with open('config/credentials.json', 'r') as f:
-            config = json.load(f)
-    except FileNotFoundError:
-        print("❌ config/credentials.json not found")
-        return False
+    load_dotenv(PROJECT_ROOT / ".env", override=False)
+    config = SecureConfig().build_legacy_config()
 
     connector = GoogleSheetsConnector(config)
 
@@ -60,7 +59,7 @@ def test_sheets_access():
             else:
                 print(f"⚠️  No sheet_id configured for {sheet_name}")
     else:
-        print("⚠️  No Google Sheets configured in credentials.json")
+        print("⚠️  No Google Sheets configured in environment variables")
 
     return True
 

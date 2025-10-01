@@ -75,6 +75,19 @@ temp/
 tmp/
 cache/
 
+# Generated datasets
+data/*.csv
+data/**/*.csv
+
+# Generated documents
+docs/**/*.html
+docs/**/*.pdf
+
+# Node.js dependencies
+node_modules/
+htmltopdfconverter/
+htmltopdfconverter/node_modules/
+
 # Document index files
 data/document_index.json
 data/test_index.json
@@ -93,6 +106,7 @@ test_*.py
 complete_system_test.sh
 final_validation.py
 !tests/test_*.py
+!tests/**/test_*.py
 
 # Local data (keep sample data)
 data/local/

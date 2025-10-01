@@ -94,18 +94,21 @@ class GoogleSheetsConnector:
             'https://www.googleapis.com/auth/drive.readonly'
         ]
 
-        # Local mode toggle
-        explicit_local_mode = config.get('local_mode')
-        computed_local_mode = not (
-            self._service_account_file_exists or
-            self._credentials_file_exists or
-            self.oauth_client_config or
-            (self.google_client_id and self.google_client_secret)
+        # Local mode toggle (for offline testing only)
+        self.local_mode = bool(config.get('local_mode'))
+
+        credentials_available = (
+            self._service_account_file_exists
+            or self._credentials_file_exists
+            or self.oauth_client_config
+            or (self.google_client_id and self.google_client_secret)
         )
-        if explicit_local_mode is None:
-            self.local_mode = computed_local_mode
-        else:
-            self.local_mode = bool(explicit_local_mode)
+
+        if not self.local_mode and not credentials_available:
+            raise ValueError(
+                "Google Sheets connector requires valid OAuth or service account credentials. "
+                "Set LOCAL_MODE=true for offline development."
+            )
 
         # Ensure we have an OAuth client config if credentials are supplied via env
         if not self.oauth_client_config and self.google_client_id and self.google_client_secret:
@@ -155,6 +158,38 @@ class GoogleSheetsConnector:
         if self._credentials_file_exists or self.oauth_client_config:
             return 'oauth'
         return 'none'
+
+    def _build_env_oauth_config(self) -> Dict[str, Any]:
+        """Construct an OAuth client configuration from environment credentials."""
+
+        if not (self.google_client_id and self.google_client_secret):
+            raise ValueError("Google OAuth client credentials are required to build client config")
+
+        auth_uri = os.getenv("GOOGLE_AUTH_URI", "https://accounts.google.com/o/oauth2/auth")
+        token_uri = os.getenv("GOOGLE_TOKEN_URI", "https://oauth2.googleapis.com/token")
+        cert_url = os.getenv(
+            "GOOGLE_AUTH_PROVIDER_CERT_URL",
+            "https://www.googleapis.com/oauth2/v1/certs",
+        )
+        redirect_uris_env = os.getenv(
+            "GOOGLE_OAUTH_REDIRECT_URIS",
+            "http://localhost,http://localhost:8080/",
+        )
+        redirect_uris = [uri.strip() for uri in redirect_uris_env.split(",") if uri.strip()]
+        if not redirect_uris:
+            redirect_uris = ["http://localhost"]
+
+        return {
+            "installed": {
+                "client_id": self.google_client_id,
+                "project_id": self.google_project_id or "",
+                "auth_uri": auth_uri,
+                "token_uri": token_uri,
+                "auth_provider_x509_cert_url": cert_url,
+                "client_secret": self.google_client_secret,
+                "redirect_uris": redirect_uris,
+            }
+        }
 
     def _load_project_manifest(self) -> Dict[str, Any]:
         """Load the project manifest file if available."""
@@ -284,11 +319,12 @@ class GoogleSheetsConnector:
             self.drive_service = build('drive', 'v3', credentials=self.creds)
 
         except Exception as e:
-            print(f"Failed to initialize Google services: {str(e)}")
-            # Set to local mode if Google services fail
-            self.local_mode = True
-            self.service = None
-            self.drive_service = None
+            if self.local_mode:
+                print(f"Failed to initialize Google services in local mode: {str(e)}")
+                self.service = None
+                self.drive_service = None
+            else:
+                raise
 
     def _init_service_account_auth(self):
         """Initialize service account authentication"""
@@ -330,9 +366,20 @@ class GoogleSheetsConnector:
 
     def _perform_oauth_flow(self):
         """Perform OAuth2 flow to get user credentials"""
-        flow = InstalledAppFlow.from_client_secrets_file(
-            self.credentials_file, self.scopes
-        )
+
+        if self.oauth_client_config:
+            flow = InstalledAppFlow.from_client_config(
+                self.oauth_client_config, self.scopes
+            )
+        elif self.credentials_file:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                self.credentials_file, self.scopes
+            )
+        else:  # pragma: no cover - defensive guard for misconfiguration
+            raise ValueError(
+                "No OAuth client configuration available. Provide GOOGLE_CLIENT_ID/SECRET "
+                "or set GOOGLE_SHEETS_CREDENTIALS_FILE."
+            )
 
         # Explicitly set redirect URI for desktop app
         flow.redirect_uri = "http://localhost"
@@ -350,6 +397,12 @@ class GoogleSheetsConnector:
         # Exchange the authorization code for credentials
         flow.fetch_token(code=auth_code)
         self.creds = flow.credentials
+
+        # Persist credentials for future runs
+        token_path = Path(self.token_file)
+        token_path.parent.mkdir(parents=True, exist_ok=True)
+        with token_path.open('wb') as token:
+            pickle.dump(self.creds, token)
 
     def authenticate_google_drive(self) -> bool:
         """
@@ -480,13 +533,34 @@ class GoogleSheetsConnector:
             sheet_name = section.get('sheet_name')
             range_spec = section.get('range')
             parsers = section.get('parsers', [])
+            local_csv = section.get('local_csv')
 
             if not sheet_name or not range_spec:
                 print(f"Warning: Manifest section '{section_key}' missing sheet name or range")
                 continue
 
             range_name = f"{sheet_name}!{range_spec}"
-            df = self.read_sheet(actual_sheet_id, range_name, force_refresh=force_refresh)
+
+            if self.local_mode and local_csv:
+                csv_path = Path(local_csv)
+                if not csv_path.is_absolute():
+                    csv_path = (self._project_root / csv_path).resolve()
+                if not csv_path.exists():
+                    print(
+                        f"Warning: Local CSV '{csv_path}' for section '{section_key}' not found; falling back to sheets API"
+                    )
+                    df = self.read_sheet(actual_sheet_id, range_name, force_refresh=force_refresh)
+                else:
+                    try:
+                        df = pd.read_csv(csv_path, header=None, dtype=str, encoding='utf-8')
+                        df = df.fillna("")
+                    except Exception as exc:
+                        print(
+                            f"Warning: Failed to read local CSV '{csv_path}' for section '{section_key}': {exc}; falling back to sheets API"
+                        )
+                        df = self.read_sheet(actual_sheet_id, range_name, force_refresh=force_refresh)
+            else:
+                df = self.read_sheet(actual_sheet_id, range_name, force_refresh=force_refresh)
 
             if df.empty:
                 print(f"Warning: Received empty DataFrame for {project_id} {sheet_name}")

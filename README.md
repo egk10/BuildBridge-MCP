@@ -21,24 +21,29 @@ The system consists of three main components:
 2. **SharePoint Connector** - Accesses SharePoint lists and document libraries
 3. **Query Processing Engine** - Understands natural language and routes to appropriate data sources
 
-## 📋 **Project Structure**
+## 📋 Project Structure
 
 ```
 BuildBridge-MCP/
-├── VALUE_PROPOSITION.md          # Complete business case and market analysis
 ├── src/                          # Core MCP implementation
-│   ├── main.py                   # Main MCP server
+│   ├── main.py                   # Main MCP server entrypoint
 │   ├── connectors/               # Data connectors
-│   ├── query_processor.py        # Natural language query processing
+│   ├── query_processor.py        # Natural language query orchestration
 │   └── ai_service.py             # AI integration service
-├── tests/                        # Test files
+├── docs/                         # Technical documentation portal
+│   ├── guides/                   # Step-by-step setup and tooling guides
+│   │   └── GOOGLE_DRIVE_SETUP_GUIDE.md
+│   ├── reports/                  # Executive and analytical reports
+│   │   └── VALUE_PROPOSITION.md
+│   ├── runbook/                  # Operational runbooks
+│   └── archives/                 # Historical plans & conversation logs
+├── scripts/                      # Utility and bootstrap scripts
+├── tests/                        # Automated tests
 ├── examples/                     # Demo and example scripts
-├── docs/                         # Technical documentation
-├── scripts/                      # Utility scripts
-├── config/                       # Configuration files
+├── config/                       # Configuration templates and manifests
 ├── data/                         # Sample data and datasets
-├── static/                       # Web interface files
 ├── deploy/                       # Deployment configurations
+├── static/                       # Web interface assets
 ├── ssl/                          # SSL certificates
 └── logs/                         # Log files
 ```
@@ -76,7 +81,7 @@ See [`docs/SECURITY_CONFIG_GUIDE.md`](docs/SECURITY_CONFIG_GUIDE.md) for compreh
 
 ## Getting Started
 
-See `docs/setup.md` for detailed setup instructions.
+See `docs/setup.md` for detailed setup instructions. For SharePoint and Sheets integration specifics, follow `docs/guides/GOOGLE_DRIVE_SETUP_GUIDE.md`.
 
 ## Example Queries
 
@@ -155,7 +160,7 @@ docker-compose down             # Stop deployment
 docker-compose pull && docker-compose up -d  # Update
 ```
 
-## � Ubuntu one-liner bootstrap
+## 🐧 Ubuntu one-liner bootstrap
 
 On a fresh Ubuntu Desktop machine, run this to clone, create a venv, install deps, enable local mode, run tests, and optionally start the server:
 
@@ -186,13 +191,13 @@ START_SERVER=true curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge
    bash scripts/start_server.sh
    ```
 
-## �📊 Features
+## 📊 Feature Highlights
 
-- **Natural Language Queries**: Ask questions in plain English
-- **Multi-Source Integration**: Excel, SharePoint, and document libraries
-- **Real-Time Data**: Live access to your construction management data
-- **Intelligent Search**: AI-powered document and data discovery
-- **Comprehensive Reports**: Budget analysis, project status, safety reports
+- **Insightful queries** – Pose schedule, budget, or safety questions in plain English
+- **Multi-source federation** – Blend Excel, SharePoint, and document libraries seamlessly
+- **Real-time awareness** – Stream live project data with configurable refresh intervals
+- **Semantic document search** – Surface the right specs, RFIs, and reports instantly
+- **Automated reporting** – Generate compliance, status, and variance summaries on demand
 
 ## 🏗️ Architecture
 

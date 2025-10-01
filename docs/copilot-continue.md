@@ -17,21 +17,21 @@ Use this quick checklist to rehydrate your development environment and pick up w
     ```
 - VS Code should auto-detect the venv. If not, press Ctrl+Shift+P → "Python: Select Interpreter" → choose .venv.
 
-## 3) Local mode config (no cloud creds required)
-- Copy the template:
-  - Windows:
-    ```powershell
-    Copy-Item config/credentials.json.template config/credentials.json -Force
-    ```
-  - Bash:
-    ```bash
-    cp config/credentials.json.template config/credentials.json
-    ```
-- Ensure these fields are set in `config/credentials.json`:
-  - "local_mode": true
-  - "onedrive_folder": "data/sample"
+## 3) Configure environment variables
+- Copy `.env.template` to `.env` and fill in the required values:
+  - Google OAuth client ID/secret (or service account file path)
+  - Google Sheets project slots (`GOOGLE_SHEETS_PROJECT_*.{NAME,ID}`)
+  - Optional SharePoint/OneDrive credentials (`SHAREPOINT_*`)
+  - OpenAI API key and model settings
+- Never commit `.env`. For production, prefer real environment variables over the file.
 
-## 4) Run tests and server
+## 4) Optional dev-only local mode
+- Leave `LOCAL_MODE` unset (or `false`) for production. To exercise the bundled CSV fixtures while offline:
+  - Set `LOCAL_MODE=true` in `.env` or your shell.
+  - Ensure the manifest points at the sample CSVs under `data/` (already configured by default).
+  - Local mode disables SharePoint calls and forces Google Sheets requests to use the cached CSV manifests.
+
+## 5) Run tests and server
 - Tests:
   - Windows:
     ```powershell
@@ -51,12 +51,12 @@ Use this quick checklist to rehydrate your development environment and pick up w
     python3 src/main.py
     ```
 
-## 5) Copilot/Cursor MCP client setup
+## 6) Copilot/Cursor MCP client setup
 - The MCP config file is at `config/mcp_config.json` and uses relative paths, so it works anywhere.
 - It runs `python src/main.py` from the repo root and sets `PYTHONPATH=src`.
 - In VS Code, install the MCP-capable client (Cursor, or VS Code MCP extension when available) and point it to this config.
 
-## 6) Fast path on Ubuntu
+## 7) Fast path on Ubuntu
 - One-liner bootstrap that does steps 1-4 for you:
   ```bash
   curl -fsSL https://raw.githubusercontent.com/egk10/BuildBridge-MCP/main/construction-management-mcp/scripts/bootstrap_ubuntu.sh | bash

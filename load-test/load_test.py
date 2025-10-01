@@ -5,7 +5,12 @@ Uses locust for more sophisticated load testing
 """
 
 import time
-from locust import HttpUser, task, between
+import pytest
+
+try:
+    from locust import HttpUser, task, between  # type: ignore[import]
+except ModuleNotFoundError as exc:  # pragma: no cover - optional dependency
+    pytest.skip("Locust not installed; skipping load tests", allow_module_level=True)
 import ssl
 
 class MCPUser(HttpUser):
