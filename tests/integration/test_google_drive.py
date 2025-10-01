@@ -2,17 +2,22 @@
 """Test script for Google Drive authentication and basic functionality."""
 
 import os
+import sys
 from pathlib import Path
 
 import pytest
 from dotenv import load_dotenv
 
-from src.connectors.google_sheets_connector import GoogleSheetsConnector
-from src.secure_config import SecureConfig
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+SRC_PATH = PROJECT_ROOT / "src"
+if str(SRC_PATH) not in sys.path:
+    sys.path.insert(0, str(SRC_PATH))
+
+from connectors.google_sheets_connector import GoogleSheetsConnector  # type: ignore
+from secure_config import SecureConfig  # type: ignore
 
 
 RUN_GOOGLE_TESTS = os.getenv("RUN_GOOGLE_INTEGRATION_TESTS") == "1" or os.getenv("RUN_INTEGRATION_TESTS") == "1"
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 def test_google_drive_auth():
     """Test Google Drive authentication"""
