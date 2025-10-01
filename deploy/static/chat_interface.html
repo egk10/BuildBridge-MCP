@@ -332,21 +332,7 @@
             <div class="chat-messages" id="chatMessages">
                 <div class="message assistant">
                     <div class="message-header">Construction MCP Assistant</div>
-                    <p>Hello! I'm your construction management assistant. I can help you with:</p>
-                    <ul>
-                        <li>📊 Project status and progress tracking</li>
-                        <li>💰 Budget analysis and cost management</li>
-                        <li>📅 Schedule monitoring and delay alerts</li>
-                        <li>🔍 Document search and retrieval</li>
-                        <li>📈 Performance reports and insights</li>
-                    </ul>
-
-                    <div class="quick-questions">
-                        <button class="quick-btn" onclick="askQuestion('Show me all projects')">📋 All Projects</button>
-                        <button class="quick-btn" onclick="askQuestion('Which projects are over budget?')">💰 Budget Issues</button>
-                        <button class="quick-btn" onclick="askQuestion('Which projects are behind schedule?')">⏰ Schedule Delays</button>
-                        <button class="quick-btn" onclick="askQuestion('Show me project progress')">📊 Progress Report</button>
-                    </div>
+                    <p>Loading your personalized dashboard...</p>
                 </div>
             </div>
 
@@ -688,17 +674,86 @@
             document.getElementById('sendButton').textContent = loading ? 'Thinking...' : 'Send';
         }
 
-        // Initialize dashboard with live data
+        // Initialize dashboard with live data and dynamic welcome
         async function loadDashboard() {
             try {
                 const response = await queryMCP('Show me all projects');
                 if (response.success && response.data.results) {
                     const projects = response.data.results;
                     displayDashboard(projects);
+                    updateWelcomeMessage(projects);
                 }
             } catch (error) {
                 console.error('Failed to load dashboard:', error);
+                // Show a generic welcome if data loading fails
+                updateWelcomeMessage([]);
             }
+        }
+
+        function updateWelcomeMessage(projects) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const welcomeDiv = messagesDiv.querySelector('.message.assistant');
+
+            if (!welcomeDiv) return;
+
+            let welcomeContent = '<div class="message-header">Construction MCP Assistant</div>';
+
+            if (projects && projects.length > 0) {
+                // Calculate key metrics
+                const totalBudget = projects.reduce((sum, p) => sum + (p.Total_Budget || 0), 0);
+                const activeProjects = projects.filter(p => p.Status !== 'Completed').length;
+                const avgProgress = projects.reduce((sum, p) => sum + (p.Progress_Percent || 0), 0) / projects.length;
+
+                // Find featured project (largest budget or first active)
+                const featuredProject = projects.find(p => p.Status !== 'Completed') || projects[0];
+
+                welcomeContent += `
+                    <p>Hi! I'm your AI construction management assistant. I can help you with information about your projects, including the <strong>${featuredProject.Project_Name || 'EGK HAMILTON'}</strong> project ($${featuredProject.Total_Budget ? featuredProject.Total_Budget.toLocaleString() : '54M'} budget, ${featuredProject.Progress_Percent || 20}% complete). All questions will get consistent AI-powered responses.</p>
+
+                    <div class="stats-card" style="margin: 15px 0;">
+                        <h4>📊 Your Current Portfolio</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">${projects.length}</div>
+                                <div class="stat-label">Total Projects</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">$${totalBudget.toLocaleString()}</div>
+                                <div class="stat-label">Total Budget</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${activeProjects}</div>
+                                <div class="stat-label">Active Projects</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">${avgProgress.toFixed(1)}%</div>
+                                <div class="stat-label">Avg Progress</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p>What would you like to know about your construction projects?</p>`;
+            } else {
+                welcomeContent += `
+                    <p>Hello! I'm your construction management assistant. I can help you with:</p>
+                    <ul>
+                        <li>📊 Project status and progress tracking</li>
+                        <li>💰 Budget analysis and cost management</li>
+                        <li>📅 Schedule monitoring and delay alerts</li>
+                        <li>🔍 Document search and retrieval</li>
+                        <li>📈 Performance reports and insights</li>
+                    </ul>`;
+            }
+
+            welcomeContent += `
+                <div class="quick-questions">
+                    <button class="quick-btn" onclick="askQuestion('Show me all projects')">📋 All Projects</button>
+                    <button class="quick-btn" onclick="askQuestion('Which projects are over budget?')">💰 Budget Issues</button>
+                    <button class="quick-btn" onclick="askQuestion('Which projects are behind schedule?')">⏰ Schedule Delays</button>
+                    <button class="quick-btn" onclick="askQuestion('Show me project progress')">📊 Progress Report</button>
+                </div>`;
+
+            welcomeDiv.innerHTML = welcomeContent;
         }
 
         function displayDashboard(projects) {

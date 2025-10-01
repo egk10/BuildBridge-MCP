@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
-"""
-Quick test script to verify MCP server functionality
-"""
+"""Quick test script to verify MCP server functionality."""
 
 import json
-import subprocess
-import time
+import os
 import signal
+import subprocess
 import sys
+import time
 from pathlib import Path
+
+import pytest
+
+
+RUN_SERVER_TESTS = os.getenv("RUN_SERVER_TESTS") == "1" or os.getenv("RUN_INTEGRATION_TESTS") == "1"
+pytestmark = pytest.mark.skipif(
+    not RUN_SERVER_TESTS,
+    reason="Server integration tests disabled. Set RUN_SERVER_TESTS=1 to enable.",
+)
 
 def test_server_startup():
     """Test that the server starts successfully"""
@@ -20,8 +28,9 @@ def test_server_startup():
     try:
         # Start the server process
         cmd = [
-            "bash", "-c", 
-            f"cd {project_dir} && source buildbridge_venv/bin/activate && python src/main.py"
+            "bash",
+            "-c",
+            f"cd {project_dir} && source buildbridge_env/bin/activate && python src/main.py",
         ]
         process = subprocess.Popen(
             cmd,

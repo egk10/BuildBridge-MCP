@@ -22,10 +22,10 @@ from construction_prompts import get_construction_prompt, enhance_query_with_con
 class QueryProcessor:
     """Processes natural language queries and routes to appropriate data sources"""
     
-    def __init__(self, excel_connector: ExcelConnector, 
-                 sharepoint_connector: SharePointConnector,
-                 document_indexer: DocumentIndexer,
-                 google_sheets_connector: GoogleSheetsConnector,
+    def __init__(self, excel_connector: Optional[ExcelConnector],
+                 sharepoint_connector: Optional[SharePointConnector],
+                 document_indexer: Optional[DocumentIndexer],
+                 google_sheets_connector: Optional[GoogleSheetsConnector],
                  config: Optional[Dict[str, Any]] = None):
         """
         Initialize query processor with data connectors
@@ -254,6 +254,8 @@ class QueryProcessor:
         
     def _search_projects_excel(self, params: Dict[str, Any], filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Search projects in Excel/OneDrive data"""
+        if not self.excel_connector:
+            return []
         criteria = filters.copy() if filters else {}
         
         # Add parameters from query
@@ -277,6 +279,8 @@ class QueryProcessor:
     
     def _search_projects_google_sheets(self, params: Dict[str, Any], filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Search projects in Google Sheets data"""
+        if not self.google_sheets_connector:
+            return []
         criteria = filters.copy() if filters else {}
         
         # Add parameters from query
@@ -297,6 +301,8 @@ class QueryProcessor:
     
     def _search_projects_sharepoint(self, params: Dict[str, Any], filters: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
         """Search projects in SharePoint data"""
+        if not self.sharepoint_connector:
+            return []
         project_id = params.get('project_id')
         return self.sharepoint_connector.get_projects_list(project_id=project_id)
     
@@ -336,25 +342,23 @@ class QueryProcessor:
             'milestones': [],
             'health_metrics': {}
         }
-        
+
         try:
-            # Get project data from Excel
-            project_df = self.excel_connector.get_project_data(project_id)
+            project_df = self._get_project_dataframe(project_id)
             if not project_df.empty:
                 project_data = project_df.iloc[0].to_dict()
                 status.update({
-                    'name': project_data.get('ProjectName', project_data.get('Name', 'Unknown')),
+                    'name': project_data.get('ProjectName') or project_data.get('Name', 'Unknown'),
                     'status': project_data.get('Status', 'Unknown'),
-                    'progress': project_data.get('Progress', 0),
-                    'manager': project_data.get('ProjectManager', 'Unassigned')
+                    'progress': project_data.get('Progress', 0) or 0,
+                    'manager': project_data.get('ProjectManager', project_data.get('Manager', 'Unassigned'))
                 })
-            
-            # Get budget status
-            budget_df = self.excel_connector.get_budget_data(project_id)
+
+            budget_df = self._get_budget_dataframe(project_id)
             if not budget_df.empty:
                 budget_data = budget_df.iloc[0].to_dict()
-                allocated = budget_data.get('BudgetAllocated', 0)
-                spent = budget_data.get('BudgetSpent', 0)
+                allocated = float(budget_data.get('BudgetAllocated') or 0)
+                spent = float(budget_data.get('BudgetSpent') or 0)
                 if allocated > 0:
                     variance = (spent - allocated) / allocated * 100
                     if variance > 10:
@@ -363,35 +367,56 @@ class QueryProcessor:
                         status['budget_status'] = f'Under Budget ({variance:+.1f}%)'
                     else:
                         status['budget_status'] = 'On Budget'
-            
-            # Get schedule status from SharePoint
-            tasks = self.sharepoint_connector.get_tasks_list(project_id=project_id)
+                elif allocated == 0 and spent == 0:
+                    status['budget_status'] = 'No Budget Data'
+
+            tasks = self._get_schedule_tasks(project_id)
             if tasks:
                 overdue_tasks = 0
-                total_tasks = len(tasks)
                 completed_tasks = 0
-                
+                total_tasks = len(tasks)
+                upcoming_milestones: List[Dict[str, Any]] = []
+
                 for task in tasks:
-                    if task.get('Status') == 'Completed':
+                    status_value = (task.get('Status') or '').lower()
+                    if status_value in {'completed', 'done', 'closed'}:
                         completed_tasks += 1
-                    elif task.get('DueDate'):
-                        due_date = datetime.fromisoformat(task['DueDate'].replace('Z', '+00:00'))
-                        if due_date < datetime.now() and task.get('Status') != 'Completed':
+
+                    due_value = task.get('DueDate')
+                    due_date = self._parse_due_date_value(due_value)
+                    if due_date:
+                        if due_date < datetime.now() and status_value not in {'completed', 'done', 'closed'}:
                             overdue_tasks += 1
-                
+                        elif due_date >= datetime.now():
+                            upcoming_milestones.append({
+                                'name': task.get('Title') or task.get('Name', 'Task'),
+                                'date': due_date.strftime('%Y-%m-%d'),
+                                'type': task.get('TaskType') or task.get('Type', 'Task')
+                            })
+
                 if overdue_tasks > 0:
                     status['schedule_status'] = f'{overdue_tasks} Overdue Tasks'
-                else:
+                elif total_tasks > 0:
                     status['schedule_status'] = 'On Schedule'
-                
-                status['progress'] = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
-            
-            # Get health metrics
-            status['health_metrics'] = self.sharepoint_connector.get_project_health_metrics(project_id)
-            
+                else:
+                    status['schedule_status'] = 'Schedule data unavailable'
+
+                status['progress'] = (completed_tasks / total_tasks * 100) if total_tasks > 0 else status['progress']
+                status['milestones'] = upcoming_milestones[:5]
+            else:
+                status['schedule_status'] = 'Schedule data unavailable'
+
+            if self.sharepoint_connector:
+                status['health_metrics'] = self.sharepoint_connector.get_project_health_metrics(project_id)
+            elif self.google_sheets_connector:
+                status['health_metrics'] = {
+                    'source': 'google_sheets',
+                    'message': 'SharePoint connector disabled; health metrics not available.'
+                }
+
         except Exception as e:
             status['error'] = f"Error retrieving project status: {str(e)}"
-        
+
         return status
     
     def analyze_budget(self, project_id: Optional[str] = None, period: str = "current_month") -> Dict[str, Any]:
@@ -416,34 +441,36 @@ class QueryProcessor:
         }
         
         try:
-            # Get budget data
-            budget_df = self.excel_connector.get_budget_data(project_id)
-            
-            if not budget_df.empty:
-                analysis['total_budget'] = budget_df['BudgetAllocated'].sum()
-                analysis['spent'] = budget_df['BudgetSpent'].sum()
+            budget_df = self._get_budget_dataframe(project_id)
+
+            if not budget_df.empty and 'BudgetAllocated' in budget_df.columns and 'BudgetSpent' in budget_df.columns:
+                analysis['total_budget'] = float(budget_df['BudgetAllocated'].sum())
+                analysis['spent'] = float(budget_df['BudgetSpent'].sum())
                 analysis['remaining'] = analysis['total_budget'] - analysis['spent']
-                
+
                 if analysis['total_budget'] > 0:
                     analysis['variance_percent'] = (analysis['spent'] - analysis['total_budget']) / analysis['total_budget'] * 100
-                
-                # Find over/under budget projects
+
                 for _, row in budget_df.iterrows():
-                    if row['BudgetAllocated'] > 0:
-                        variance = (row['BudgetSpent'] - row['BudgetAllocated']) / row['BudgetAllocated'] * 100
-                        
+                    allocated = float(row.get('BudgetAllocated') or 0)
+                    spent = float(row.get('BudgetSpent') or 0)
+                    if allocated > 0:
+                        variance = (spent - allocated) / allocated * 100
+
                         project_info = {
-                            'name': row.get('ProjectName', row.get('ProjectID', 'Unknown')),
+                            'name': row.get('ProjectName') or row.get('ProjectID', 'Unknown'),
                             'variance': variance,
-                            'allocated': row['BudgetAllocated'],
-                            'spent': row['BudgetSpent']
+                            'allocated': allocated,
+                            'spent': spent
                         }
-                        
-                        if variance > 5:  # More than 5% over budget
+
+                        if variance > 5:
                             analysis['over_budget_projects'].append(project_info)
-                        elif variance < -5:  # More than 5% under budget
+                        elif variance < -5:
                             analysis['under_budget_projects'].append(project_info)
-        
+            else:
+                analysis['message'] = 'No budget data available from configured sources.'
+
         except Exception as e:
             analysis['error'] = f"Error analyzing budget: {str(e)}"
         
@@ -467,50 +494,60 @@ class QueryProcessor:
         }
         
         try:
-            # Get all projects to check schedules
-            projects_df = self.excel_connector.get_project_data()
-            
+            projects_df = self._get_project_dataframe()
             end_date = datetime.now() + timedelta(days=days_ahead)
-            
+
+            if projects_df.empty:
+                updates['message'] = 'No project schedule data available from configured sources.'
+                return updates
+
             for _, project in projects_df.iterrows():
-                project_id = project.get('ProjectID', project.get('ID'))
-                
-                # Get tasks from SharePoint
-                tasks = self.sharepoint_connector.get_tasks_list(project_id=project_id)
-                
+                project_id = project.get('ProjectID') or project.get('ID') or project.get('Project_Name')
+                if not project_id:
+                    continue
+
+                tasks = self._get_schedule_tasks(project_id)
+
                 for task in tasks:
-                    if task.get('DueDate'):
-                        due_date = datetime.fromisoformat(task['DueDate'].replace('Z', '+00:00'))
-                        
-                        # Check for upcoming milestones
-                        if datetime.now() <= due_date <= end_date:
-                            updates['upcoming_milestones'].append({
-                                'project': project.get('ProjectName', project_id),
-                                'name': task.get('Title', 'Unknown Task'),
-                                'date': due_date.strftime('%Y-%m-%d'),
-                                'type': task.get('TaskType', 'Task')
-                            })
-                        
-                        # Check for overdue tasks
-                        elif due_date < datetime.now() and task.get('Status') != 'Completed':
-                            days_overdue = (datetime.now() - due_date).days
-                            updates['overdue_tasks'].append({
-                                'project': project.get('ProjectName', project_id),
-                                'name': task.get('Title', 'Unknown Task'),
-                                'days_overdue': days_overdue,
-                                'due_date': due_date.strftime('%Y-%m-%d')
-                            })
-            
-            # Check for delayed projects
-            delayed_df = self.excel_connector.get_delayed_projects()
-            for _, project in delayed_df.iterrows():
-                updates['delayed_projects'].append({
-                    'name': project.get('ProjectName', 'Unknown'),
-                    'delay_days': project.get('DelayDays', 0),
-                    'original_end': project.get('PlannedEndDate'),
-                    'current_end': project.get('ActualEndDate')
-                })
-        
+                    due_value = task.get('DueDate')
+                    due_date = self._parse_due_date_value(due_value)
+                    if not due_date:
+                        continue
+
+                    if datetime.now() <= due_date <= end_date:
+                        updates['upcoming_milestones'].append({
+                            'project': project.get('ProjectName') or project.get('Project_Name', project_id),
+                            'name': task.get('Title', 'Unknown Task'),
+                            'date': due_date.strftime('%Y-%m-%d'),
+                            'type': task.get('TaskType') or task.get('Type', 'Task')
+                        })
+                    elif due_date < datetime.now() and (task.get('Status') or '').lower() not in {'completed', 'done', 'closed'}:
+                        days_overdue = (datetime.now() - due_date).days
+                        updates['overdue_tasks'].append({
+                            'project': project.get('ProjectName') or project.get('Project_Name', project_id),
+                            'name': task.get('Title', 'Unknown Task'),
+                            'days_overdue': days_overdue,
+                            'due_date': due_date.strftime('%Y-%m-%d')
+                        })
+
+            delayed_df = pd.DataFrame()
+            if self.excel_connector:
+                delayed_df = self.excel_connector.get_delayed_projects()
+            elif self.google_sheets_connector:
+                try:
+                    delayed_df = self.google_sheets_connector.get_delayed_projects()
+                except Exception:
+                    delayed_df = pd.DataFrame()
+
+            if not delayed_df.empty:
+                for _, project in delayed_df.iterrows():
+                    updates['delayed_projects'].append({
+                        'name': project.get('ProjectName') or project.get('Project_Name', 'Unknown'),
+                        'delay_days': project.get('DelayDays', 0),
+                        'original_end': project.get('PlannedEndDate') or project.get('Planned Finish'),
+                        'current_end': project.get('ActualEndDate') or project.get('Actual Finish')
+                    })
+
         except Exception as e:
             updates['error'] = f"Error getting schedule updates: {str(e)}"
         
@@ -541,7 +578,7 @@ class QueryProcessor:
                     report['content'] = self._format_status_report(status)
                 else:
                     # All projects status
-                    projects_df = self.excel_connector.get_project_data()
+                    projects_df = self._get_project_dataframe()
                     report['content'] = self._format_all_projects_status(projects_df)
             
             elif report_type.lower() == 'budget':
@@ -549,7 +586,10 @@ class QueryProcessor:
                 report['content'] = self._format_budget_report(analysis)
             
             elif report_type.lower() == 'safety':
-                incidents = self.sharepoint_connector.get_safety_incidents(project_id=project_id)
+                if self.sharepoint_connector:
+                    incidents = self.sharepoint_connector.get_safety_incidents(project_id=project_id)
+                else:
+                    incidents = []
                 report['content'] = self._format_safety_report(incidents)
             
             elif report_type.lower() == 'compliance':
@@ -583,13 +623,19 @@ class QueryProcessor:
         
         try:
             # Search in SharePoint lists
-            results['sharepoint_results'] = self.sharepoint_connector.search_across_lists(search_term)
+            if self.sharepoint_connector:
+                results['sharepoint_results'] = self.sharepoint_connector.search_across_lists(search_term)
+            else:
+                results['sharepoint_results'] = {}
             
             # Search in documents
-            results['document_results'] = self.document_indexer.search_documents(search_term)
+            if self.document_indexer:
+                results['document_results'] = self.document_indexer.search_documents(search_term)
+            else:
+                results['document_results'] = []
             
             # Search in Excel data (basic text search in project names, descriptions)
-            projects_df = self.excel_connector.get_project_data()
+            projects_df = self._get_project_dataframe()
             matching_projects = []
             
             for _, project in projects_df.iterrows():
@@ -649,6 +695,220 @@ class QueryProcessor:
             enhanced_response += "- Risk management is essential for project success\n"
         
         return enhanced_response
+
+    def _get_project_dataframe(self, project_id: Optional[str] = None) -> pd.DataFrame:
+        """Fetch project data from available connectors and normalize columns."""
+        frames: List[pd.DataFrame] = []
+
+        if self.excel_connector:
+            try:
+                df = self.excel_connector.get_project_data(project_id)
+                if not df.empty:
+                    frames.append(self._normalize_project_dataframe(df, source='excel'))
+            except Exception as exc:
+                print(f"Warning: Excel project data unavailable: {exc}")
+
+        if self.google_sheets_connector:
+            try:
+                df = self.google_sheets_connector.get_project_data(project_id)
+                if not df.empty:
+                    frames.append(self._normalize_project_dataframe(df, source='google_sheets'))
+            except Exception as exc:
+                print(f"Warning: Google Sheets project data unavailable: {exc}")
+
+        if frames:
+            return pd.concat(frames, ignore_index=True, sort=False)
+
+        return pd.DataFrame()
+
+    def _normalize_project_dataframe(self, df: pd.DataFrame, source: str) -> pd.DataFrame:
+        """Normalize project DataFrame column names."""
+        normalized = df.copy()
+
+        rename_map = {
+            'Project_ID': 'ProjectID',
+            'project_id': 'ProjectID',
+            'Project_Name': 'ProjectName',
+            'Project_Manager': 'ProjectManager',
+            'Manager': 'ProjectManager',
+            'Progress_Percent': 'Progress',
+            'ProgressPercent': 'Progress'
+        }
+
+        rename_dict = {}
+        for old, new in rename_map.items():
+            if old in normalized.columns and new not in normalized.columns:
+                rename_dict[old] = new
+        if rename_dict:
+            normalized = normalized.rename(columns=rename_dict)
+
+        if 'Progress' in normalized.columns:
+            normalized['Progress'] = pd.to_numeric(normalized['Progress'], errors='coerce').fillna(0).clip(lower=0, upper=100)
+
+        normalized['Source'] = source
+
+        return normalized
+
+    def _get_budget_dataframe(self, project_id: Optional[str] = None) -> pd.DataFrame:
+        """Fetch budget data from available connectors and normalize columns."""
+        frames: List[pd.DataFrame] = []
+
+        if self.excel_connector:
+            try:
+                df = self.excel_connector.get_budget_data(project_id)
+                if not df.empty:
+                    frames.append(self._normalize_budget_dataframe(df, source='excel'))
+            except Exception as exc:
+                print(f"Warning: Excel budget data unavailable: {exc}")
+
+        if self.google_sheets_connector:
+            try:
+                df = self.google_sheets_connector.get_budget_data(project_id)
+                if not df.empty:
+                    frames.append(self._normalize_budget_dataframe(df, source='google_sheets'))
+            except Exception as exc:
+                print(f"Warning: Google Sheets budget data unavailable: {exc}")
+
+        if frames:
+            return pd.concat(frames, ignore_index=True, sort=False)
+
+        return pd.DataFrame()
+
+    def _normalize_budget_dataframe(self, df: pd.DataFrame, source: str) -> pd.DataFrame:
+        """Normalize budget DataFrame column names."""
+        normalized = df.copy()
+
+        rename_map = {
+            'Project_ID': 'ProjectID',
+            'project_id': 'ProjectID',
+            'Project': 'ProjectID',
+            'Project_Name': 'ProjectName',
+            'ProjectName': 'ProjectName',
+            'Budget': 'BudgetAllocated',
+            'Total_Budget': 'BudgetAllocated',
+            'PlannedBudget': 'BudgetAllocated',
+            'ActualSpend': 'BudgetSpent',
+            'Spent': 'BudgetSpent',
+            'Actual_Cost': 'BudgetSpent'
+        }
+
+        rename_dict = {}
+        for old, new in rename_map.items():
+            if old in normalized.columns and new not in normalized.columns:
+                rename_dict[old] = new
+
+        if rename_dict:
+            normalized = normalized.rename(columns=rename_dict)
+
+        for col in ['BudgetAllocated', 'BudgetSpent']:
+            if col in normalized.columns:
+                normalized[col] = pd.to_numeric(normalized[col], errors='coerce').fillna(0.0)
+
+        normalized['Source'] = source
+
+        return normalized
+
+    def _get_schedule_tasks(self, project_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """Fetch schedule tasks from available connectors."""
+        tasks: List[Dict[str, Any]] = []
+
+        if self.sharepoint_connector:
+            try:
+                sharepoint_tasks = self.sharepoint_connector.get_tasks_list(project_id=project_id) or []
+                tasks.extend(sharepoint_tasks)
+            except Exception as exc:
+                print(f"Warning: SharePoint schedule unavailable: {exc}")
+
+        if tasks:
+            return tasks
+
+        if self.google_sheets_connector:
+            try:
+                schedule_df = self.google_sheets_connector.get_schedule_data(project_id)
+                tasks.extend(self._convert_schedule_df_to_tasks(schedule_df))
+            except Exception as exc:
+                print(f"Warning: Google Sheets schedule unavailable: {exc}")
+
+        return tasks
+
+    def _convert_schedule_df_to_tasks(self, schedule_df: pd.DataFrame) -> List[Dict[str, Any]]:
+        """Convert Google Sheets schedule DataFrame into task dictionaries."""
+        tasks: List[Dict[str, Any]] = []
+
+        if schedule_df.empty:
+            return tasks
+
+        name_columns = ['TaskName', 'Task', 'Milestone', 'Activity', 'Name']
+        status_columns = ['Status', 'TaskStatus', 'Completion']
+        due_columns = ['DueDate', 'Due Date', 'PlannedFinish', 'Planned Finish', 'EndDate', 'Target Date']
+        type_columns = ['TaskType', 'Type', 'Category']
+
+        for _, row in schedule_df.iterrows():
+            task: Dict[str, Any] = {}
+
+            name = None
+            for col in name_columns:
+                if col in schedule_df.columns:
+                    value = row.get(col)
+                    if pd.notna(value) and str(value).strip():
+                        name = str(value).strip()
+                        break
+            task['Title'] = name or 'Task'
+
+            status_value = None
+            for col in status_columns:
+                if col in schedule_df.columns:
+                    value = row.get(col)
+                    if pd.notna(value) and str(value).strip():
+                        status_value = str(value).strip()
+                        break
+            if status_value:
+                task['Status'] = status_value
+
+            due_value = None
+            for col in due_columns:
+                if col in schedule_df.columns:
+                    value = row.get(col)
+                    if pd.notna(value) and str(value).strip():
+                        due_value = str(value).strip()
+                        break
+            if due_value:
+                parsed_due = self._parse_due_date_value(due_value)
+                if parsed_due:
+                    task['DueDate'] = parsed_due.isoformat()
+
+            task_type = None
+            for col in type_columns:
+                if col in schedule_df.columns:
+                    value = row.get(col)
+                    if pd.notna(value) and str(value).strip():
+                        task_type = str(value).strip()
+                        break
+            if task_type:
+                task['TaskType'] = task_type
+
+            tasks.append(task)
+
+        return tasks
+
+    def _parse_due_date_value(self, due_value: Any) -> Optional[datetime]:
+        """Parse due date values into datetime objects."""
+        if isinstance(due_value, datetime):
+            return due_value
+
+        if due_value is None or (isinstance(due_value, str) and not due_value.strip()):
+            return None
+
+        try:
+            parsed = pd.to_datetime(due_value, errors='coerce')
+            if pd.isna(parsed):
+                return None
+            parsed_dt = parsed.to_pydatetime() if hasattr(parsed, 'to_pydatetime') else parsed
+            if parsed_dt.tzinfo:
+                parsed_dt = parsed_dt.replace(tzinfo=None)
+            return parsed_dt
+        except Exception:
+            return None
     
     def _format_projects(self, projects_df: pd.DataFrame) -> List[Dict[str, Any]]:
         """Format projects DataFrame as list of dictionaries"""
@@ -680,7 +940,10 @@ class QueryProcessor:
         content = f"Status Report for {len(projects_df)} Projects:\n\n"
         
         for _, project in projects_df.iterrows():
-            content += f"• {project.get('ProjectName', 'Unknown')}: {project.get('Status', 'Unknown')} ({project.get('Progress', 0)}%)\n"
+            name = project.get('ProjectName') or project.get('Project_Name') or project.get('Name', 'Unknown')
+            status = project.get('Status', 'Unknown')
+            progress = project.get('Progress') or project.get('Progress_Percent') or 0
+            content += f"• {name}: {status} ({progress}%)\n"
         
         return content
     
@@ -701,14 +964,17 @@ class QueryProcessor:
     
     def _format_safety_report(self, incidents: List[Dict[str, Any]]) -> str:
         """Format safety incidents as report text"""
+        if not incidents:
+            return "Safety data not available. SharePoint connector is disabled."
+
         content = f"Safety Report - {len(incidents)} Incidents\n\n"
-        
+
         for incident in incidents:
             content += f"• {incident.get('Title', 'Unknown Incident')}\n"
             content += f"  Date: {incident.get('IncidentDate', 'Unknown')}\n"
             content += f"  Severity: {incident.get('Severity', 'Unknown')}\n"
             content += f"  Status: {incident.get('Status', 'Unknown')}\n\n"
-        
+
         return content
     
     def _format_compliance_report(self, project_id: Optional[str]) -> str:

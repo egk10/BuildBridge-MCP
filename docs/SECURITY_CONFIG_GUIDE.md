@@ -39,10 +39,20 @@ GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
 GOOGLE_PROJECT_ID=your-project-id
 
-# Google Sheets Configuration
-GOOGLE_SHEETS_PROJECT_72_PERTH=1iYDWJx_HSIzo6ORRDOTwkcfy-g0waKnu36THO7E52_k
-GOOGLE_SHEETS_PROJECT_17175_YONGE_ST=1L6pKSAvq2_yN6SmQ11l80Q9jHJYG3dx_iLHffUJyDfU
-GOOGLE_SHEETS_PROJECT_AZURE_ROAD=1pYlXf2-Je0uhxXkU_xWkIpLGXwvMP6SFM6oP-mL9BEg
+# Google Sheets Configuration (generic slots)
+GOOGLE_SHEETS_PROJECT_1_NAME=72_perth
+GOOGLE_SHEETS_PROJECT_1_ID=1iYDWJx_HSIzo6ORRDOTwkcfy-g0waKnu36THO7E52_k
+GOOGLE_SHEETS_PROJECT_2_NAME=17175_yonge_st
+GOOGLE_SHEETS_PROJECT_2_ID=1L6pKSAvq2_yN6SmQ11l80Q9jHJYG3dx_iLHffUJyDfU
+GOOGLE_SHEETS_PROJECT_3_NAME=azure_road
+GOOGLE_SHEETS_PROJECT_3_ID=1pYlXf2-Je0uhxXkU_xWkIpLGXwvMP6SFM6oP-mL9BEg
+
+# Microsoft SharePoint Configuration
+SHAREPOINT_CLIENT_ID=your-entra-client-id
+SHAREPOINT_CLIENT_SECRET=your-entra-client-secret
+SHAREPOINT_TENANT_ID=your-entra-tenant-id
+SHAREPOINT_SITE=https://yourcompany.sharepoint.com/sites/construction
+# SHAREPOINT_LISTS_JSON={"projects": "Projects", "tasks": "Tasks"}
 
 # OpenAI Configuration
 OPENAI_API_KEY=sk-proj-your-key-here

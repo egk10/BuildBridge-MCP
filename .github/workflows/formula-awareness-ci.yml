@@ -6,7 +6,7 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
-      - 'scripts/test_formula_extraction.py'
+      - 'scripts/formula_extraction_cli.py'
       - 'scripts/test_what_if_simulation.py'
       - 'requirements*.txt'
       - '.github/workflows/**'
@@ -15,7 +15,7 @@ on:
     paths:
       - 'src/**'
       - 'tests/**'
-      - 'scripts/test_formula_extraction.py'
+      - 'scripts/formula_extraction_cli.py'
       - 'scripts/test_what_if_simulation.py'
       - 'requirements*.txt'
 
@@ -50,7 +50,7 @@ jobs:
 
     - name: Run formula extraction tests
       run: |
-        python -m pytest scripts/test_formula_extraction.py -v --tb=short
+        python -m pytest tests/test_formula_extraction.py -v --tb=short
       env:
         PYTHONPATH: src
 
@@ -149,16 +149,19 @@ jobs:
 
     - name: Validate formula extraction metrics
       run: |
-        python -c "
-        # Validate that formula extraction tests pass exit criteria
-        import sys
+        python - <<'PY'
+        import os
         import subprocess
+        import sys
+
+        env = dict(os.environ)
+        env['PYTHONPATH'] = 'src'
 
         result = subprocess.run([
             'python', '-m', 'pytest',
-            'scripts/test_formula_extraction.py',
+            'tests/test_formula_extraction.py',
             '-v', '--tb=no', '-q'
-        ], capture_output=True, text=True, env={'PYTHONPATH': 'src'})
+        ], capture_output=True, text=True, env=env)
 
         if result.returncode != 0:
             print('❌ Formula extraction tests failed')
@@ -167,22 +170,25 @@ jobs:
             sys.exit(1)
 
         print('✅ Formula extraction tests passed')
-        "
+        PY
       env:
         PYTHONPATH: src
 
     - name: Validate what-if simulation functionality
       run: |
-        python -c "
-        # Validate what-if simulation works
-        import sys
+        python - <<'PY'
+        import os
         import subprocess
+        import sys
+
+        env = dict(os.environ)
+        env['PYTHONPATH'] = 'src'
 
         result = subprocess.run([
             'python', '-m', 'pytest',
             'scripts/test_what_if_simulation.py',
             '-v', '--tb=no', '-q'
-        ], capture_output=True, text=True, env={'PYTHONPATH': 'src'})
+        ], capture_output=True, text=True, env=env)
 
         if result.returncode != 0:
             print('❌ What-if simulation tests failed')
@@ -191,7 +197,7 @@ jobs:
             sys.exit(1)
 
         print('✅ What-if simulation tests passed')
-        "
+        PY
       env:
         PYTHONPATH: src
 

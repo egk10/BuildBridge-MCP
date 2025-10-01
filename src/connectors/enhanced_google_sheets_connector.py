@@ -13,10 +13,24 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import networkx as nx
 
-from connectors.google_sheets_connector import GoogleSheetsConnector
-from models.formula_context import FormulaContext
-from schema_discovery import FormulaClassifier, export_dependency_graph, analyze_dependency_graph
-from utils.formula_metrics import get_formula_metrics_recorder
+try:  # pragma: no cover - allow running as package or module
+	from src.connectors.google_sheets_connector import GoogleSheetsConnector
+	from src.models.formula_context import FormulaContext
+	from src.schema_discovery import (
+		FormulaClassifier,
+		analyze_dependency_graph,
+		export_dependency_graph,
+	)
+	from src.utils.formula_metrics import get_formula_metrics_recorder
+except ModuleNotFoundError:  # pragma: no cover - fallback when src isn't a package
+	from connectors.google_sheets_connector import GoogleSheetsConnector  # type: ignore
+	from models.formula_context import FormulaContext  # type: ignore
+	from schema_discovery import (  # type: ignore
+		FormulaClassifier,
+		analyze_dependency_graph,
+		export_dependency_graph,
+	)
+	from utils.formula_metrics import get_formula_metrics_recorder  # type: ignore
 
 
 LOGGER = logging.getLogger(__name__)

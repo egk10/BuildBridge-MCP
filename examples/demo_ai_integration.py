@@ -7,13 +7,21 @@ implemented in weeks 1-2 of the project plan.
 """
 
 import asyncio
-import json
 import os
 import sys
 from pathlib import Path
 
-# Add src to path for imports
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+ROOT_DIR = Path(__file__).resolve().parent.parent
+SRC_DIR = ROOT_DIR / "src"
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+if str(SRC_DIR) not in sys.path:
+    sys.path.insert(0, str(SRC_DIR))
+
+from src.ai_service import TokenTracker, create_ai_service
+from src.construction_prompts import ConstructionPrompts
+from src.production_mcp_integration import ConstructionMCPEngine, MCPRequest, RequestType
+from src.secure_config import SecureConfig
 
 print("🏗️ BuildBridge-MCP AI Integration Demo")
 print("=" * 50)
@@ -24,8 +32,6 @@ def demo_construction_prompts():
     print("-" * 40)
     
     try:
-        from construction_prompts import ConstructionPrompts
-        
         prompts = ConstructionPrompts()
         
         # Demo query type detection
@@ -54,10 +60,6 @@ def demo_token_tracking():
     print("-" * 40)
     
     try:
-        # Mock AI service import
-        sys.path.append(str(Path(__file__).parent / "src"))
-        from ai_service import TokenTracker
-        
         tracker = TokenTracker()
         
         # Simulate some API calls
@@ -94,7 +96,6 @@ async def demo_production_integration():
     print("-" * 40)
     
     try:
-        from production_mcp_integration import ConstructionMCPEngine, RequestType, MCPRequest
         from datetime import datetime
         import uuid
         
@@ -138,41 +139,35 @@ def demo_configuration():
     print("-" * 40)
     
     try:
-        config_path = Path(__file__).parent / "config" / "credentials.json"
-        
-        if config_path.exists():
-            with open(config_path, 'r') as f:
-                config = json.load(f)
-            
-            print("  ✅ Configuration file loaded")
-            print(f"  🔧 Local mode: {config.get('local_mode', 'Not set')}")
-            
-            ai_config = config.get('ai_service', {})
-            if ai_config:
-                print(f"  🤖 AI model: {ai_config.get('model', 'Not set')}")
-                print(f"  🌡️ Temperature: {ai_config.get('temperature', 'Not set')}")
-                print(f"  📊 Max tokens: {ai_config.get('max_tokens', 'Not set')}")
-                
-                # Check for API key (masked)
-                api_key = ai_config.get('openai_api_key', '')
-                if api_key and api_key != '${OPENAI_API_KEY}':
-                    print(f"  🔑 API key: {'*' * 20}...{api_key[-4:] if len(api_key) > 4 else '****'}")
-                else:
-                    print(f"  🔑 API key: Environment variable reference")
-            
-            print("  ✅ AI service configuration found")
+        snapshot = SecureConfig().build_legacy_config()
+
+        print("  ✅ Loaded configuration from secure environment")
+        print(f"  🔧 Local mode: {snapshot.get('local_mode', 'Not set')}")
+
+        ai_config = snapshot.get('ai_service', {})
+        if ai_config:
+            print(f"  🤖 AI model: {ai_config.get('model', 'Not set')}")
+            print(f"  🌡️ Temperature: {ai_config.get('temperature', 'Not set')}")
+            print(f"  📊 Max tokens: {ai_config.get('max_tokens', 'Not set')}")
+
+            api_key = ai_config.get('openai_api_key', '')
+            if api_key and not api_key.startswith('${'):
+                masked = ('*' * 20) + (api_key[-4:] if len(api_key) > 4 else "****")
+                print(f"  🔑 API key: {masked}")
+            else:
+                print("  🔑 API key: Environment variable reference")
         else:
-            print("  ❌ Configuration file not found")
-        
-        # Check environment variable
-        api_key = os.getenv('OPENAI_API_KEY')
-        if api_key:
-            print(f"  ✅ Environment API key: {'*' * 20}...{api_key[-4:] if len(api_key) > 4 else '****'}")
+            print("  ⚠️ AI service not configured")
+
+        env_api_key = os.getenv('OPENAI_API_KEY')
+        if env_api_key:
+            masked = ('*' * 20) + (env_api_key[-4:] if len(env_api_key) > 4 else "****")
+            print(f"  ✅ Environment API key: {masked}")
         else:
             print("  ⚠️ Environment API key not set")
-        
+
         print("\n✅ Configuration system working correctly!")
-        
+
     except Exception as e:
         print(f"❌ Error testing configuration: {e}")
 
@@ -189,8 +184,6 @@ async def demo_ai_service():
         return
     
     try:
-        from ai_service import create_ai_service
-        
         config = {
             'openai_api_key': api_key,
             'model': 'gpt-3.5-turbo',  # Use cheaper model for demo

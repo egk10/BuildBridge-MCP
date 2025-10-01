@@ -29,16 +29,26 @@ class DocumentIndexer:
             config: Configuration dictionary with credentials and settings
         """
         self.config = config
-        self.client_id = config['client_id']
-        self.client_secret = config['client_secret']
-        self.tenant_id = config['tenant_id']
-        self.sharepoint_site = config['sharepoint_site']
+        self.client_id = config.get('client_id')
+        self.client_secret = config.get('client_secret')
+        self.tenant_id = config.get('tenant_id')
+        self.sharepoint_site = config.get('sharepoint_site')
         
-        # Local mode toggle: skip SharePoint auth when true
-        self.local_mode = bool(
-            config.get('local_mode') or
-            self.sharepoint_site in ('local-test', 'local', '')
-        )
+        # Local mode toggle: only enabled when explicitly requested
+        self.local_mode = bool(config.get('local_mode'))
+
+        if self.local_mode:
+            self.sharepoint_site = self.sharepoint_site or 'local'
+        else:
+            missing = [
+                key
+                for key in ('client_id', 'client_secret', 'tenant_id', 'sharepoint_site')
+                if not config.get(key)
+            ]
+            if missing:
+                raise ValueError(
+                    "Missing required Document Indexer credentials: " + ", ".join(missing)
+                )
 
         # Document storage locations
         self.document_libraries = config.get('document_libraries', ['Documents', 'Shared Documents'])
