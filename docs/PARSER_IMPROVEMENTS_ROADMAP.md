@@ -25,12 +25,12 @@ This document tracks improvements to the BuildBridge-MCP data parsing system to 
 ### Phase 1: Dynamic Column Detection (HIGH PRIORITY)
 
 #### 1.1 GCA Stats Tab Parser
-- [ ] Find "GCA (M2)" column header dynamically in GCA Stats tab
-- [ ] Find "GCA (SF)" column header dynamically in GCA Stats tab  
-- [ ] Extract Total GCA values using dynamic column indices
-- [ ] Remove hardcoded column indices [7], [8]
-- [ ] Add fallback logic if headers not found
-- [ ] Test with all 3 projects
+- [x] Find "GCA (M2)" column header dynamically in GCA Stats tab
+- [x] Find "GCA (SF)" column header dynamically in GCA Stats tab  
+- [x] Extract Total GCA values using dynamic column indices
+- [x] Remove hardcoded column indices [7], [8]
+- [x] Add fallback logic if headers not found
+- [x] Test with all 3 projects
 
 #### 1.2 Project Summary Tab Parser
 - [ ] Find column headers dynamically instead of using iloc[20]
@@ -42,11 +42,11 @@ This document tracks improvements to the BuildBridge-MCP data parsing system to 
 - [ ] Test with all 3 projects
 
 #### 1.3 Parser Utilities
-- [ ] Create `find_column_by_header()` helper function
-- [ ] Create `extract_value_by_row_and_column_labels()` helper
-- [ ] Add header normalization (handle variations like "GCA(SF)", "GCA (SF)", "GCA-SF")
-- [ ] Add error handling for missing headers
-- [ ] Add logging for debugging parser issues
+- [x] Create `find_column_by_header()` helper function
+- [x] Create `extract_value_by_row_and_column_labels()` helper
+- [x] Add header normalization (handle variations like "GCA(SF)", "GCA (SF)", "GCA-SF")
+- [x] Add error handling for missing headers
+- [x] Add logging for debugging parser issues
 
 ---
 
@@ -190,6 +190,17 @@ After each implementation phase:
 ---
 
 ## Change Log
+
+### 2025-10-01 (Evening Update)
+- ✅ **Phase 1.1 Complete**: GCA Stats tab now uses dynamic column detection
+- ✅ **Phase 1.3 Complete**: Added parser utility functions
+  - `find_column_by_header()` - Dynamic column index lookup
+  - `extract_value_by_labels()` - Label-based value extraction  
+  - `_normalize_header()` - Flexible header matching
+- ✅ Parser searches first 10 rows to auto-detect header row
+- ✅ Supports header variations: 'GCA(SF)', 'GCA (SF)', 'GCA-SF'
+- ✅ All GCA values still correct after refactoring (859,857 SF total)
+- 🎯 **Next**: Implement Phase 1.2 (Project Summary tab dynamic detection)
 
 ### 2025-10-01
 - ✅ Fixed: Load project data from normalized cache instead of live sheets
