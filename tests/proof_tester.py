@@ -231,42 +231,64 @@ class BuildBridgeProofTester:
             expected_stalls = project_info.get('parking_stalls', 0)
             project_name = project_info.get('name', project_id)
             
-            # Multiple name variations to match
+            # Build name variations
             name_variants = [
                 project_name,
-                re.escape(project_name),  # With special character escaping
-                project_id,
-                project_id.replace('_', ' ').title()  # "72_perth" → "72 Perth"
+                project_name.replace(' - ', ' '),
+                project_name.split(' - ')[-1] if ' - ' in project_name else project_name,
+                project_id.replace('_', ' '),
             ]
             
+            # Add variant without leading numbers
+            if re.match(r'^\d+\s+', project_name):
+                name_without_number = re.sub(r'^\d+\s+', '', project_name)
+                name_variants.append(name_without_number)
+            
             found = False
-            for name_variant in name_variants:
-                # Try multiple extraction patterns - DON'T use f-strings with regex {n,m}!
-                patterns = [
-                    # Pattern 1: Name + stalls/parking + number
-                    re.escape(name_variant) + r'[:\s]*(?:has\s+)?(\d+)\s*(?:stalls?|parking)',
-                    # Pattern 2: Name + parking + number
-                    re.escape(name_variant) + r'.*?parking[:\s]*(\d+)',
-                    # Pattern 3: Number + stalls + name (inverted)
-                    r'(\d+)\s*(?:stalls?|parking).*?' + re.escape(name_variant),
+            for name in name_variants:
+                # Section-based extraction: find project section first
+                # Try multiple formats: numbered lists, bold with colon, etc.
+                section_patterns = [
+                    # Numbered list: "1. **Name:**" until next number or **
+                    r'\d+\.\s*\*\*' + re.escape(name) + r':\*\*(.*?)(?=\n\d+\.\s*\*\*|\Z)',
+                    # Colon inside bold: **Name:** until next number or **
+                    r'\*\*' + re.escape(name) + r':\*\*(.*?)(?=\n\d+\.\s|\n\*\*[A-Z0-9]|\Z)',
+                    # Colon outside bold: **Name**: until next number or **
+                    r'\*\*' + re.escape(name) + r'\*\*:?(.*?)(?=\n\d+\.\s|\n\*\*[A-Z0-9]|\Z)',
                 ]
                 
-                for pattern in patterns:
-                    match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
-                    if match:
-                        actual_stalls = int(match.group(1))
+                for section_pattern in section_patterns:
+                    section_match = re.search(section_pattern, response_text, re.DOTALL)
+                    
+                    if section_match:
+                        project_section = section_match.group(1)
                         
-                        # Sanity check: parking stalls typically 50-500 for these projects
-                        if 50 <= actual_stalls <= 500:
-                            actual_values[project_id] = actual_stalls
-                            
-                            if actual_stalls != expected_stalls:
-                                passed = False
-                                errors.append(
-                                    f"{project_name}: Expected {expected_stalls} stalls, "
-                                    f"got {actual_stalls} stalls"
-                                )
-                            found = True
+                        # Extract parking stalls from this section only
+                        stall_patterns = [
+                            r'(\d+)\s*(?:parking\s*)?stalls?',
+                            r'parking[:\s]*(\d+)',
+                            r'has\s+(\d+)\s*stalls?',
+                        ]
+                        
+                        for stall_pattern in stall_patterns:
+                            stall_match = re.search(stall_pattern, project_section, re.IGNORECASE)
+                            if stall_match:
+                                actual_stalls = int(stall_match.group(1))
+                                
+                                # Sanity check: parking stalls typically 0-500 for these projects
+                                if 0 <= actual_stalls <= 500:
+                                    actual_values[project_id] = actual_stalls
+                                    
+                                    if actual_stalls != expected_stalls:
+                                        passed = False
+                                        errors.append(
+                                            f"{project_name}: Expected {expected_stalls} stalls, "
+                                            f"got {actual_stalls} stalls"
+                                        )
+                                    found = True
+                                    break
+                        
+                        if found:
                             break
                 
                 if found:
@@ -319,43 +341,62 @@ class BuildBridgeProofTester:
             expected_cost = project_info.get('total_direct_cost', 0)
             project_name = project_info.get('name', project_id)
             
-            # Multiple name variations to match
+            # Build name variations
             name_variants = [
                 project_name,
-                re.escape(project_name),  # With special character escaping
-                project_id,
-                project_id.replace('_', ' ').title()  # "72_perth" → "72 Perth"
+                project_name.replace(' - ', ' '),
+                project_name.split(' - ')[-1] if ' - ' in project_name else project_name,
+                project_id.replace('_', ' '),
             ]
             
+            # Add variant without leading numbers
+            if re.match(r'^\d+\s+', project_name):
+                name_without_number = re.sub(r'^\d+\s+', '', project_name)
+                name_variants.append(name_without_number)
+            
             found = False
-            for name_variant in name_variants:
-                # Try multiple extraction patterns for cost values - DON'T use f-strings with regex {n,m}!
-                patterns = [
-                    # Pattern 1: Name + $ + number
-                    re.escape(name_variant) + r'[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',
-                    # Pattern 2: Name + cost/direct + $ + number
-                    re.escape(name_variant) + r'.*?(?:cost|direct)[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',
-                    # Pattern 3: $ + number + name (inverted)
-                    r'\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?).*?' + re.escape(name_variant),
+            for name in name_variants:
+                # Section-based extraction: find project section first
+                # Try multiple formats: numbered lists, bold with colon, etc.
+                section_patterns = [
+                    # Numbered list: "1. **Name:**" or "1. **Project: Name**"
+                    r'\d+\.\s*\*\*(?:Project:\s*)?' + re.escape(name) + r'(?::\*\*|\*\*:?)(.*?)(?=\n\d+\.\s*\*\*|\Z)',
+                    # Colon inside bold: **Name:** until next number or **
+                    r'\*\*' + re.escape(name) + r':\*\*(.*?)(?=\n\d+\.\s|\n\*\*[A-Z0-9]|\Z)',
+                    # Colon outside bold: **Name**: until next number or **
+                    r'\*\*' + re.escape(name) + r'\*\*:?(.*?)(?=\n\d+\.\s|\n\*\*[A-Z0-9]|\Z)',
                 ]
                 
-                for pattern in patterns:
-                    match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
-                    if match:
-                        cost_str = match.group(1).replace(',', '')
-                        actual_cost = float(cost_str)
+                for section_pattern in section_patterns:
+                    section_match = re.search(section_pattern, response_text, re.DOTALL)
+                    
+                    if section_match:
+                        project_section = section_match.group(1)
                         
-                        # Handle millions notation (if value < 1000, likely in millions)
-                        if actual_cost < 1000:
-                            actual_cost *= 1_000_000
+                        # Extract cost from this section only
+                        cost_patterns = [
+                            r'(?:Total\s+)?Direct\s+Cost[:\s]*\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',
+                            r'Cost[:\s]*\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',
+                            r'\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',
+                        ]
                         
-                        # Sanity check: direct costs typically $10M-$100M for these projects
-                        if 10_000_000 <= actual_cost <= 100_000_000:
-                            actual_values[project_id] = actual_cost
-                            
-                            tolerance = max(expected_cost * 0.01, 1000)  # 1% or $1000
-                            if abs(actual_cost - expected_cost) > tolerance:
-                                passed = False
+                        for cost_pattern in cost_patterns:
+                            cost_match = re.search(cost_pattern, project_section, re.IGNORECASE)
+                            if cost_match:
+                                cost_str = cost_match.group(1).replace(',', '')
+                                actual_cost = float(cost_str)
+                                
+                                # Handle millions notation (if value < 1000, likely in millions)
+                                if actual_cost < 1000:
+                                    actual_cost *= 1_000_000
+                                
+                                # Sanity check: direct costs typically $0-$100M for these projects
+                                if 0 <= actual_cost <= 100_000_000:
+                                    actual_values[project_id] = actual_cost
+                                    
+                                    tolerance = max(expected_cost * 0.01, 1000) if expected_cost > 0 else 1000
+                                    if abs(actual_cost - expected_cost) > tolerance:
+                                        passed = False
                                 variance = self.calculate_variance(expected_cost, actual_cost)
                                 errors.append(
                                     f"{project_name}: Expected ${expected_cost:,.0f}, "
