@@ -127,6 +127,93 @@ def _find_label_value(df: pd.DataFrame, label: str) -> Optional[str]:
     return None
 
 
+def _normalize_header(header: str) -> str:
+    """
+    Normalize column header for matching.
+    Handles variations like 'GCA(SF)', 'GCA (SF)', 'GCA - SF', etc.
+    """
+    normalized = _clean_text(header).upper()
+    # Remove common separators and whitespace
+    for char in [' ', '-', '_', '(', ')', '[', ']']:
+        normalized = normalized.replace(char, '')
+    return normalized
+
+
+def find_column_by_header(df: pd.DataFrame, 
+                          header_text: str, 
+                          row_index: int = 0,
+                          variations: Optional[List[str]] = None) -> Optional[int]:
+    """
+    Find column index by searching for header text.
+    
+    Args:
+        df: DataFrame to search
+        header_text: Primary header text to search for (e.g., "GCA (SF)")
+        row_index: Row index where headers are located (default: 0)
+        variations: Additional header variations to try (e.g., ["GCA-SF", "GCA SF"])
+    
+    Returns:
+        Column index if found, None otherwise
+    """
+    if row_index >= len(df):
+        return None
+    
+    # Build list of patterns to search
+    search_patterns = [header_text]
+    if variations:
+        search_patterns.extend(variations)
+    
+    # Normalize all patterns
+    normalized_patterns = [_normalize_header(p) for p in search_patterns]
+    
+    # Search through columns in the header row
+    header_row = df.iloc[row_index]
+    for col_idx, cell_value in enumerate(header_row):
+        normalized_cell = _normalize_header(str(cell_value))
+        if normalized_cell in normalized_patterns:
+            return col_idx
+    
+    return None
+
+
+def extract_value_by_labels(df: pd.DataFrame,
+                            row_label: str,
+                            column_header: str,
+                            header_row_index: int = 0,
+                            column_variations: Optional[List[str]] = None) -> Optional[float]:
+    """
+    Extract a numeric value by searching for both row label and column header.
+    
+    Args:
+        df: DataFrame to search
+        row_label: Text to search for in row labels (e.g., "Total GCA")
+        column_header: Header text for the column (e.g., "GCA (SF)")
+        header_row_index: Row where column headers are located
+        column_variations: Alternative column header names to try
+    
+    Returns:
+        Numeric value if found, None otherwise
+    """
+    # Find the column index
+    col_idx = find_column_by_header(df, column_header, header_row_index, column_variations)
+    if col_idx is None:
+        return None
+    
+    # Search for the row with the label
+    row_label_upper = row_label.upper()
+    for row_idx, row in df.iterrows():
+        # Check first few columns for the row label
+        for label_col_idx in range(min(3, len(row))):
+            cell_text = _clean_text(row.iloc[label_col_idx]).upper()
+            if row_label_upper in cell_text:
+                # Found the row, extract value from the target column
+                if col_idx < len(row):
+                    return _to_number(row.iloc[col_idx])
+                return None
+    
+    return None
+
+
 def extract_summary_metrics(df: pd.DataFrame, project_id: str) -> Dict[str, Any]:
     df = df.fillna("")
 
@@ -215,34 +302,92 @@ def extract_summary_metrics(df: pd.DataFrame, project_id: str) -> Dict[str, Any]
 
 
 def extract_gca_metrics(df: pd.DataFrame, project_id: str) -> Dict[str, Any]:
+    """
+    Extract GCA metrics from GCA Stats tab.
+    Uses dynamic column detection instead of hardcoded indices.
+    """
     df = df.fillna("")
-    rows = df.values.tolist()
-
+    
+    # The GCA Stats tab has headers around row 6
+    # Let's search the first 10 rows for the header row
+    gca_m2_col = None
+    gca_sf_col = None
+    parking_col = None
+    header_row_found = None
+    
+    for potential_header_row in range(10):
+        if potential_header_row >= len(df):
+            break
+        
+        # Try to find GCA (SF) column as a marker
+        test_col = find_column_by_header(
+            df, 
+            "GCA (SF)", 
+            row_index=potential_header_row,
+            variations=["GCA(SF)", "GCA SF", "GCASF", "GCA-SF"]
+        )
+        
+        if test_col is not None:
+            header_row_found = potential_header_row
+            gca_sf_col = test_col
+            
+            # Now find the other columns using the same header row
+            gca_m2_col = find_column_by_header(
+                df, 
+                "GCA (M2)", 
+                row_index=potential_header_row,
+                variations=["GCA(M2)", "GCA M2", "GCAM2", "GCA-M2"]
+            )
+            
+            parking_col = find_column_by_header(
+                df,
+                "Parking",
+                row_index=potential_header_row,
+                variations=["PARKING", "Parking Stalls", "Stalls"]
+            )
+            
+            break
+    
+    # Initialize values
     parking_below_grade = None
     parking_above_grade = None
     total_gca_sf = None
     total_gca_m2 = None
-
-    for row in rows:
+    
+    # Scan rows for specific labels (skip rows before and including header)
+    rows = df.values.tolist()
+    start_row = (header_row_found + 1) if header_row_found is not None else 7
+    
+    for row_idx in range(start_row, len(rows)):
+        row = rows[row_idx]
+        
+        # Get label from Building Floor Location column (usually column B, index 1)
         label = _clean_text(row[1] if len(row) > 1 else "")
-        parking_value = _to_number(row[3] if len(row) > 3 else None)
+        label_upper = label.upper()
         
         # Extract parking values
-        if "SUB-TOTAL - BELOW GRADE" in label.upper():
-            parking_below_grade = parking_value
-        if "SUB-TOTAL - ABOVE GRADE PARKING" in label.upper():
-            parking_above_grade = parking_value
+        if "SUB-TOTAL - BELOW GRADE" in label_upper or "SUB-TOTAL-BELOW GRADE" in label_upper or "SUBTOTAL - BELOW GRADE" in label_upper:
+            if parking_col is not None and parking_col < len(row):
+                parking_below_grade = _to_number(row[parking_col])
         
-        # Extract Total GCA from the "Total GCA" row
-        # Column H (index 7) = GCA (M2), Column I (index 8) = GCA (SF)
-        if "TOTAL GCA" in label.upper() and "BELOW" not in label.upper() and "ABOVE" not in label.upper():
-            total_gca_m2 = _to_number(row[7] if len(row) > 7 else None)
-            total_gca_sf = _to_number(row[8] if len(row) > 8 else None)
-
+        if "SUB-TOTAL - ABOVE GRADE" in label_upper or "SUB-TOTAL-ABOVE GRADE" in label_upper or "SUBTOTAL - ABOVE GRADE" in label_upper:
+            if parking_col is not None and parking_col < len(row):
+                parking_above_grade = _to_number(row[parking_col])
+        
+        # Extract Total GCA (be specific to avoid subtotals)
+        if "TOTAL GCA" in label_upper and "BELOW" not in label_upper and "ABOVE" not in label_upper:
+            # Extract GCA values from dynamic columns
+            if gca_m2_col is not None and gca_m2_col < len(row):
+                total_gca_m2 = _to_number(row[gca_m2_col])
+            
+            if gca_sf_col is not None and gca_sf_col < len(row):
+                total_gca_sf = _to_number(row[gca_sf_col])
+    
+    # Calculate total parking
     total_parking = None
     if parking_below_grade is not None or parking_above_grade is not None:
         total_parking = (parking_below_grade or 0) + (parking_above_grade or 0)
-
+    
     gca_tab = {
         "contract_id": "gca_stats",
         "source_tab": "GCA Stats",
@@ -254,7 +399,7 @@ def extract_gca_metrics(df: pd.DataFrame, project_id: str) -> Dict[str, Any]:
             "total_gca_m2": _format_number(total_gca_m2),
         },
     }
-
+    
     return {
         "tabs": [gca_tab],
         "project": {
