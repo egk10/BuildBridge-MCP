@@ -626,7 +626,7 @@ class ConstructionMCPEngine:
                 return {"error": str(e), "results": []}
     
     async def _gather_google_sheets_projects(self) -> List[Dict[str, Any]]:
-        """Gather project data directly from Google Sheets"""
+        """Gather project data from normalized cache files"""
         print(f"🐛 DEBUG: _gather_google_sheets_projects called")
         try:
             # Check if Google Sheets is enabled
@@ -635,7 +635,8 @@ class ConstructionMCPEngine:
                 logger.info("ℹ️ Google Sheets data source disabled")
                 return []
             
-            if not self.google_sheets_connector or self.google_sheets_connector.local_mode:
+            if not self.google_sheets_connector:
+                logger.warning("Google Sheets connector not available")
                 return []
             
             all_projects = []
@@ -646,44 +647,49 @@ class ConstructionMCPEngine:
             
             logger.info(f"🔍 Found {len(projects_config)} projects in config: {list(projects_config.keys())}")
             
-            # For each project, try to get data from the main project sheet
-            for project_key, sheet_id in projects_config.items():
-                logger.info(f"📊 Processing project {project_key} with sheet ID: {sheet_id}")
+            # Read from normalized cache instead of live sheets
+            from pathlib import Path
+            cache_dir = Path(__file__).parent.parent / 'cache' / 'normalized'
+            
+            for project_key in projects_config.keys():
+                logger.info(f"📊 Loading cached data for project {project_key}")
                 try:
-                    # Try to read from the main project sheet directly
-                    # Use a broad range to capture all data
-                    df = self.google_sheets_connector.read_sheet(
-                        sheet_id, 
-                        "A1:Z1000"  # Read the entire first sheet
-                    )
+                    cache_file = cache_dir / f"{project_key}.json"
                     
-                    logger.info(f"📊 Read DataFrame for {project_key}: shape={df.shape}")
-                    if not df.empty and len(df) > 0:
-                        logger.info(f"📊 First few rows of {project_key} data:")
-                        logger.info(f"{df.head(3)}")
-                        
-                        # Use the intelligent extraction method to parse complex sheet structures
-                        project_data = self._extract_project_info_from_sheet(df)
-                        if project_data:  # Only add if we successfully extracted data
-                            project_data['Project_ID'] = project_key
-                            project_data['source'] = f'Google Sheets: {project_key} project'
-                            project_data['sheet_id'] = sheet_id
-                            all_projects.append(project_data)
-                            logger.info(f"✅ Successfully gathered data for project {project_key}")
-                        else:
-                            logger.warning(f"Failed to extract project data from sheet for {project_key}")
+                    if not cache_file.exists():
+                        logger.warning(f"Cache file not found for {project_key}: {cache_file}")
+                        continue
+                    
+                    # Read cached normalized data
+                    with open(cache_file, 'r', encoding='utf-8') as f:
+                        cached_data = json.load(f)
+                    
+                    # Extract the project data from the cache
+                    project_data = cached_data.get('project', {})
+                    
+                    if project_data:
+                        # Ensure Project_ID is set
+                        project_data['Project_ID'] = project_key
+                        project_data['source'] = f'Cached normalized data: {project_key}'
+                        all_projects.append(project_data)
+                        logger.info(f"✅ Successfully loaded cached data for project {project_key}")
+                        logger.info(f"   Project Name: {project_data.get('Project_Name', 'N/A')}")
+                        logger.info(f"   Location: {project_data.get('Location', 'N/A')}")
+                        logger.info(f"   Budget: ${project_data.get('Total_Budget', 0):,.0f}")
                     else:
-                        logger.warning(f"Empty or no data found for project {project_key}")
+                        logger.warning(f"No 'project' key found in cache for {project_key}")
                         
                 except Exception as e:
-                    logger.warning(f"Failed to get data for project {project_key}: {e}")
+                    logger.warning(f"Failed to load cached data for project {project_key}: {e}")
+                    logger.debug(f"Exception details: {traceback.format_exc()}")
                     continue
             
-            logger.info(f"Successfully gathered {len(all_projects)} projects from Google Sheets")
+            logger.info(f"✅ Successfully gathered {len(all_projects)} projects from cache")
             return all_projects
             
         except Exception as e:
             logger.error(f"Error gathering Google Sheets projects: {e}")
+            logger.debug(f"Exception details: {traceback.format_exc()}")
             return []
     
     def _extract_project_info_from_sheet(self, df) -> Optional[Dict[str, Any]]:

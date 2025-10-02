@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-10-01T22:11:14.052597",
+  "timestamp": "2025-10-01T22:26:49.590375",
   "server": "http://localhost:8000",
   "ground_truth_source": "tests/ground_truth.json",
   "ground_truth_generated": "2025-10-01T22:10:36.538700",
-  "total_time_seconds": 28.52574872970581,
+  "total_time_seconds": 34.93608736991882,
   "summary": {
     "total": 5,
     "passed": 1,
@@ -15,7 +15,7 @@
       "test": "GCA Totals",
       "passed": false,
       "errors": [
-        "72 Perth Avenue: GCA value not found in response",
+        "72 Perth Avenue: Expected 205 SF, got 1 SF (variance: 99.5%)",
         "24021 - 17175 Yonge St: GCA value not found in response",
         "6071 Azure Road: GCA value not found in response"
       ],
@@ -24,8 +24,10 @@
         "17175_yonge_st": 269141.0,
         "azure_road": 140014.0
       },
-      "actual": {},
-      "response": "{'ai_response': \"I don't have that information.\", 'confidence_score': 0.0, 'tokens_used': 1174, 'cost_estimate': 0.000594, 'response_time': 17.07430934906006, 'model_used': 'gpt-3.5-turbo', 'query_type': 'general', 'metadata': {'query_type': 'general', 'prompt_tokens': 1167, 'completion_tokens': 7, ..."
+      "actual": {
+        "72_perth": 1.0
+      },
+      "response": "{'ai_response': \"To find the total Gross Construction Area (GCA) for the projects Azure Road, 17175 Yonge St, and 72 Perth Avenue, we need to sum up the GCA for each project individually.\\n\\nHere's the breakdown for each project:\\n\\n1. **Azure Road:**\\n   - Total GCA: 140,014 square feet\\n\\n2. **171..."
     },
     {
       "test": "Parking Stalls",
@@ -41,46 +43,50 @@
         "azure_road": 0
       },
       "actual": {},
-      "response": "{'ai_response': \"Hey there! Let me give you a comprehensive status update on the Lakeside Residences construction project:\\n\\n- **Progress Percentage:** As of the latest data, the project has reached [Progress Percentage]% completion. The team is making steady progress towards completing the constru..."
+      "response": "{'ai_response': \"Let's dive into the status update for the construction projects based on the available data:\\n\\n**72 Perth Avenue:**\\n- Progress Percentage: Unfortunately, progress percentage data is not available for this project.\\n- Budget Status: The total budget for this project is not specifie..."
     },
     {
       "test": "Total Direct Cost",
       "passed": false,
       "errors": [
-        "72 Perth Avenue: Cost not found in response",
-        "24021 - 17175 Yonge St: Cost not found in response",
-        "6071 Azure Road: Cost not found in response"
+        "72 Perth Avenue: Expected $897,836, got $46,798,403 (variance: 5112.4%)",
+        "24021 - 17175 Yonge St: Expected $7,746,848, got $46,798,403 (variance: 504.1%)",
+        "6071 Azure Road: Expected $0, got $23,981,776 (variance: 100.0%)"
       ],
       "expected": {
         "72_perth": 897836.0,
         "17175_yonge_st": 7746848.0,
         "azure_road": 0.0
       },
-      "actual": {},
-      "response": "{'ai_response': \"I don't have detailed budget information for the Lakeside Residences project.\", 'confidence_score': 0.3, 'tokens_used': 1171, 'cost_estimate': 0.0006004999999999999, 'response_time': 1.2003169059753418, 'model_used': 'gpt-3.5-turbo', 'query_type': 'general', 'metadata': {'query_type..."
+      "actual": {
+        "72_perth": 46798403.0,
+        "17175_yonge_st": 46798403.0,
+        "azure_road": 23981776.0
+      },
+      "response": "{'ai_response': 'I don\\'t have budget information for the \"72 Perth Avenue\" project. However, I can provide detailed budget information for the other projects in the data:\\n\\n1. **Project: 24021 - 17175 Yonge St**\\n   - Total Budget: $46,798,403.00\\n   - Total Direct Cost: $7,746,848.00\\n   - Remain..."
     },
     {
       "test": "Project Locations",
-      "passed": false,
-      "errors": [
-        "72 Perth Avenue: Location 'Toronto, ON' not found in response",
-        "24021 - 17175 Yonge St: Location '17175 Yonge St Newmarket, Ontario' not found in response",
-        "6071 Azure Road: Location 'Richmond, British Columbia' not found in response"
-      ],
+      "passed": true,
+      "errors": [],
       "expected": {
         "72_perth": "Toronto, ON",
         "17175_yonge_st": "17175 Yonge St Newmarket, Ontario",
         "azure_road": "Richmond, British Columbia"
       },
-      "actual": {},
-      "response": "{'ai_response': \"I don't have information about the specific locations of the projects Azure Road, Yonge St, and Perth Avenue.\", 'confidence_score': 0.25000000000000006, 'tokens_used': 1180, 'cost_estimate': 0.000613, 'response_time': 0.5248034000396729, 'model_used': 'gpt-3.5-turbo', 'query_type': ..."
+      "actual": {
+        "72_perth": "Toronto, ON",
+        "17175_yonge_st": "17175 Yonge St Newmarket, Ontario",
+        "azure_road": "Richmond, British Columbia"
+      },
+      "response": "{'ai_response': 'Hey there! Here are the locations for the three projects you mentioned:\\n\\n1. **72 Perth Avenue:**\\n   - Location: Toronto, ON\\n\\n2. **24021 - 17175 Yonge St:**\\n   - Location: 17175 Yonge St Newmarket, Ontario\\n\\n3. **6071 Azure Road:**\\n   - Location: Richmond, British Columbia\\n\\..."
     },
     {
       "test": "Portfolio Totals",
-      "passed": true,
+      "passed": false,
       "errors": [
-        "Total Budget not found in response",
-        "Total Direct Cost not found in response"
+        "Total Budget: Expected $70,780,179, got $46,798,403 (variance: 33.9%)",
+        "Total Direct Cost: Expected $8,644,684, got $7,746,848 (variance: 10.4%)"
       ],
       "expected": {
         "total_projects": 3,
@@ -90,7 +96,7 @@
         "total_building_area_metric": 101924.0,
         "total_parking": 306
       },
-      "response": "{'ai_response': \"I don't have detailed budget information for the Lakeside Residences project.\", 'confidence_score': 0.3, 'tokens_used': 1171, 'cost_estimate': 0.0006004999999999999, 'response_time': 1.1378450393676758, 'model_used': 'gpt-3.5-turbo', 'query_type': 'general', 'metadata': {'query_type..."
+      "response": "{'ai_response': 'I don\\'t have budget information for the \"72 Perth Avenue\" project. However, I can provide detailed budget information for the other projects in the data:\\n\\n1. **Project: 24021 - 17175 Yonge St**\\n   - Total Budget: $46,798,403.00\\n   - Total Direct Cost: $7,746,848.00\\n   - Remain..."
     }
   ]
 }

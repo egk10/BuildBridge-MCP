@@ -602,9 +602,15 @@ class ConstructionPrompts:
                         # Add other key information
                         for field in ['Status', 'Project_Manager', 'Start_Date', 'End_Date', 'Location', 'Client', 'Architect', 
                                     'Total_Units', 'Parking_Spots', 'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade',
-                                    'Parking_Stalls', 'Building_Area_Metric', 'Building_Area_Imperial',
+                                    'Parking_Stalls', 'Building_Area_Metric', 'Building_Area_Imperial', 'Total_GCA_SF',
+                                    'Total_Budget', 'Total_Direct_Cost',
                                     'Levels_Above_Grade', 'Levels_Below_Grade', 'Project_Type', 'Tender_Closing']:
-                            if field in project and project[field]:
+                            if field in project and project[field] is not None:
+                                # Show zero values for critical metrics like parking, GCA, and costs
+                                show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost', 'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade']
+                                if project[field] == 0 and not show_if_zero:
+                                    continue
+                                    
                                 field_display = field.replace('_', ' ')
                                 if field == 'Total_Units':
                                     project_info.append(f"    Units/Functional Units: {project[field]}")
@@ -619,9 +625,17 @@ class ConstructionPrompts:
                                 elif field == 'Parking_Stalls':
                                     project_info.append(f"    Parking Stalls: {project[field]}")
                                 elif field == 'Building_Area_Metric':
-                                    project_info.append(f"    Building Area (sq m): {project[field]:,.0f}")
+                                    if project[field] != 0:  # Only show if non-zero
+                                        project_info.append(f"    Building Area (sq m): {project[field]:,.0f}")
                                 elif field == 'Building_Area_Imperial':
-                                    project_info.append(f"    Building Area (sq ft): {project[field]:,.0f}")
+                                    if project[field] != 0:  # Only show if non-zero
+                                        project_info.append(f"    Building Area (sq ft): {project[field]:,.0f}")
+                                elif field == 'Total_GCA_SF':
+                                    project_info.append(f"    Total GCA (SF): {project[field]:,.0f}")
+                                elif field == 'Total_Budget':
+                                    project_info.append(f"    Total Budget: ${project[field]:,.2f}")
+                                elif field == 'Total_Direct_Cost':
+                                    project_info.append(f"    Total Direct Cost: ${project[field]:,.2f}")
                                 else:
                                     project_info.append(f"    {field_display}: {project[field]}")
 
