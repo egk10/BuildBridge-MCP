@@ -220,14 +220,24 @@ def extract_gca_metrics(df: pd.DataFrame, project_id: str) -> Dict[str, Any]:
 
     parking_below_grade = None
     parking_above_grade = None
+    total_gca_sf = None
+    total_gca_m2 = None
 
     for row in rows:
         label = _clean_text(row[1] if len(row) > 1 else "")
         parking_value = _to_number(row[3] if len(row) > 3 else None)
+        
+        # Extract parking values
         if "SUB-TOTAL - BELOW GRADE" in label.upper():
             parking_below_grade = parking_value
         if "SUB-TOTAL - ABOVE GRADE PARKING" in label.upper():
             parking_above_grade = parking_value
+        
+        # Extract Total GCA from the "Total GCA" row
+        # Column H (index 7) = GCA (M2), Column I (index 8) = GCA (SF)
+        if "TOTAL GCA" in label.upper() and "BELOW" not in label.upper() and "ABOVE" not in label.upper():
+            total_gca_m2 = _to_number(row[7] if len(row) > 7 else None)
+            total_gca_sf = _to_number(row[8] if len(row) > 8 else None)
 
     total_parking = None
     if parking_below_grade is not None or parking_above_grade is not None:
@@ -240,6 +250,8 @@ def extract_gca_metrics(df: pd.DataFrame, project_id: str) -> Dict[str, Any]:
             "parking_below_grade": _format_number(parking_below_grade),
             "parking_above_grade": _format_number(parking_above_grade),
             "parking_total": _format_number(total_parking),
+            "total_gca_sf": _format_number(total_gca_sf),
+            "total_gca_m2": _format_number(total_gca_m2),
         },
     }
 
@@ -251,6 +263,8 @@ def extract_gca_metrics(df: pd.DataFrame, project_id: str) -> Dict[str, Any]:
                 "Parking_Below_Grade": parking_below_grade,
                 "Parking_Above_Grade": parking_above_grade,
                 "Parking_Total": total_parking,
+                "Total_GCA_SF": total_gca_sf,
+                "Total_GCA_M2": total_gca_m2,
             }.items()
             if value is not None
         },
