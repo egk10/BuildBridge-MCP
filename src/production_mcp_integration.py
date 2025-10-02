@@ -1234,10 +1234,13 @@ if FASTAPI_AVAILABLE:
             # Always gather project data for project-related queries
             if any(keyword in query_lower for keyword in ['project', 'budget', 'cost', 'schedule', 'status', 'all', 'list', 'show', 'lakeside', 'residences', 'yonge', 'azure', 'perth', 'about', 'tell']):
                 try:
+                    # Import required modules at the start of the try block
+                    import re
+                    from datetime import datetime as dt_import
+                    
                     # Extract specific project ID from query if mentioned
                     project_id = None
                     # Look for patterns like "project 72_perth", "72_perth project", "17175 Yonge Street project", etc.
-                    import re
                     
                     # Try multiple patterns to extract project identifiers
                     print(f"🐛 PATTERN SEARCH DEBUG: Looking for patterns in query_lower: '{query_lower}'")
@@ -1295,7 +1298,7 @@ if FASTAPI_AVAILABLE:
                                 type=RequestType.SEARCH_PROJECTS,
                                 query=f"project {project_id}",
                                 parameters={'filters': {'project_id': project_id}},
-                                timestamp=datetime.now()
+                                timestamp=dt_import.now()
                             )
                         )
                         if search_result and 'results' in search_result and search_result['results']:
@@ -1317,7 +1320,7 @@ if FASTAPI_AVAILABLE:
                                 type=RequestType.SEARCH_PROJECTS,
                                 query="all projects",
                                 parameters={'filters': {}},
-                                timestamp=datetime.now()
+                                timestamp=dt_import.now()
                             )
                         )
                         if search_result and 'results' in search_result:
