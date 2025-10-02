@@ -606,8 +606,8 @@ class ConstructionPrompts:
                                     'Total_Budget', 'Total_Direct_Cost',
                                     'Levels_Above_Grade', 'Levels_Below_Grade', 'Project_Type', 'Tender_Closing']:
                             if field in project and project[field] is not None:
-                                # Show zero values for critical metrics like parking, GCA, and costs
-                                show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost', 'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade']
+                                # Show zero values for critical metrics like parking, GCA, budgets, and costs
+                                show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost', 'Total_Budget', 'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade']
                                 if project[field] == 0 and not show_if_zero:
                                     continue
                                     
