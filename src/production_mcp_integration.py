@@ -1620,10 +1620,64 @@ This system manages multiple construction projects with comprehensive tracking o
         else:
             raise HTTPException(status_code=404, detail="Logs viewer not found")
     
+    @app.get("/api/projects")
+    async def get_available_projects():
+        """Get list of available projects from configuration"""
+        try:
+            # Load project manifest
+            manifest_path = Path(__file__).parent.parent / "config" / "project_manifest.json"
+            if manifest_path.exists():
+                with open(manifest_path, 'r') as f:
+                    project_manifest = json.load(f)
+                
+                # Transform to frontend format
+                projects = []
+                project_display_names = {
+                    '17175_yonge_st': '17175 Yonge St',
+                    'azure_road': 'Azure Road',
+                    '72_perth': '72 Perth Avenue'
+                }
+                
+                for project_id in project_manifest.keys():
+                    display_name = project_display_names.get(project_id, project_id.replace('_', ' ').title())
+                    projects.append({
+                        'id': project_id,
+                        'display': display_name,
+                        'queries': [
+                            {'label': '📋 Project Overview', 'query': f'Show me details for {display_name} project'},
+                            {'label': '💰 Budget Status', 'query': f'What is the budget for {display_name}?'},
+                            {'label': '📊 Total Direct Cost', 'query': f'Calculate total direct cost for {display_name}'},
+                            {'label': '📐 Unit Costs', 'query': f'Show cost per square foot for {display_name}'},
+                            {'label': '🏢 Building Details', 'query': f'Show building area and units for {display_name}'},
+                            {'label': '🅿️ Parking Info', 'query': f'Show parking details for {display_name}'}
+                        ]
+                    })
+                
+                return {'success': True, 'projects': projects}
+            else:
+                # Fallback to hardcoded projects
+                return {
+                    'success': True,
+                    'projects': [
+                        {
+                            'id': '17175_yonge_st',
+                            'display': '17175 Yonge St',
+                            'queries': [
+                                {'label': '📋 Project Overview', 'query': 'Show me details for 17175 Yonge St project'},
+                                {'label': '💰 Budget Status', 'query': 'What is the budget for 17175 Yonge St?'},
+                                {'label': '📊 Total Direct Cost', 'query': 'Calculate total direct cost for 17175 Yonge St'}
+                            ]
+                        }
+                    ]
+                }
+        except Exception as e:
+            logger.error(f"Error fetching projects: {e}")
+            return {'success': False, 'error': str(e)}
+    
     @app.get("/")
     async def root():
         """Redirect to chat interface"""
-        return RedirectResponse(url="/chat_interface.html")
+        return RedirectResponse(url="/static/chat_interface_v2.html")
     
     @app.get("/favicon.ico")
     async def get_favicon():

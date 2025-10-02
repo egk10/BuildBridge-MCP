@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildBridge AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .main-layout {
+            display: flex;
+            max-width: 1600px;
+            margin: 0 auto;
+            gap: 20px;
+            height: 90vh;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 340px;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .sidebar h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar h4 {
+            color: #764ba2;
+            font-size: 15px;
+            margin: 20px 0 12px 0;
+            padding-top: 15px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .project-btn {
+            width: 100%;
+            padding: 14px 16px;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: left;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .project-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.7);
+        }
+
+        .project-btn.active {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: scale(1.02);
+        }
+
+        .project-btn .arrow {
+            transition: transform 0.3s ease;
+            font-size: 18px;
+        }
+
+        .project-btn.active .arrow {
+            transform: rotate(90deg);
+        }
+
+        .submenu {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease;
+            opacity: 0;
+            margin-left: 12px;
+            margin-bottom: 10px;
+        }
+
+        .submenu.open {
+            max-height: 600px;
+            opacity: 1;
+        }
+
+        .submenu-btn {
+            width: 100%;
+            padding: 11px 14px;
+            margin-bottom: 6px;
+            background: rgba(102, 126, 234, 0.08);
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.25);
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            text-align: left;
+            transition: all 0.25s ease;
+            font-weight: 500;
+        }
+
+        .submenu-btn:hover {
+            background: rgba(102, 126, 234, 0.18);
+            border-color: #667eea;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .submenu-btn:active {
+            transform: translateX(5px) scale(0.98);
+        }
+
+        .quick-btn {
+            width: 100%;
+            padding: 11px 14px;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            text-align: left;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 12px rgba(102, 126, 234, 0.35);
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 18px rgba(102, 126, 234, 0.5);
+        }
+
+        /* ===== CHAT CONTAINER ===== */
+        .chat-container {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .chat-header h1 {
+            font-size: 2em;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .chat-header p {
+            opacity: 0.95;
+            font-size: 1.1em;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 25px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 5px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 16px 20px;
+            border-radius: 15px;
+            max-width: 85%;
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .message.assistant {
+            background: white;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .message-header {
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 0.9em;
+            opacity: 0.85;
+        }
+
+        .chat-input-container {
+            padding: 20px 25px;
+            background: white;
+            border-top: 2px solid #e9ecef;
+            display: flex;
+            gap: 12px;
+        }
+
+        #userInput {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        #userInput:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #sendBtn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        #sendBtn:active {
+            transform: scale(0.98);
+        }
+
+        .welcome-message {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .welcome-message h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .welcome-message ul {
+            list-style: none;
+            margin-top: 12px;
+        }
+
+        .welcome-message li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .welcome-message li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .pro-tip {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 152, 0, 0.15));
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .pro-tip strong {
+            color: #f57c00;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 15px;
+            background: white;
+            border-radius: 15px;
+            max-width: 100px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            margin: 0 3px;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 1200px) {
+            .main-layout {
+                flex-direction: column;
+                height: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: 400px;
+            }
+
+            .chat-container {
+                min-height: 500px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        <!-- SIDEBAR WITH PROJECT BUTTONS -->
+        <div class="sidebar">
+            <h3>📂 Loaded Projects</h3>
+            <div id="projectButtons"></div>
+
+            <h4>📊 Portfolio Queries</h4>
+            <button class="quick-btn" onclick="sendQuery('Show me all projects')">📋 All Projects</button>
+            <button class="quick-btn" onclick="sendQuery('Add up the total budget across all projects')">💰 Total Budget</button>
+            <button class="quick-btn" onclick="sendQuery('Calculate total direct cost across all projects')">📊 Total Costs</button>
+            <button class="quick-btn" onclick="sendQuery('Compare budgets across all projects')">📈 Budget Comparison</button>
+            <button class="quick-btn" onclick="sendQuery('Which project has the highest budget?')">🏆 Highest Budget</button>
+            <button class="quick-btn" onclick="sendQuery('Show me projects with zero GCA')">⚠️ Data Issues</button>
+            <button class="quick-btn" onclick="sendQuery('Which projects are over budget?')">🚨 Over Budget</button>
+            <button class="quick-btn" onclick="sendQuery('Show cost per square foot for each project')">📐 Unit Costs</button>
+        </div>
+
+        <!-- MAIN CHAT CONTAINER -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <h1>🏗️ BuildBridge AI Assistant</h1>
+                <p>Your intelligent construction management companion</p>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="welcome-message">
+                    <h3>Hey there! 👋 Welcome to BuildBridge AI</h3>
+                    <p>I'm your construction management AI assistant. Here's what I can help you with:</p>
+                    <ul>
+                        <li><strong>📊 Project Analytics</strong> - Status updates, progress tracking, and performance metrics</li>
+                        <li><strong>💰 Budget Analysis</strong> - Cost tracking, variance analysis, and financial forecasts</li>
+                        <li><strong>📅 Schedule Management</strong> - Timeline tracking, milestone monitoring, and delay detection</li>
+                        <li><strong>🔍 Smart Search</strong> - Find specific information across all your project data</li>
+                        <li><strong>📈 Comparisons</strong> - Compare metrics across multiple projects</li>
+                        <li><strong>⚠️ Data Quality</strong> - Detect #DIV/0!, missing values, and anomalies</li>
+                    </ul>
+                    
+                    <div class="pro-tip">
+                        <strong>💡 Pro Tip:</strong> Use the sidebar to quickly navigate projects! Click any project name to see one-click queries, or use Portfolio Queries for cross-project analysis. I can also detect spreadsheet errors like #DIV/0!, missing areas, and $0 budgets.
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Type your question or use quick actions in the sidebar..." 
+                    onkeypress="if(event.key==='Enter') sendMessage()"
+                >
+                <button id="sendBtn" onclick="sendMessage()">Send 🚀</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Project configuration - will be loaded dynamically from API
+        let PROJECT_CONFIG = {};
+
+        // Load projects from API
+        async function loadProjects() {
+            try {
+                const response = await fetch('/api/projects');
+                const data = await response.json();
+                
+                if (data.success && data.projects) {
+                    // Convert array to object format
+                    data.projects.forEach(project => {
+                        PROJECT_CONFIG[project.id] = {
+                            display: project.display,
+                            queries: project.queries
+                        };
+                    });
+                    
+                    // Initialize UI after loading projects
+                    initializeProjectButtons();
+                } else {
+                    console.error('Failed to load projects:', data.error);
+                    // Use fallback configuration
+                    useFallbackConfig();
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                // Use fallback configuration
+                useFallbackConfig();
+            }
+        }
+
+        // Fallback configuration if API fails
+        function useFallbackConfig() {
+            PROJECT_CONFIG = {
+                '17175_yonge_st': {
+                    display: '17175 Yonge St',
+                    queries: [
+                        { label: '📋 Project Overview', query: 'Show me details for 17175 Yonge St project' },
+                        { label: '💰 Budget Status', query: 'What is the budget for 17175 Yonge St?' },
+                        { label: '📊 Total Direct Cost', query: 'Calculate total direct cost for 17175 Yonge St' },
+                        { label: '📐 Unit Costs', query: 'Show cost per square foot for 17175 Yonge St' },
+                        { label: '🏢 Building Details', query: 'Show building area and units for 17175 Yonge St' },
+                        { label: '🅿️ Parking Info', query: 'Show parking details for 17175 Yonge St' }
+                    ]
+                },
+                'azure_road': {
+                    display: 'Azure Road',
+                    queries: [
+                        { label: '📋 Project Overview', query: 'Show me details for Azure Road project' },
+                        { label: '💰 Budget Status', query: 'What is the budget for Azure Road?' },
+                        { label: '📊 Total Direct Cost', query: 'Calculate total direct cost for Azure Road' },
+                        { label: '📐 Unit Costs', query: 'Show cost per square foot for Azure Road' },
+                        { label: '🏢 Building Details', query: 'Show building area and units for Azure Road' },
+                        { label: '⚠️ Data Quality Check', query: 'Check for any data issues in Azure Road project' }
+                    ]
+                },
+                '72_perth': {
+                    display: '72 Perth Avenue',
+                    queries: [
+                        { label: '📋 Project Overview', query: 'Show me details for 72 Perth project' },
+                        { label: '💰 Budget Status', query: 'What is the budget for 72 Perth?' },
+                        { label: '📊 Total Direct Cost', query: 'Calculate total direct cost for 72 Perth' },
+                        { label: '📐 Unit Costs', query: 'Show cost per square foot for 72 Perth' },
+                        { label: '🏢 Building Details', query: 'Show building area and units for 72 Perth' },
+                        { label: '🅿️ Parking Info', query: 'Show parking details for 72 Perth' }
+                    ]
+                }
+            };
+            initializeProjectButtons();
+        }
+
+        // Initialize project buttons
+        function initializeProjectButtons() {
+            const container = document.getElementById('projectButtons');
+            
+            Object.entries(PROJECT_CONFIG).forEach(([projectId, config]) => {
+                // Create project button
+                const projectBtn = document.createElement('button');
+                projectBtn.className = 'project-btn';
+                projectBtn.innerHTML = `
+                    <span>${config.display}</span>
+                    <span class="arrow">➤</span>
+                `;
+                projectBtn.onclick = () => toggleSubmenu(projectId);
+                
+                // Create submenu
+                const submenu = document.createElement('div');
+                submenu.className = 'submenu';
+                submenu.id = `submenu-${projectId}`;
+                
+                config.queries.forEach(item => {
+                    const btn = document.createElement('button');
+                    btn.className = 'submenu-btn';
+                    btn.textContent = item.label;
+                    btn.onclick = () => sendQuery(item.query);
+                    submenu.appendChild(btn);
+                });
+                
+                container.appendChild(projectBtn);
+                container.appendChild(submenu);
+            });
+        }
+
+        // Toggle submenu visibility
+        function toggleSubmenu(projectId) {
+            const submenu = document.getElementById(`submenu-${projectId}`);
+            const projectBtn = submenu.previousElementSibling;
+            
+            // Close all other submenus
+            document.querySelectorAll('.submenu').forEach(menu => {
+                if (menu.id !== `submenu-${projectId}`) {
+                    menu.classList.remove('open');
+                    menu.previousElementSibling.classList.remove('active');
+                }
+            });
+            
+            // Toggle current submenu
+            submenu.classList.toggle('open');
+            projectBtn.classList.toggle('active');
+        }
+
+        // Send a pre-defined query
+        function sendQuery(query) {
+            document.getElementById('userInput').value = query;
+            sendMessage();
+        }
+
+        // Send message to API
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            input.value = '';
+            
+            // Show typing indicator
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.style.display = 'block';
+            scrollToBottom();
+            
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ query: message })
+                });
+                
+                const data = await response.json();
+                
+                // Hide typing indicator
+                typingIndicator.style.display = 'none';
+                
+                if (data.success) {
+                    addMessage(data.response, 'assistant');
+                } else {
+                    addMessage('Sorry, I encountered an error: ' + (data.error || 'Unknown error'), 'assistant');
+                }
+            } catch (error) {
+                typingIndicator.style.display = 'none';
+                addMessage('Sorry, I couldn\'t connect to the server. Please try again.', 'assistant');
+                console.error('Error:', error);
+            }
+        }
+
+        // Add message to chat
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const header = document.createElement('div');
+            header.className = 'message-header';
+            header.textContent = sender === 'user' ? 'You' : '🤖 BuildBridge AI';
+            
+            const content = document.createElement('div');
+            
+            // Parse markdown-style formatting
+            let formattedText = text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+            
+            content.innerHTML = formattedText;
+            
+            messageDiv.appendChild(header);
+            messageDiv.appendChild(content);
+            messagesContainer.appendChild(messageDiv);
+            
+            scrollToBottom();
+        }
+
+        // Scroll chat to bottom
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Initialize on page load
+        window.onload = function() {
+            // Load projects from API first, then initialize UI
+            loadProjects();
+            document.getElementById('userInput').focus();
+        };
+    </script>
+</body>
+</html>
