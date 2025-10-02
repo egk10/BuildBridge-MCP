@@ -1346,26 +1346,38 @@ This system manages multiple construction projects with comprehensive tracking o
                 
                 response_text = ai_response.content if hasattr(ai_response, 'content') else str(ai_response)
                 
-                # Add data source footer to response with actual sources used
+                # Add data source footer to response with actual sources used AND TIMESTAMPS
                 actual_sources_used = []
+                cache_timestamp = None
                 if data_context and 'projects' in data_context:
                     # Extract unique sources from project data
                     sources = set()
                     for project in data_context['projects']:
                         if 'source' in project:
                             sources.add(project['source'])
+                        # Check for cache metadata
+                        if 'cached_at' in project and cache_timestamp is None:
+                            cache_timestamp = project['cached_at']
                     actual_sources_used = list(sources)
+                
+                # Format timestamp for display
+                from datetime import datetime
+                if cache_timestamp:
+                    timestamp_str = f" (cached: {cache_timestamp})"
+                else:
+                    timestamp_str = f" (fetched: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
                 
                 if actual_sources_used:
                     source_footer = f"""
 ---
 📂 **Data Sources Used:**
-{chr(10).join(['• ' + source for source in actual_sources_used])}"""
+{chr(10).join(['• ' + source + timestamp_str for source in actual_sources_used])}"""
                 else:
                     source_footer = f"""
 ---
 📂 **Data Sources Configured:**
-{chr(10).join(['• ' + source for source in data_sources])}"""
+{chr(10).join(['• ' + source for source in data_sources])}
+🕐 Status: Live connection{timestamp_str}"""
                 
                 response_with_sources = f"{response_text}{source_footer}"
                 
