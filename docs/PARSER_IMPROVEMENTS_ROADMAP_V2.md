@@ -773,6 +773,32 @@ cache/normalized/*.json (static files)
 
 ### 📅 FUTURE PRIORITIES
 
+#### v2.1 Consideration: Formula-Awareness Activation ⭐
+**Status:** ✅ Code merged to main (Sep 28-29), but NOT activated in production
+**What Exists:**
+- `EnhancedGoogleSheetsConnector` (18,903 bytes) - Formula extraction, dependency graphs
+- `FormulaAwareAIService` (17,441 bytes) - What-if simulations, formula context
+- `FormulaClassifier` - 10 business rule categories
+- Complete test suite (99.63-100% success rates)
+- Prometheus monitoring + CI/CD pipeline
+
+**What It Would Enable:**
+- "What-if budget increases by 10%?" queries
+- Understanding calculated vs. entered values
+- Circular reference detection
+- Formula dependency visualization
+- Business rule explanations
+
+**Decision Criteria:**
+- [ ] Monitor user queries for "what-if" patterns
+- [ ] Assess if division cost comparisons need formula context
+- [ ] Performance testing with real queries
+- [ ] User feedback indicates confusion about calculated values
+
+**Activation Timeline:** Consider for v2.1 (Nov) or v2.2 (Dec) based on user needs
+
+---
+
 #### Week 4: Advanced Analytics (Tests 8-9)
 **Test 8: Budget Performance Analysis** (Day 1-2)
 - Query: "Which projects are over budget? Show variance."
