@@ -1,0 +1,96 @@
+{
+  "timestamp": "2025-10-01T22:11:14.052597",
+  "server": "http://localhost:8000",
+  "ground_truth_source": "tests/ground_truth.json",
+  "ground_truth_generated": "2025-10-01T22:10:36.538700",
+  "total_time_seconds": 28.52574872970581,
+  "summary": {
+    "total": 5,
+    "passed": 1,
+    "failed": 4,
+    "success_rate": 20.0
+  },
+  "results": [
+    {
+      "test": "GCA Totals",
+      "passed": false,
+      "errors": [
+        "72 Perth Avenue: GCA value not found in response",
+        "24021 - 17175 Yonge St: GCA value not found in response",
+        "6071 Azure Road: GCA value not found in response"
+      ],
+      "expected": {
+        "72_perth": 205.0,
+        "17175_yonge_st": 269141.0,
+        "azure_road": 140014.0
+      },
+      "actual": {},
+      "response": "{'ai_response': \"I don't have that information.\", 'confidence_score': 0.0, 'tokens_used': 1174, 'cost_estimate': 0.000594, 'response_time': 17.07430934906006, 'model_used': 'gpt-3.5-turbo', 'query_type': 'general', 'metadata': {'query_type': 'general', 'prompt_tokens': 1167, 'completion_tokens': 7, ..."
+    },
+    {
+      "test": "Parking Stalls",
+      "passed": false,
+      "errors": [
+        "72 Perth Avenue: Parking stalls not found in response",
+        "24021 - 17175 Yonge St: Parking stalls not found in response",
+        "6071 Azure Road: Parking stalls not found in response"
+      ],
+      "expected": {
+        "72_perth": 31,
+        "17175_yonge_st": 197,
+        "azure_road": 0
+      },
+      "actual": {},
+      "response": "{'ai_response': \"Hey there! Let me give you a comprehensive status update on the Lakeside Residences construction project:\\n\\n- **Progress Percentage:** As of the latest data, the project has reached [Progress Percentage]% completion. The team is making steady progress towards completing the constru..."
+    },
+    {
+      "test": "Total Direct Cost",
+      "passed": false,
+      "errors": [
+        "72 Perth Avenue: Cost not found in response",
+        "24021 - 17175 Yonge St: Cost not found in response",
+        "6071 Azure Road: Cost not found in response"
+      ],
+      "expected": {
+        "72_perth": 897836.0,
+        "17175_yonge_st": 7746848.0,
+        "azure_road": 0.0
+      },
+      "actual": {},
+      "response": "{'ai_response': \"I don't have detailed budget information for the Lakeside Residences project.\", 'confidence_score': 0.3, 'tokens_used': 1171, 'cost_estimate': 0.0006004999999999999, 'response_time': 1.2003169059753418, 'model_used': 'gpt-3.5-turbo', 'query_type': 'general', 'metadata': {'query_type..."
+    },
+    {
+      "test": "Project Locations",
+      "passed": false,
+      "errors": [
+        "72 Perth Avenue: Location 'Toronto, ON' not found in response",
+        "24021 - 17175 Yonge St: Location '17175 Yonge St Newmarket, Ontario' not found in response",
+        "6071 Azure Road: Location 'Richmond, British Columbia' not found in response"
+      ],
+      "expected": {
+        "72_perth": "Toronto, ON",
+        "17175_yonge_st": "17175 Yonge St Newmarket, Ontario",
+        "azure_road": "Richmond, British Columbia"
+      },
+      "actual": {},
+      "response": "{'ai_response': \"I don't have information about the specific locations of the projects Azure Road, Yonge St, and Perth Avenue.\", 'confidence_score': 0.25000000000000006, 'tokens_used': 1180, 'cost_estimate': 0.000613, 'response_time': 0.5248034000396729, 'model_used': 'gpt-3.5-turbo', 'query_type': ..."
+    },
+    {
+      "test": "Portfolio Totals",
+      "passed": true,
+      "errors": [
+        "Total Budget not found in response",
+        "Total Direct Cost not found in response"
+      ],
+      "expected": {
+        "total_projects": 3,
+        "total_budget": 70780179.0,
+        "total_direct_cost": 8644684.0,
+        "total_gca_sf": 409360.0,
+        "total_building_area_metric": 101924.0,
+        "total_parking": 306
+      },
+      "response": "{'ai_response': \"I don't have detailed budget information for the Lakeside Residences project.\", 'confidence_score': 0.3, 'tokens_used': 1171, 'cost_estimate': 0.0006004999999999999, 'response_time': 1.1378450393676758, 'model_used': 'gpt-3.5-turbo', 'query_type': 'general', 'metadata': {'query_type..."
+    }
+  ]
+}

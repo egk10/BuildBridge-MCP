@@ -1,0 +1,91 @@
+{
+  "generated_at": "2025-10-01T22:10:36.538700",
+  "source": "Google Sheets cache",
+  "projects": {
+    "72_perth": {
+      "name": "72 Perth Avenue",
+      "location": "Toronto, ON",
+      "client": "Castlepoint Numa",
+      "budget_date": "14-Jun-24",
+      "total_budget": 0.0,
+      "total_direct_cost": 897836.0,
+      "building_area_metric": 17427.0,
+      "total_gca_sf": 205.0,
+      "parking_stalls": 31,
+      "parking_below_grade": 31,
+      "parking_above_grade": 0,
+      "parking_total": 31,
+      "subtotal_siteworks": 0.0,
+      "division_cost_totals": {}
+    },
+    "17175_yonge_st": {
+      "name": "24021 - 17175 Yonge St",
+      "location": "17175 Yonge St Newmarket, Ontario",
+      "client": "Trinity Coptic Foundation",
+      "budget_date": "September 27, 2024",
+      "total_budget": 46798403.0,
+      "total_direct_cost": 7746848.0,
+      "building_area_metric": 84497.0,
+      "total_gca_sf": 269141.0,
+      "parking_stalls": 197,
+      "parking_below_grade": 0,
+      "parking_above_grade": 0,
+      "parking_total": 0,
+      "subtotal_siteworks": 224992.0,
+      "division_cost_totals": {
+        "02": 3968661.0,
+        "03": 82267.0,
+        "04": 0.0,
+        "05": 117750.0,
+        "06": 19625.0,
+        "07": 1441121.0,
+        "08": 19625.0,
+        "09": 79750.0,
+        "10": 23800.0,
+        "11": 75000.0,
+        "12": 0.0,
+        "13": 0.0,
+        "14": 46000.0,
+        "15": 1031000.0,
+        "16": 842250.0,
+        "CA": 0.0,
+        "01": 929622.0,
+        "17": 303676.0,
+        "18": 0.0,
+        "19": 0.0,
+        "20": 0.0,
+        "21": 0.0
+      }
+    },
+    "azure_road": {
+      "name": "6071 Azure Road",
+      "location": "Richmond, British Columbia",
+      "client": "LDHT Holdings",
+      "budget_date": "December 20, 2024",
+      "total_budget": 23981776.0,
+      "total_direct_cost": 0.0,
+      "building_area_metric": 0.0,
+      "total_gca_sf": 140014.0,
+      "parking_stalls": 0,
+      "parking_below_grade": 0,
+      "parking_above_grade": 275,
+      "parking_total": 275,
+      "subtotal_siteworks": 87206.0,
+      "division_cost_totals": {}
+    }
+  },
+  "portfolio_totals": {
+    "total_projects": 3,
+    "total_budget": 70780179.0,
+    "total_direct_cost": 8644684.0,
+    "total_gca_sf": 409360.0,
+    "total_building_area_metric": 101924.0,
+    "total_parking": 306
+  },
+  "portfolio_averages": {
+    "avg_budget": 23593393.0,
+    "avg_direct_cost": 2881561.3333333335,
+    "avg_gca_sf": 136453.33333333334,
+    "avg_parking": 102.0
+  }
+}
