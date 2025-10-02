@@ -11,10 +11,10 @@
       "total_direct_cost": 897836.0,
       "building_area_metric": 17427.0,
       "total_gca_sf": 214384.0,
-      "parking_stalls": 31,
+      "parking_stalls": 44,
       "parking_below_grade": 31,
-      "parking_above_grade": 0,
-      "parking_total": 31,
+      "parking_above_grade": 13,
+      "parking_total": 44,
       "subtotal_siteworks": 0.0,
       "division_cost_totals": {}
     },
@@ -68,8 +68,8 @@
       "total_gca_sf": 376332.0,
       "parking_stalls": 0,
       "parking_below_grade": 0,
-      "parking_above_grade": 275,
-      "parking_total": 275,
+      "parking_above_grade": 0,
+      "parking_total": 0,
       "subtotal_siteworks": 87206.0,
       "division_cost_totals": {}
     }
@@ -80,12 +80,12 @@
     "total_direct_cost": 8644684.0,
     "total_gca_sf": 859857.0,
     "total_building_area_metric": 101924.0,
-    "total_parking": 306
+    "total_parking": 241
   },
   "portfolio_averages": {
     "avg_budget": 23593393.0,
     "avg_direct_cost": 2881561.3333333335,
     "avg_gca_sf": 286619.0,
-    "avg_parking": 102.0
+    "avg_parking": 80.33
   }
 }

@@ -913,7 +913,12 @@ class ConstructionMCPEngine:
         """Handle enhanced query processing with AI response"""
         try:
             enhanced = enhance_query_with_construction_context(request.query)
-            prompt_type = request.parameters.get('prompt_type', 'general')
+            # Auto-detect query type from keywords (calculation, budget, schedule, etc.)
+            from construction_prompts import ConstructionPrompts
+            prompt_detector = ConstructionPrompts()
+            detected_type = prompt_detector.get_query_type_from_keywords(request.query)
+            # Use detected type, fall back to request parameter if not detected
+            prompt_type = detected_type if detected_type != 'general' else request.parameters.get('prompt_type', 'general')
             system_prompt = get_construction_prompt(prompt_type)
             
             # If this looks like a calculation or analysis query, process it with AI
