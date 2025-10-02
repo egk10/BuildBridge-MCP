@@ -626,7 +626,7 @@ class ConstructionMCPEngine:
                 return {"error": str(e), "results": []}
     
     async def _gather_google_sheets_projects(self) -> List[Dict[str, Any]]:
-        """Gather project data directly from Google Sheets"""
+        """Gather project data from normalized cache files"""
         print(f"🐛 DEBUG: _gather_google_sheets_projects called")
         try:
             # Check if Google Sheets is enabled
@@ -635,7 +635,8 @@ class ConstructionMCPEngine:
                 logger.info("ℹ️ Google Sheets data source disabled")
                 return []
             
-            if not self.google_sheets_connector or self.google_sheets_connector.local_mode:
+            if not self.google_sheets_connector:
+                logger.warning("Google Sheets connector not available")
                 return []
             
             all_projects = []
@@ -646,44 +647,49 @@ class ConstructionMCPEngine:
             
             logger.info(f"🔍 Found {len(projects_config)} projects in config: {list(projects_config.keys())}")
             
-            # For each project, try to get data from the main project sheet
-            for project_key, sheet_id in projects_config.items():
-                logger.info(f"📊 Processing project {project_key} with sheet ID: {sheet_id}")
+            # Read from normalized cache instead of live sheets
+            from pathlib import Path
+            cache_dir = Path(__file__).parent.parent / 'cache' / 'normalized'
+            
+            for project_key in projects_config.keys():
+                logger.info(f"📊 Loading cached data for project {project_key}")
                 try:
-                    # Try to read from the main project sheet directly
-                    # Use a broad range to capture all data
-                    df = self.google_sheets_connector.read_sheet(
-                        sheet_id, 
-                        "A1:Z1000"  # Read the entire first sheet
-                    )
+                    cache_file = cache_dir / f"{project_key}.json"
                     
-                    logger.info(f"📊 Read DataFrame for {project_key}: shape={df.shape}")
-                    if not df.empty and len(df) > 0:
-                        logger.info(f"📊 First few rows of {project_key} data:")
-                        logger.info(f"{df.head(3)}")
-                        
-                        # Use the intelligent extraction method to parse complex sheet structures
-                        project_data = self._extract_project_info_from_sheet(df)
-                        if project_data:  # Only add if we successfully extracted data
-                            project_data['Project_ID'] = project_key
-                            project_data['source'] = f'Google Sheets: {project_key} project'
-                            project_data['sheet_id'] = sheet_id
-                            all_projects.append(project_data)
-                            logger.info(f"✅ Successfully gathered data for project {project_key}")
-                        else:
-                            logger.warning(f"Failed to extract project data from sheet for {project_key}")
+                    if not cache_file.exists():
+                        logger.warning(f"Cache file not found for {project_key}: {cache_file}")
+                        continue
+                    
+                    # Read cached normalized data
+                    with open(cache_file, 'r', encoding='utf-8') as f:
+                        cached_data = json.load(f)
+                    
+                    # Extract the project data from the cache
+                    project_data = cached_data.get('project', {})
+                    
+                    if project_data:
+                        # Ensure Project_ID is set
+                        project_data['Project_ID'] = project_key
+                        project_data['source'] = f'Cached normalized data: {project_key}'
+                        all_projects.append(project_data)
+                        logger.info(f"✅ Successfully loaded cached data for project {project_key}")
+                        logger.info(f"   Project Name: {project_data.get('Project_Name', 'N/A')}")
+                        logger.info(f"   Location: {project_data.get('Location', 'N/A')}")
+                        logger.info(f"   Budget: ${project_data.get('Total_Budget', 0):,.0f}")
                     else:
-                        logger.warning(f"Empty or no data found for project {project_key}")
+                        logger.warning(f"No 'project' key found in cache for {project_key}")
                         
                 except Exception as e:
-                    logger.warning(f"Failed to get data for project {project_key}: {e}")
+                    logger.warning(f"Failed to load cached data for project {project_key}: {e}")
+                    logger.debug(f"Exception details: {traceback.format_exc()}")
                     continue
             
-            logger.info(f"Successfully gathered {len(all_projects)} projects from Google Sheets")
+            logger.info(f"✅ Successfully gathered {len(all_projects)} projects from cache")
             return all_projects
             
         except Exception as e:
             logger.error(f"Error gathering Google Sheets projects: {e}")
+            logger.debug(f"Exception details: {traceback.format_exc()}")
             return []
     
     def _extract_project_info_from_sheet(self, df) -> Optional[Dict[str, Any]]:
@@ -907,7 +913,12 @@ class ConstructionMCPEngine:
         """Handle enhanced query processing with AI response"""
         try:
             enhanced = enhance_query_with_construction_context(request.query)
-            prompt_type = request.parameters.get('prompt_type', 'general')
+            # Auto-detect query type from keywords (calculation, budget, schedule, etc.)
+            from construction_prompts import ConstructionPrompts
+            prompt_detector = ConstructionPrompts()
+            detected_type = prompt_detector.get_query_type_from_keywords(request.query)
+            # Use detected type, fall back to request parameter if not detected
+            prompt_type = detected_type if detected_type != 'general' else request.parameters.get('prompt_type', 'general')
             system_prompt = get_construction_prompt(prompt_type)
             
             # If this looks like a calculation or analysis query, process it with AI
@@ -1223,10 +1234,13 @@ if FASTAPI_AVAILABLE:
             # Always gather project data for project-related queries
             if any(keyword in query_lower for keyword in ['project', 'budget', 'cost', 'schedule', 'status', 'all', 'list', 'show', 'lakeside', 'residences', 'yonge', 'azure', 'perth', 'about', 'tell']):
                 try:
+                    # Import required modules at the start of the try block
+                    import re
+                    from datetime import datetime as dt_import
+                    
                     # Extract specific project ID from query if mentioned
                     project_id = None
                     # Look for patterns like "project 72_perth", "72_perth project", "17175 Yonge Street project", etc.
-                    import re
                     
                     # Try multiple patterns to extract project identifiers
                     print(f"🐛 PATTERN SEARCH DEBUG: Looking for patterns in query_lower: '{query_lower}'")
@@ -1284,7 +1298,7 @@ if FASTAPI_AVAILABLE:
                                 type=RequestType.SEARCH_PROJECTS,
                                 query=f"project {project_id}",
                                 parameters={'filters': {'project_id': project_id}},
-                                timestamp=datetime.now()
+                                timestamp=dt_import.now()
                             )
                         )
                         if search_result and 'results' in search_result and search_result['results']:
@@ -1306,7 +1320,7 @@ if FASTAPI_AVAILABLE:
                                 type=RequestType.SEARCH_PROJECTS,
                                 query="all projects",
                                 parameters={'filters': {}},
-                                timestamp=datetime.now()
+                                timestamp=dt_import.now()
                             )
                         )
                         if search_result and 'results' in search_result:
@@ -1335,26 +1349,38 @@ This system manages multiple construction projects with comprehensive tracking o
                 
                 response_text = ai_response.content if hasattr(ai_response, 'content') else str(ai_response)
                 
-                # Add data source footer to response with actual sources used
+                # Add data source footer to response with actual sources used AND TIMESTAMPS
                 actual_sources_used = []
+                cache_timestamp = None
                 if data_context and 'projects' in data_context:
                     # Extract unique sources from project data
                     sources = set()
                     for project in data_context['projects']:
                         if 'source' in project:
                             sources.add(project['source'])
+                        # Check for cache metadata
+                        if 'cached_at' in project and cache_timestamp is None:
+                            cache_timestamp = project['cached_at']
                     actual_sources_used = list(sources)
+                
+                # Format timestamp for display
+                from datetime import datetime
+                if cache_timestamp:
+                    timestamp_str = f" (cached: {cache_timestamp})"
+                else:
+                    timestamp_str = f" (fetched: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
                 
                 if actual_sources_used:
                     source_footer = f"""
 ---
 📂 **Data Sources Used:**
-{chr(10).join(['• ' + source for source in actual_sources_used])}"""
+{chr(10).join(['• ' + source + timestamp_str for source in actual_sources_used])}"""
                 else:
                     source_footer = f"""
 ---
 📂 **Data Sources Configured:**
-{chr(10).join(['• ' + source for source in data_sources])}"""
+{chr(10).join(['• ' + source for source in data_sources])}
+🕐 Status: Live connection{timestamp_str}"""
                 
                 response_with_sources = f"{response_text}{source_footer}"
                 
@@ -1597,10 +1623,64 @@ This system manages multiple construction projects with comprehensive tracking o
         else:
             raise HTTPException(status_code=404, detail="Logs viewer not found")
     
+    @app.get("/api/projects")
+    async def get_available_projects():
+        """Get list of available projects from configuration"""
+        try:
+            # Load project manifest
+            manifest_path = Path(__file__).parent.parent / "config" / "project_manifest.json"
+            if manifest_path.exists():
+                with open(manifest_path, 'r') as f:
+                    project_manifest = json.load(f)
+                
+                # Transform to frontend format
+                projects = []
+                project_display_names = {
+                    '17175_yonge_st': '17175 Yonge St',
+                    'azure_road': 'Azure Road',
+                    '72_perth': '72 Perth Avenue'
+                }
+                
+                for project_id in project_manifest.keys():
+                    display_name = project_display_names.get(project_id, project_id.replace('_', ' ').title())
+                    projects.append({
+                        'id': project_id,
+                        'display': display_name,
+                        'queries': [
+                            {'label': '📋 Project Overview', 'query': f'Show me details for {display_name} project'},
+                            {'label': '💰 Budget Status', 'query': f'What is the budget for {display_name}?'},
+                            {'label': '📊 Total Direct Cost', 'query': f'Calculate total direct cost for {display_name}'},
+                            {'label': '📐 Unit Costs', 'query': f'Show cost per square foot for {display_name}'},
+                            {'label': '🏢 Building Details', 'query': f'Show building area and units for {display_name}'},
+                            {'label': '🅿️ Parking Info', 'query': f'Show parking details for {display_name}'}
+                        ]
+                    })
+                
+                return {'success': True, 'projects': projects}
+            else:
+                # Fallback to hardcoded projects
+                return {
+                    'success': True,
+                    'projects': [
+                        {
+                            'id': '17175_yonge_st',
+                            'display': '17175 Yonge St',
+                            'queries': [
+                                {'label': '📋 Project Overview', 'query': 'Show me details for 17175 Yonge St project'},
+                                {'label': '💰 Budget Status', 'query': 'What is the budget for 17175 Yonge St?'},
+                                {'label': '📊 Total Direct Cost', 'query': 'Calculate total direct cost for 17175 Yonge St'}
+                            ]
+                        }
+                    ]
+                }
+        except Exception as e:
+            logger.error(f"Error fetching projects: {e}")
+            return {'success': False, 'error': str(e)}
+    
     @app.get("/")
     async def root():
         """Redirect to chat interface"""
-        return RedirectResponse(url="/chat_interface.html")
+        return RedirectResponse(url="/static/chat_interface_v2.html")
     
     @app.get("/favicon.ico")
     async def get_favicon():

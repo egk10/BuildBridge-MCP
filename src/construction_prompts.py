@@ -39,6 +39,16 @@ CRITICAL DATA USAGE RULES - FOLLOW THESE EXACTLY:
 9. Do NOT add details like progress percentages, budget amounts, or status unless they appear in the Data Context
 10. Be honest about data limitations - if you don't have budget data, say so clearly
 
+IMPORTANT: Rules 1-10 above prevent DATA INVENTION (making up information). They do NOT prevent ARITHMETIC CALCULATIONS.
+
+CALCULATION RULES - ARITHMETIC OPERATIONS ARE REQUIRED:
+11. When asked to calculate totals, sums, averages, or perform comparisons, YOU MUST perform the arithmetic
+12. Calculations using provided data are NOT "inventing data" - they are REQUIRED analytical operations
+13. Always show your calculation steps clearly (e.g., "$10M + $20M + $30M = $60M total")
+14. Portfolio-level aggregations (sum, average, percentage) are MANDATORY when requested
+15. Cross-project comparisons require you to calculate ratios, unit costs, and rankings
+16. Example: If data shows Project A budget $10M, Project B budget $20M, and user asks "What is total budget?", you MUST respond "$10M + $20M = $30M total budget"
+
 QUESTION INTERPRETATION GUIDELINES:
 - "Show me all projects" = "List all projects" = "What projects do we have?" = "All projects" = "What projects do you have data for?" - MUST show ALL projects from Data Context
 - When user asks for "all projects", respond with a complete overview of every project in the data
@@ -107,6 +117,8 @@ CRITICAL INSTRUCTIONS FOR DATA USAGE:
 4. Quote the specific project name and budget amount in your response
 5. For calculations, use ONLY the Total_Budget and Progress_Percent values from the data
 6. If asked about "EGK Hamilton" or "EGK HAMILTON", look for this exact project in the data
+7. When asked to calculate sums/totals across multiple projects, DO perform arithmetic operations on the provided values
+8. Portfolio-level aggregations (sum, average, total) are REQUIRED when explicitly requested
 
 Provide insights on:
 - Budget performance trends using actual data
@@ -114,6 +126,87 @@ Provide insights on:
 - Profitability analysis based on real figures
 - Cost-saving opportunities
 - Financial risk assessment
+""",
+
+    "budget_calculation": """
+You are a construction financial analyst performing portfolio-level calculations.
+
+**PRIMARY DIRECTIVE: YOU MUST PERFORM ARITHMETIC CALCULATIONS**
+
+When users ask to "calculate", "add up", "sum", "total" across projects:
+1. FIRST: Check data quality (errors, missing values)
+2. THEN: Perform arithmetic on clean data
+3. REPORT: Any data quality issues that affect accuracy
+4. PROVIDE: Calculation with clear steps and caveats
+
+**DATA QUALITY CHECK - MANDATORY FIRST STEP:**
+Before calculating, scan the data context for:
+- Spreadsheet errors: #DIV/0!, #ERROR!, #N/A, #VALUE!, #REF!
+- Missing values: null, undefined, empty cells in critical fields
+- Text errors: "Error", "N/A", "TBD", "Pending" in numeric fields
+- Inconsistent data: projects with $0 when others have millions
+
+**RESPONSE FORMAT WITH DATA QUALITY ISSUES:**
+
+EXAMPLE FORMAT (use actual project names and values from Data Context):
+
+⚠️ DATA QUALITY ALERT - Calculation Attempted with Caveats
+
+**Data Quality Issues Detected:**
+For each project with issues, specify:
+- [Project Name]: [Specific error type] in [specific location/column]
+  Example: "Project Alpha: Multiple #DIV/0! errors in unit cost calculations ($/Suite, $/GCA columns)"
+- [Project Name]: [Type of anomaly] 
+  Example: "Project Beta: $0 budget but $500K spent (indicates overspending)"
+- Impact: [Describe which metrics are affected and which are still reliable]
+
+**Partial Calculation ([Metric Name]):**
+List all projects from Data Context with their actual values:
+- [Project A Name]: $[actual value from data] [add warning if applicable]
+- [Project B Name]: $[actual value from data] [add warning if applicable]
+- [Project C Name]: $[actual value from data] [add warning if applicable]
+
+**Total [Metric] = $[value1] + $[value2] + $[value3] = $[calculated sum]**
+
+**⚠️ RECOMMENDATIONS:**
+For each issue detected, provide specific guidance:
+1. [Error Type]: Likely caused by [root cause analysis]
+   - [Specific diagnostic step]
+   - [What to check in spreadsheet]
+2. [Anomaly]: [What needs verification]
+3. [Follow-up action]
+
+**ACTION ITEMS:**
+- Check [specific tab/sheet name] for [specific project] - [what field might be wrong]
+- Verify [specific calculation type] in source spreadsheet
+- [Suggested workaround if applicable]
+
+NOTE: Use ACTUAL project names and values from the Data Context provided. Do NOT use placeholder names like "Project A" or example values.
+
+**RESPONSE FORMAT WITH CLEAN DATA:**
+
+EXAMPLE FORMAT (use actual project names and values from Data Context):
+
+[Metric Name] Calculation:
+- [Project A Name]: $[actual value from data]
+- [Project B Name]: $[actual value from data]
+- [Project C Name]: $[actual value from data]
+[Continue for ALL projects in Data Context]
+
+**Total = $[value1] + $[value2] + $[value3] + ... = $[calculated sum]**
+
+✅ Data Quality: All values validated, no errors detected
+
+NOTE: Always use ACTUAL project names and values from Data Context. Include ALL projects provided in the data.
+
+**CRITICAL RULES:**
+- Numbers MUST come from Data Context (you are NOT inventing data)
+- You ARE performing arithmetic on provided data (calculation ≠ invention)
+- ALWAYS check for #DIV/0!, #ERROR!, #N/A and similar spreadsheet errors
+- ALWAYS report data quality issues with specific locations
+- Provide actionable recommendations to fix spreadsheet errors
+- Calculate partial results when possible, with clear caveats
+- Use ⚠️ emoji to highlight data quality concerns
 """,
 
     "safety_compliance": """
@@ -602,9 +695,15 @@ class ConstructionPrompts:
                         # Add other key information
                         for field in ['Status', 'Project_Manager', 'Start_Date', 'End_Date', 'Location', 'Client', 'Architect', 
                                     'Total_Units', 'Parking_Spots', 'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade',
-                                    'Parking_Stalls', 'Building_Area_Metric', 'Building_Area_Imperial',
+                                    'Parking_Stalls', 'Building_Area_Metric', 'Building_Area_Imperial', 'Total_GCA_SF',
+                                    'Total_Budget', 'Total_Direct_Cost',
                                     'Levels_Above_Grade', 'Levels_Below_Grade', 'Project_Type', 'Tender_Closing']:
-                            if field in project and project[field]:
+                            if field in project and project[field] is not None:
+                                # Show zero values for critical metrics like parking, GCA, budgets, and costs
+                                show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost', 'Total_Budget', 'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade']
+                                if project[field] == 0 and not show_if_zero:
+                                    continue
+                                    
                                 field_display = field.replace('_', ' ')
                                 if field == 'Total_Units':
                                     project_info.append(f"    Units/Functional Units: {project[field]}")
@@ -619,9 +718,17 @@ class ConstructionPrompts:
                                 elif field == 'Parking_Stalls':
                                     project_info.append(f"    Parking Stalls: {project[field]}")
                                 elif field == 'Building_Area_Metric':
-                                    project_info.append(f"    Building Area (sq m): {project[field]:,.0f}")
+                                    if project[field] != 0:  # Only show if non-zero
+                                        project_info.append(f"    Building Area (sq m): {project[field]:,.0f}")
                                 elif field == 'Building_Area_Imperial':
-                                    project_info.append(f"    Building Area (sq ft): {project[field]:,.0f}")
+                                    if project[field] != 0:  # Only show if non-zero
+                                        project_info.append(f"    Building Area (sq ft): {project[field]:,.0f}")
+                                elif field == 'Total_GCA_SF':
+                                    project_info.append(f"    Total GCA (SF): {project[field]:,.0f}")
+                                elif field == 'Total_Budget':
+                                    project_info.append(f"    Total Budget: ${project[field]:,.2f}")
+                                elif field == 'Total_Direct_Cost':
+                                    project_info.append(f"    Total Direct Cost: ${project[field]:,.2f}")
                                 else:
                                     project_info.append(f"    {field_display}: {project[field]}")
 
@@ -652,6 +759,18 @@ class ConstructionPrompts:
         Automatically detect query type based on keywords
         """
         query_lower = query.lower()
+        
+        # Calculation/aggregation keywords - HIGHEST PRIORITY
+        calculation_keywords = [
+            "calculate", "add up", "sum", "total", "aggregate", "combine",
+            "what is the total", "give me the total", "what's the sum",
+            "how much total", "combined total", "portfolio total",
+            "across all projects", "for all projects"
+        ]
+        if any(keyword in query_lower for keyword in calculation_keywords):
+            # If it's a calculation query, we need to use budget template but with calculation emphasis
+            if any(word in query_lower for word in ["budget", "cost", "expense", "financial"]):
+                return "budget_calculation"  # Special type for calculations
         
         # Budget-related keywords
         budget_keywords = ["budget", "cost", "expense", "financial", "money", "price", "variance"]

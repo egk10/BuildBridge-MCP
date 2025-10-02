@@ -13,9 +13,17 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             min-height: 100vh;
             color: #333;
+            animation: gradientShift 15s ease infinite;
+            background-size: 400% 400%;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
         .container {
@@ -274,19 +282,26 @@
         }
 
         .quick-btn {
-            padding: 8px 16px;
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 20px;
+            padding: 10px 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
             cursor: pointer;
             font-size: 14px;
+            font-weight: 500;
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
 
         .quick-btn:hover {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .quick-btn:active {
+            transform: translateY(0px);
         }
 
         .stats-card {
@@ -331,21 +346,34 @@
         <div class="chat-container">
             <div class="chat-messages" id="chatMessages">
                 <div class="message assistant">
-                    <div class="message-header">Construction MCP Assistant</div>
-                    <p>Hello! I'm your construction management assistant. I can help you with:</p>
+                    <div class="message-header">🤖 Construction MCP Assistant</div>
+                    <p>Hey there! 👋 I'm your AI-powered construction buddy. I can help you with tons of stuff:</p>
                     <ul>
-                        <li>📊 Project status and progress tracking</li>
-                        <li>💰 Budget analysis and cost management</li>
-                        <li>📅 Schedule monitoring and delay alerts</li>
-                        <li>🔍 Document search and retrieval</li>
-                        <li>📈 Performance reports and insights</li>
+                        <li>📊 <strong>Project status</strong> - real-time progress tracking with data quality checks</li>
+                        <li>💰 <strong>Budget analysis</strong> - calculate totals, detect overspending, spot spreadsheet errors</li>
+                        <li>📅 <strong>Schedule insights</strong> - monitor delays and critical path items</li>
+                        <li>🔍 <strong>Smart search</strong> - find any project detail instantly</li>
+                        <li>📈 <strong>Portfolio analytics</strong> - compare projects, calculate unit costs, rankings</li>
+                        <li>⚠️ <strong>Data quality</strong> - detect #DIV/0!, missing values, and anomalies</li>
                     </ul>
+
+                    <div style="background: #e7f3ff; padding: 12px; border-radius: 8px; margin: 15px 0;">
+                        <strong>🎯 Try These Power Queries:</strong>
+                    </div>
 
                     <div class="quick-questions">
                         <button class="quick-btn" onclick="askQuestion('Show me all projects')">📋 All Projects</button>
-                        <button class="quick-btn" onclick="askQuestion('Which projects are over budget?')">💰 Budget Issues</button>
-                        <button class="quick-btn" onclick="askQuestion('Which projects are behind schedule?')">⏰ Schedule Delays</button>
-                        <button class="quick-btn" onclick="askQuestion('Show me project progress')">📊 Progress Report</button>
+                        <button class="quick-btn" onclick="askQuestion('Add up the total budget across all projects')">💰 Portfolio Budget</button>
+                        <button class="quick-btn" onclick="askQuestion('Calculate total direct cost across all projects')">📊 Total Costs</button>
+                        <button class="quick-btn" onclick="askQuestion('Which project has the highest budget?')">🏆 Top Project</button>
+                        <button class="quick-btn" onclick="askQuestion('Show me projects with zero GCA')">⚠️ Data Issues</button>
+                        <button class="quick-btn" onclick="askQuestion('Compare budgets across all projects')">📈 Compare All</button>
+                        <button class="quick-btn" onclick="askQuestion('Which projects are over budget?')">🚨 Over Budget</button>
+                        <button class="quick-btn" onclick="askQuestion('Show cost per square foot for each project')">📐 Unit Costs</button>
+                    </div>
+
+                    <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #ffc107;">
+                        <strong>� Pro Tip:</strong> I can detect spreadsheet errors like #DIV/0!, missing areas, and $0 budgets. Just ask me to calculate something and I'll let you know about any data quality issues! 
                     </div>
                 </div>
             </div>
