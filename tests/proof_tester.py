@@ -105,33 +105,64 @@ class BuildBridgeProofTester:
             project_name = project_info.get('name', project_id)
             expected_gca = project_info.get('total_gca_sf', 0)
             
-            # Try multiple patterns to find GCA
-            patterns = [
-                rf'{project_name}.*?(\d+[\d,]*\.?\d*)\s*SF',
-                rf'{project_name}.*?GCA.*?(\d+[\d,]*\.?\d*)',
-                rf'{project_id}.*?(\d+[\d,]*\.?\d*)\s*SF'
+            # Build search patterns - try project name variations
+            name_variants = [
+                project_name,
+                project_name.replace(' - ', ' '),  # "24021 - 17175 Yonge" -> "24021 17175 Yonge"
+                project_name.split(' - ')[-1] if ' - ' in project_name else project_name,  # Get last part
+                project_id.replace('_', ' '),  # "azure_road" -> "azure road"
             ]
             
             found = False
-            for pattern in patterns:
-                match = re.search(pattern, response_text, re.IGNORECASE)
-                if match:
-                    actual_gca = float(match.group(1).replace(',', ''))
-                    actual_values[project_id] = actual_gca
-                    
-                    variance = self.calculate_variance(expected_gca, actual_gca)
-                    if variance > 1.0:  # 1% tolerance
-                        passed = False
-                        errors.append(
-                            f"{project_name}: Expected {expected_gca:,.0f} SF, "
-                            f"got {actual_gca:,.0f} SF (variance: {variance:.1f}%)"
-                        )
-                    found = True
+            for name in name_variants:
+                # DON'T use f-strings for regex patterns with {n,m} quantifiers!
+                # Python tries to interpret {} as format placeholders
+                patterns = [
+                    # Pattern 1: Name in markdown bold with GCA
+                    r'\*\*' + re.escape(name) + r'\*\*:?\s*-?\s*Total GCA:\s*(\d{1,3}(?:,\d{3})*)\s*SF',
+                    # Pattern 2: Name then closest number and SF
+                    re.escape(name) + r'.*?(\d{1,3}(?:,\d{3})*)\s*(?:square feet|SF)',
+                ]
+                
+                for pattern in patterns:
+                    match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
+                    if match:
+                        actual_gca = float(match.group(1).replace(',', ''))
+                        # Sanity check: GCA should be reasonable (between 100 and 1,000,000 SF)
+                        if 100 <= actual_gca <= 1_000_000:
+                            actual_values[project_id] = actual_gca
+                            
+                            variance = self.calculate_variance(expected_gca, actual_gca)
+                            if variance > 1.0:  # 1% tolerance
+                                passed = False
+                                errors.append(
+                                    f"{project_name}: Expected {expected_gca:,.0f} SF, "
+                                    f"got {actual_gca:,.0f} SF (variance: {variance:.1f}%)"
+                                )
+                            found = True
+                            break
+                
+                if found:
                     break
             
             if not found:
                 passed = False
                 errors.append(f"{project_name}: GCA value not found in response")
+        
+        self.results.append({
+            "test": "GCA Totals",
+            "passed": passed,
+            "errors": errors,
+            "expected": {pid: self.ground_truth['projects'][pid]['total_gca_sf'] 
+                        for pid in ['72_perth', '17175_yonge_st', 'azure_road']},
+            "actual": actual_values,
+            "response": response_text[:300] + "..."
+        })
+        
+        print(f"  {'✅ PASSED' if passed else '❌ FAILED'}")
+        if errors:
+            for error in errors:
+                print(f"    - {error}")
         
         self.results.append({
             "test": "GCA Totals",
@@ -176,27 +207,45 @@ class BuildBridgeProofTester:
             expected_stalls = project_info.get('parking_stalls', 0)
             project_name = project_info.get('name', project_id)
             
-            # Extract parking value with multiple patterns
-            patterns = [
-                rf'{project_name}.*?(\d+)\s*(?:stalls?|parking)',
-                rf'{project_name}.*?parking.*?(\d+)',
-                rf'{project_id}.*?(\d+)\s*(?:stalls?|parking)'
+            # Multiple name variations to match
+            name_variants = [
+                project_name,
+                re.escape(project_name),  # With special character escaping
+                project_id,
+                project_id.replace('_', ' ').title()  # "72_perth" → "72 Perth"
             ]
             
             found = False
-            for pattern in patterns:
-                match = re.search(pattern, response_text, re.IGNORECASE)
-                if match:
-                    actual_stalls = int(match.group(1))
-                    actual_values[project_id] = actual_stalls
-                    
-                    if actual_stalls != expected_stalls:
-                        passed = False
-                        errors.append(
-                            f"{project_name}: Expected {expected_stalls} stalls, "
-                            f"got {actual_stalls} stalls"
-                        )
-                    found = True
+            for name_variant in name_variants:
+                # Try multiple extraction patterns - DON'T use f-strings with regex {n,m}!
+                patterns = [
+                    # Pattern 1: Name + stalls/parking + number
+                    re.escape(name_variant) + r'[:\s]*(?:has\s+)?(\d+)\s*(?:stalls?|parking)',
+                    # Pattern 2: Name + parking + number
+                    re.escape(name_variant) + r'.*?parking[:\s]*(\d+)',
+                    # Pattern 3: Number + stalls + name (inverted)
+                    r'(\d+)\s*(?:stalls?|parking).*?' + re.escape(name_variant),
+                ]
+                
+                for pattern in patterns:
+                    match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
+                    if match:
+                        actual_stalls = int(match.group(1))
+                        
+                        # Sanity check: parking stalls typically 50-500 for these projects
+                        if 50 <= actual_stalls <= 500:
+                            actual_values[project_id] = actual_stalls
+                            
+                            if actual_stalls != expected_stalls:
+                                passed = False
+                                errors.append(
+                                    f"{project_name}: Expected {expected_stalls} stalls, "
+                                    f"got {actual_stalls} stalls"
+                                )
+                            found = True
+                            break
+                
+                if found:
                     break
             
             if not found:
@@ -246,29 +295,52 @@ class BuildBridgeProofTester:
             expected_cost = project_info.get('total_direct_cost', 0)
             project_name = project_info.get('name', project_id)
             
-            # Extract cost value
-            patterns = [
-                rf'{project_name}.*?\$\s*([\d,]+\.?\d*)',
-                rf'{project_name}.*?cost.*?\$\s*([\d,]+\.?\d*)',
-                rf'{project_id}.*?\$\s*([\d,]+\.?\d*)'
+            # Multiple name variations to match
+            name_variants = [
+                project_name,
+                re.escape(project_name),  # With special character escaping
+                project_id,
+                project_id.replace('_', ' ').title()  # "72_perth" → "72 Perth"
             ]
             
             found = False
-            for pattern in patterns:
-                match = re.search(pattern, response_text, re.IGNORECASE)
-                if match:
-                    actual_cost = float(match.group(1).replace(',', ''))
-                    actual_values[project_id] = actual_cost
-                    
-                    tolerance = max(expected_cost * 0.01, 1000)  # 1% or $1000
-                    if abs(actual_cost - expected_cost) > tolerance:
-                        passed = False
-                        variance = self.calculate_variance(expected_cost, actual_cost)
-                        errors.append(
-                            f"{project_name}: Expected ${expected_cost:,.0f}, "
-                            f"got ${actual_cost:,.0f} (variance: {variance:.1f}%)"
-                        )
-                    found = True
+            for name_variant in name_variants:
+                # Try multiple extraction patterns for cost values - DON'T use f-strings with regex {n,m}!
+                patterns = [
+                    # Pattern 1: Name + $ + number
+                    re.escape(name_variant) + r'[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',
+                    # Pattern 2: Name + cost/direct + $ + number
+                    re.escape(name_variant) + r'.*?(?:cost|direct)[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',
+                    # Pattern 3: $ + number + name (inverted)
+                    r'\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?).*?' + re.escape(name_variant),
+                ]
+                
+                for pattern in patterns:
+                    match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
+                    if match:
+                        cost_str = match.group(1).replace(',', '')
+                        actual_cost = float(cost_str)
+                        
+                        # Handle millions notation (if value < 1000, likely in millions)
+                        if actual_cost < 1000:
+                            actual_cost *= 1_000_000
+                        
+                        # Sanity check: direct costs typically $10M-$100M for these projects
+                        if 10_000_000 <= actual_cost <= 100_000_000:
+                            actual_values[project_id] = actual_cost
+                            
+                            tolerance = max(expected_cost * 0.01, 1000)  # 1% or $1000
+                            if abs(actual_cost - expected_cost) > tolerance:
+                                passed = False
+                                variance = self.calculate_variance(expected_cost, actual_cost)
+                                errors.append(
+                                    f"{project_name}: Expected ${expected_cost:,.0f}, "
+                                    f"got ${actual_cost:,.0f} (variance: {variance:.1f}%)"
+                                )
+                            found = True
+                            break
+                
+                if found:
                     break
             
             if not found:
@@ -365,27 +437,78 @@ class BuildBridgeProofTester:
         
         errors = []
         passed = True
+        actual_values = {}
         
-        # Try to find total budget and direct cost in response
-        budget_match = re.search(r'total.*?budget.*?\$\s*([\d,]+\.?\d*)', response_text, re.IGNORECASE)
-        direct_match = re.search(r'total.*?direct.*?cost.*?\$\s*([\d,]+\.?\d*)', response_text, re.IGNORECASE)
+        # Try multiple patterns for total budget - DON'T use f-strings with regex {n,m}!
+        budget_patterns = [
+            r'total.*?budget[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',  # "Total Budget: $X"
+            r'combined.*?budget[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',  # "Combined Budget: $X"
+            r'budget[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?).*?(?:total|combined)',  # "Budget: $X (total)"
+            r'\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?).*?(?:total|combined).*?budget',  # "$X total budget"
+        ]
         
-        if budget_match:
-            actual_budget = float(budget_match.group(1).replace(',', ''))
-            variance = self.calculate_variance(expected_budget, actual_budget)
-            if variance > 1.0:
-                passed = False
-                errors.append(f"Total Budget: Expected ${expected_budget:,.0f}, got ${actual_budget:,.0f} (variance: {variance:.1f}%)")
-        else:
+        budget_found = False
+        for pattern in budget_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
+            if match:
+                budget_str = match.group(1).replace(',', '')
+                actual_budget = float(budget_str)
+                
+                # Handle millions notation
+                if actual_budget < 1000:
+                    actual_budget *= 1_000_000
+                
+                # Sanity check: portfolio budget should be $50M-$200M
+                if 50_000_000 <= actual_budget <= 200_000_000:
+                    actual_values['total_budget'] = actual_budget
+                    variance = self.calculate_variance(expected_budget, actual_budget)
+                    if variance > 1.0:
+                        passed = False
+                        errors.append(
+                            f"Total Budget: Expected ${expected_budget:,.0f}, "
+                            f"got ${actual_budget:,.0f} (variance: {variance:.1f}%)"
+                        )
+                    budget_found = True
+                    break
+        
+        if not budget_found:
+            passed = False
             errors.append("Total Budget not found in response")
         
-        if direct_match:
-            actual_direct = float(direct_match.group(1).replace(',', ''))
-            variance = self.calculate_variance(expected_direct, actual_direct)
-            if variance > 1.0:
-                passed = False
-                errors.append(f"Total Direct Cost: Expected ${expected_direct:,.0f}, got ${actual_direct:,.0f} (variance: {variance:.1f}%)")
-        else:
+        # Try multiple patterns for total direct cost - DON'T use f-strings with regex {n,m}!
+        direct_patterns = [
+            r'total.*?direct.*?cost[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',  # "Total Direct Cost: $X"
+            r'combined.*?direct.*?cost[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?)',  # "Combined Direct Cost: $X"
+            r'direct.*?cost[:\s]*.*?\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?).*?(?:total|combined)',  # "Direct Cost: $X (total)"
+            r'\$\s*(\d{1,3}(?:,\d{3})*(?:\.\d+)?).*?(?:total|combined).*?direct',  # "$X total direct"
+        ]
+        
+        direct_found = False
+        for pattern in direct_patterns:
+            match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
+            if match:
+                direct_str = match.group(1).replace(',', '')
+                actual_direct = float(direct_str)
+                
+                # Handle millions notation
+                if actual_direct < 1000:
+                    actual_direct *= 1_000_000
+                
+                # Sanity check: portfolio direct cost should be $30M-$150M
+                if 30_000_000 <= actual_direct <= 150_000_000:
+                    actual_values['total_direct_cost'] = actual_direct
+                    variance = self.calculate_variance(expected_direct, actual_direct)
+                    if variance > 1.0:
+                        passed = False
+                        errors.append(
+                            f"Total Direct Cost: Expected ${expected_direct:,.0f}, "
+                            f"got ${actual_direct:,.0f} (variance: {variance:.1f}%)"
+                        )
+                    direct_found = True
+                    break
+        
+        if not direct_found:
+            passed = False
             errors.append("Total Direct Cost not found in response")
         
         self.results.append({
@@ -393,6 +516,7 @@ class BuildBridgeProofTester:
             "passed": passed,
             "errors": errors,
             "expected": expected_totals,
+            "actual": actual_values,
             "response": response_text[:300] + "..."
         })
         

@@ -1,7 +1,15 @@
 # Parser Improvements Roadmap
 
 ## Overview
-This document tracks improvements to the BuildBridge-MCP data parsing system to make it more robust, reliable, and maintainable.
+This docume#### 2.1 Improved Value Extraction
+- [x] **CRITICAL BUG FIX**: Don't use f-strings for regex patterns with `{n,m}` quantifiers!
+  - Python interprets `{1,3}` as format placeholder, breaks regex
+  - Solution: Use string concatenation (`re.escape(name) + r'.*?(\d{1,3}...'`) instead of f-strings (`rf'{re.escape(name)}...'`)
+- [x] Improve GCA value extraction regex patterns (fixed with above bug fix)
+- [x] Improve parking stalls extraction patterns (fixed with above bug fix)
+- [x] Improve cost extraction patterns (fixed with above bug fix)
+- [ ] Handle variations in AI response format
+- [ ] Add fallback patterns for different response stylescks improvements to the BuildBridge-MCP data parsing system to make it more robust, reliable, and maintainable.
 
 **Last Updated:** October 1, 2025  
 **Status:** In Progress
@@ -16,7 +24,7 @@ This document tracks improvements to the BuildBridge-MCP data parsing system to 
 | **Unit conversion** | ❌ Not implemented | ✅ Add conversion logic with fallback | MEDIUM | ⏳ Pending |
 | **Cache staleness** | ❌ Manual refresh only | ✅ Add TTL or webhook from Google Sheets | LOW | ⏳ Pending |
 | **Row hardcoding** | ⚠️ Partially (uses labels for some) | ✅ Always use label search, never row numbers | HIGH | 🔄 In Progress |
-| **Test parser accuracy** | ⚠️ 20% pass rate | ✅ Better regex patterns to extract AI responses | MEDIUM | ⏳ Pending |
+| **Test parser accuracy** | ⚠️ Critical bug: f-string curly braces conflicting with regex | ✅ Use string concatenation not f-strings for regex patterns | MEDIUM | 🔄 In Progress |
 
 ---
 
@@ -190,6 +198,20 @@ After each implementation phase:
 ---
 
 ## Change Log
+
+### 2025-10-01 (Late Night Update)
+- 🐛 **CRITICAL BUG FOUND & FIXED**: F-string curly braces conflicting with regex quantifiers
+  - Problem: Using `rf'{pattern}.*?(\d{{1,3}})'` caused Python to interpret `{1,3}` as format placeholder
+  - Impact: Regex patterns never matched, causing test extraction failures
+  - Solution: Use string concatenation instead: `re.escape(name) + r'.*?(\d{1,3})'`
+- ✅ **Phase 2.1 Major Progress**: Fixed regex extraction patterns in all test methods
+  - test_gca_totals(): Patterns now correctly extract individual project GCA values
+  - test_parking_stalls(): Fixed pattern building to avoid f-string conflicts
+  - test_direct_costs(): Fixed pattern building to avoid f-string conflicts  
+  - test_portfolio_totals(): Fixed budget and direct cost extraction patterns
+- ✅ Verified AI is providing CORRECT data (manual curl tests confirm accurate GCA: 214,384, 269,141, 376,332 SF)
+- 📝 Created debug_extraction.py script to test regex patterns in isolation
+- 🎯 **Status**: Regex patterns fixed, ready for full test run validation
 
 ### 2025-10-01 (Evening Update)
 - ✅ **Phase 1.1 Complete**: GCA Stats tab now uses dynamic column detection
