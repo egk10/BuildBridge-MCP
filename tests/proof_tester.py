@@ -109,37 +109,61 @@ class BuildBridgeProofTester:
             name_variants = [
                 project_name,
                 project_name.replace(' - ', ' '),  # "24021 - 17175 Yonge" -> "24021 17175 Yonge"
-                project_name.split(' - ')[-1] if ' - ' in project_name else project_name,  # Get last part
+                project_name.split(' - ')[-1] if ' - ' in project_name else project_name,  # Get last part after dash
                 project_id.replace('_', ' '),  # "azure_road" -> "azure road"
             ]
             
+            # Add variant without leading numbers for names like "6071 Azure Road" -> "Azure Road"
+            if re.match(r'^\d+\s+', project_name):
+                name_without_number = re.sub(r'^\d+\s+', '', project_name)
+                name_variants.append(name_without_number)
+            
             found = False
             for name in name_variants:
-                # DON'T use f-strings for regex patterns with {n,m} quantifiers!
-                # Python tries to interpret {} as format placeholders
-                patterns = [
-                    # Pattern 1: Name in markdown bold with GCA
-                    r'\*\*' + re.escape(name) + r'\*\*:?\s*-?\s*Total GCA:\s*(\d{1,3}(?:,\d{3})*)\s*SF',
-                    # Pattern 2: Name then closest number and SF
-                    re.escape(name) + r'.*?(\d{1,3}(?:,\d{3})*)\s*(?:square feet|SF)',
+                # Strategy: Extract the project's section first, then get GCA from that section only
+                # This prevents matching values from other projects
+                
+                # Pattern: **Name:** or **Name** followed by content until next numbered item or end
+                section_patterns = [
+                    # Colon inside bold: **Name:**
+                    r'\*\*' + re.escape(name) + r':\*\*(.*?)(?=\n\d+\.\s|\Z)',
+                    # Colon outside bold: **Name**:
+                    r'\*\*' + re.escape(name) + r'\*\*:?(.*?)(?=\n\d+\.\s|\Z)',
                 ]
                 
-                for pattern in patterns:
-                    match = re.search(pattern, response_text, re.IGNORECASE | re.DOTALL)
-                    if match:
-                        actual_gca = float(match.group(1).replace(',', ''))
-                        # Sanity check: GCA should be reasonable (between 100 and 1,000,000 SF)
-                        if 100 <= actual_gca <= 1_000_000:
-                            actual_values[project_id] = actual_gca
-                            
-                            variance = self.calculate_variance(expected_gca, actual_gca)
-                            if variance > 1.0:  # 1% tolerance
-                                passed = False
-                                errors.append(
-                                    f"{project_name}: Expected {expected_gca:,.0f} SF, "
-                                    f"got {actual_gca:,.0f} SF (variance: {variance:.1f}%)"
-                                )
-                            found = True
+                for section_pattern in section_patterns:
+                    section_match = re.search(section_pattern, response_text, re.DOTALL)
+                    
+                    if section_match:
+                        project_section = section_match.group(1)
+                        
+                        # Now extract GCA from ONLY this project's section
+                        gca_patterns = [
+                            r'Total GCA:\s*(\d{1,3}(?:,\d{3})*)\s*SF',
+                            r'GCA:\s*(\d{1,3}(?:,\d{3})*)\s*SF',
+                            r'(\d{1,3}(?:,\d{3})*)\s*SF',
+                        ]
+                        
+                        for gca_pattern in gca_patterns:
+                            gca_match = re.search(gca_pattern, project_section)
+                            if gca_match:
+                                actual_gca = float(gca_match.group(1).replace(',', ''))
+                                
+                                # Sanity check: GCA should be reasonable
+                                if 100 <= actual_gca <= 1_000_000:
+                                    actual_values[project_id] = actual_gca
+                                    
+                                    variance = self.calculate_variance(expected_gca, actual_gca)
+                                    if variance > 1.0:  # 1% tolerance
+                                        passed = False
+                                        errors.append(
+                                            f"{project_name}: Expected {expected_gca:,.0f} SF, "
+                                            f"got {actual_gca:,.0f} SF (variance: {variance:.1f}%)"
+                                        )
+                                    found = True
+                                    break
+                        
+                        if found:
                             break
                 
                 if found:
