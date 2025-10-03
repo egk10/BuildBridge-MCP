@@ -413,6 +413,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
   
 - **v1.x** - Initial Google Sheets integration
 
-## Continue Copilot Chat on new hardware
-
-See the docs/ directory for a quick, copy-paste checklist to rehydrate your environment and resume development on another machine.
