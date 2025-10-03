@@ -1635,14 +1635,32 @@ This system manages multiple construction projects with comprehensive tracking o
                 
                 # Transform to frontend format
                 projects = []
-                project_display_names = {
-                    'Y': 'Project Y',
-                    'A': 'Project A',
-                    'P': 'Project P'
-                }
+                cache_dir = Path(__file__).parent.parent / 'cache' / 'normalized'
                 
                 for project_id in project_manifest.keys():
-                    display_name = project_display_names.get(project_id, project_id.replace('_', ' ').title())
+                    # Try to get display name from cache file (real project data)
+                    display_name = None
+                    cache_file = cache_dir / f"{project_id}.json"
+                    
+                    if cache_file.exists():
+                        try:
+                            with open(cache_file, 'r') as f:
+                                cache_data = json.load(f)
+                                # Get Project_Name from cache
+                                project_name = cache_data.get('project', {}).get('Project_Name', '')
+                                if project_name and project_name.strip():
+                                    # Use "Project {ID}" format for single-letter IDs, otherwise use the actual name
+                                    if len(project_id) == 1:
+                                        display_name = f"Project {project_id.upper()}"
+                                    else:
+                                        display_name = project_name
+                        except Exception as e:
+                            logger.warning(f"Could not read cache for {project_id}: {e}")
+                    
+                    # Fallback to formatted project ID if no cache data
+                    if not display_name:
+                        display_name = f"Project {project_id.upper()}" if len(project_id) == 1 else project_id.replace('_', ' ').title()
+                    
                     projects.append({
                         'id': project_id,
                         'display': display_name,
