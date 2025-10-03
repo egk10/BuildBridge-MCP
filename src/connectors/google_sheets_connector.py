@@ -8,6 +8,7 @@ budgets, schedules, and resource information.
 import os
 import json
 import pickle
+import logging
 import pandas as pd
 from typing import Dict, List, Any, Optional
 from pathlib import Path
@@ -19,6 +20,8 @@ import threading
 
 from google.oauth2.credentials import Credentials
 from google.oauth2.service_account import Credentials as ServiceAccountCredentials
+
+logger = logging.getLogger(__name__)
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
@@ -192,16 +195,38 @@ class GoogleSheetsConnector:
         }
 
     def _load_project_manifest(self) -> Dict[str, Any]:
-        """Load the project manifest file if available."""
+        """
+        Load the project manifest using environment-based configuration first,
+        falling back to project_manifest.json if needed.
+        
+        Priority:
+        1. Environment variables (convention-based) - PREFERRED
+        2. project_manifest.json file (backward compatibility)
+        """
+        # Try to build manifest from environment variables first
+        try:
+            from secure_config import build_project_manifest_from_env
+            env_manifest = build_project_manifest_from_env()
+            if env_manifest:
+                logger.info(f"✅ Using environment-based project configuration ({len(env_manifest)} projects)")
+                return env_manifest
+        except Exception as exc:
+            logger.debug(f"Could not build manifest from environment: {exc}")
+        
+        # Fall back to JSON file for backward compatibility
         try:
             if self.project_manifest_file and self.project_manifest_file.exists():
                 with open(self.project_manifest_file, 'r', encoding='utf-8') as fp:
                     manifest = json.load(fp)
                     if isinstance(manifest, dict):
+                        logger.info(f"⚠️  Using legacy project_manifest.json ({len(manifest)} projects)")
+                        logger.info("   Consider migrating to .env-based configuration for simpler management")
                         return manifest
                     print("Warning: project_manifest.json did not contain an object; ignoring")
         except Exception as exc:
             print(f"Warning: Failed to load project manifest: {exc}")
+        
+        logger.warning("No project manifest found (neither .env nor JSON)")
         return {}
 
     def reload_project_manifest(self) -> None:
