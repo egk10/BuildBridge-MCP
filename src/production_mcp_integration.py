@@ -549,24 +549,24 @@ class ConstructionMCPEngine:
                     
                     # Map to standard project IDs
                     if any(term in extracted for term in ['lakeside', 'residences']):
-                        project_id = '72_perth'
-                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '72_perth'")
+                        project_id = 'P'
+                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'P'")
                         break
                     elif any(term in extracted for term in ['17175', 'yonge']):
-                        project_id = '17175_yonge_st'
-                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '17175_yonge_st'")
+                        project_id = 'Y'
+                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'Y'")
                         break
                     elif any(term in extracted for term in ['72', 'perth']):
-                        project_id = '72_perth'
-                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '72_perth'")
+                        project_id = 'P'
+                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'P'")
                         break
                     elif any(term in extracted for term in ['azure', 'road']):
-                        project_id = 'azure_road'
-                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'azure_road'")
+                        project_id = 'A'
+                        print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'A'")
                         break
-                    elif extracted in ['72_perth', '17175_yonge_st', 'azure_road']:
-                        project_id = extracted
-                        print(f"🐛 MAPPING DEBUG: Direct match '{extracted}' to project_id '{extracted}'")
+                    elif extracted in ['p', 'y', 'a']:
+                        project_id = extracted.upper()
+                        print(f"🐛 MAPPING DEBUG: Direct match '{extracted}' to project_id '{extracted.upper()}'")
                         break
             
             # If we found a specific project ID, add it to filters
@@ -1240,7 +1240,7 @@ if FASTAPI_AVAILABLE:
                     
                     # Extract specific project ID from query if mentioned
                     project_id = None
-                    # Look for patterns like "project 72_perth", "72_perth project", "17175 Yonge Street project", etc.
+                    # Look for patterns like "project P", "P project", "Yonge Street project", etc.
                     
                     # Try multiple patterns to extract project identifiers
                     print(f"🐛 PATTERN SEARCH DEBUG: Looking for patterns in query_lower: '{query_lower}'")
@@ -1270,24 +1270,24 @@ if FASTAPI_AVAILABLE:
                             
                             # Map to standard project IDs
                             if any(term in extracted for term in ['lakeside', 'residences']):
-                                project_id = '72_perth'
-                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '72_perth'")
+                                project_id = 'P'
+                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'P'")
                                 break
                             elif any(term in extracted for term in ['17175', 'yonge']):
-                                project_id = '17175_yonge_st'
-                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '17175_yonge_st'")
+                                project_id = 'Y'
+                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'Y'")
                                 break
                             elif any(term in extracted for term in ['72', 'perth']):
-                                project_id = '72_perth'
-                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id '72_perth'")
+                                project_id = 'P'
+                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'P'")
                                 break
                             elif any(term in extracted for term in ['azure', 'road']):
-                                project_id = 'azure_road'
-                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'azure_road'")
+                                project_id = 'A'
+                                print(f"🐛 MAPPING DEBUG: Mapped '{extracted}' to project_id 'A'")
                                 break
-                            elif extracted in ['72_perth', '17175_yonge_st', 'azure_road']:
-                                project_id = extracted
-                                print(f"🐛 MAPPING DEBUG: Direct match '{extracted}' to project_id '{extracted}'")
+                            elif extracted in ['p', 'y', 'a']:
+                                project_id = extracted.upper()
+                                print(f"🐛 MAPPING DEBUG: Direct match '{extracted}' to project_id '{extracted.upper()}'")
                                 break
                     
                     if project_id:
@@ -1636,9 +1636,9 @@ This system manages multiple construction projects with comprehensive tracking o
                 # Transform to frontend format
                 projects = []
                 project_display_names = {
-                    '17175_yonge_st': '17175 Yonge St',
-                    'azure_road': 'Azure Road',
-                    '72_perth': '72 Perth Avenue'
+                    'Y': 'Project Y',
+                    'A': 'Project A',
+                    'P': 'Project P'
                 }
                 
                 for project_id in project_manifest.keys():
@@ -1663,7 +1663,7 @@ This system manages multiple construction projects with comprehensive tracking o
                     'success': True,
                     'projects': [
                         {
-                            'id': '17175_yonge_st',
+                            'id': 'Y',
                             'display': '17175 Yonge St',
                             'queries': [
                                 {'label': '📋 Project Overview', 'query': 'Show me details for 17175 Yonge St project'},
