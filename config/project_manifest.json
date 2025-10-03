@@ -1,5 +1,5 @@
 {
-  "17175_yonge_st": {
+  "Y": {
     "project_summary": {
       "sheet_name": "Project Summary",
       "range": "A1:AZ200",
@@ -17,7 +17,7 @@
       "local_csv": "data/Copy of 24021 - 17175 Yonge St. - SKYGRiD Master Estimate - GCA Stats.csv"
     },
     "below_grade": {
-      "sheet_name": "Below Grade 1 Detail",
+      "sheet_name": "BG1",
       "range": "A1:R200",
       "parsers": [
         "extract_division_costs"
@@ -25,7 +25,7 @@
       "local_csv": "data/Copy of 24021 - 17175 Yonge St. - SKYGRiD Master Estimate - BG1.csv"
     }
   },
-  "azure_road": {
+  "A": {
     "project_summary": {
       "sheet_name": "Project Summary",
       "range": "A1:AZ200",
@@ -43,7 +43,7 @@
       "local_csv": "data/Copy of 24019 - Azure Road - SKYGRiD Master Estimate - GCA Stats.csv"
     }
   },
-  "72_perth": {
+  "P": {
     "project_summary": {
       "sheet_name": "Project Summary",
       "range": "A1:AZ200",

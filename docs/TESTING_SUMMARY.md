@@ -89,7 +89,7 @@ The BuildBridge-MCP system is now ready for:
 
 ### 🔮 **Next Steps Available**
 
-- **Week 3-4**: Anthropic Claude integration, Azure OpenAI support
+- **Week 3-4**: Anthropic Claude integration, Project A OpenAI support
 - **Week 5-6**: Local LLM integration, advanced analytics
 - **Production**: Deploy to cloud infrastructure with scaling
 

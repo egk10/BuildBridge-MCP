@@ -16,7 +16,7 @@
 │  ├──────────────────────┤  │  • Project Analytics                   │  │
 │  │                      │  │  • Budget Analysis                     │  │
 │  │ ┌──────────────────┐ │  │  • Schedule Management                 │  │
-│  │ │ 17175 Yonge St ➤ │ │  │  • Data Quality Detection              │  │
+│  │ │ Project Y ➤      │ │  │  • Data Quality Detection              │  │
 │  │ └──────────────────┘ │  │                                        │  │
 │  │   ├─ 📋 Overview    │  │  💡 Pro Tip: Use sidebar!              │  │
 │  │   ├─ 💰 Budget      │  ├────────────────────────────────────────┤  │
@@ -26,11 +26,11 @@
 │  │   └─ 🅿️ Parking     │  │                                        │  │
 │  │                      │  │  [Typing indicator: ● ● ●]            │  │
 │  │ ┌──────────────────┐ │  │                                        │  │
-│  │ │ Azure Road ➤     │ │  ├────────────────────────────────────────┤  │
+│  │ │ Project A ➤      │ │  ├────────────────────────────────────────┤  │
 │  │ └──────────────────┘ │  │ [Input Box] Type your question...     │  │
 │  │                      │  │ [Send 🚀]                              │  │
 │  │ ┌──────────────────┐ │  └────────────────────────────────────────┘  │
-│  │ │ 72 Perth Ave ➤   │ │                                             │
+│  │ │ Project P ➤      │ │                                             │
 │  │ └──────────────────┘ │                                             │
 │  │                      │                                             │
 │  ├──────────────────────┤                                             │
@@ -59,15 +59,15 @@
 │ 📂 Loaded Projects   │
 ├──────────────────────┤
 │ ┌──────────────────┐ │  ← Purple gradient button
-│ │ 17175 Yonge St ➤ │ │  ← Arrow points right (collapsed)
+│ │ Project Y ➤      │ │  ← Arrow points right (collapsed)
 │ └──────────────────┘ │
 │                      │
 │ ┌──────────────────┐ │
-│ │ Azure Road ➤     │ │
+│ │ Project A ➤      │ │
 │ └──────────────────┘ │
 │                      │
 │ ┌──────────────────┐ │
-│ │ 72 Perth Ave ➤   │ │
+│ │ Project P ➤      │ │
 │ └──────────────────┘ │
 └──────────────────────┘
 ```
@@ -76,7 +76,7 @@
 ```
 ┌──────────────────────┐
 │ ┌──────────────────┐ │
-│ │ 17175 Yonge St ➤ │ │  ← Elevates 2px upward
+│ │ Project Y ➤      │ │  ← Elevates 2px upward
 │ └──────────────────┘ │  ← Glowing shadow (stronger)
 │         ▲                ← Visual lift effect
 │         │
@@ -88,7 +88,7 @@
 ```
 ┌──────────────────────┐
 │ ┌──────────────────┐ │
-│ │ 17175 Yonge St ▼ │ │  ← Reverse gradient (active)
+│ │ Project Y ▼      │ │  ← Reverse gradient (active)
 │ └──────────────────┘ │  ← Arrow rotated 90° down
 │                      │
 │   ┌────────────────┐ │  ← Submenu slides in
@@ -106,7 +106,7 @@
 │   └────────────────┘ │
 │                      │
 │ ┌──────────────────┐ │  ← Other projects collapse
-│ │ Azure Road ➤     │ │
+│ │ Project A ➤      │ │
 │ └──────────────────┘ │
 └──────────────────────┘
 ```
@@ -484,7 +484,7 @@ Enter Key:
 
 ### Screen Readers
 ```
-Buttons: Clear labels ("Project Overview for 17175 Yonge St")
+Buttons: Clear labels ("Project Overview for Project Y")
 Emojis: Decorative (aria-hidden="true" recommended)
 Sections: Proper heading hierarchy (h3, h4)
 ```
@@ -498,8 +498,8 @@ Sections: Proper heading hierarchy (h3, h4)
 User Action:                    Visual Feedback:
 ────────────────────────────────────────────────────────────
 1. Page loads                   → Sidebar shows 3 projects
-2. Hover "17175 Yonge St"       → Button elevates, glows
-3. Click "17175 Yonge St"       → Submenu expands (0.4s)
+2. Hover "Project Y"            → Button elevates, glows
+3. Click "Project Y"            → Submenu expands (0.4s)
 4. Hover "💰 Budget Status"     → Slides 5px right, darkens
 5. Click "💰 Budget Status"     → Input fills, submits
 6. Wait (3-5s)                  → Typing indicator animates
@@ -523,11 +523,11 @@ User Action:                    Visual Feedback:
 ```
 User Action:                    Visual Feedback:
 ────────────────────────────────────────────────────────────
-1. Click "Azure Road"           → Submenu expands
+1. Click "Project A"            → Submenu expands
 2. (Submenu already open)       → Shows 6 query options
 3. Hover "⚠️ Data Quality"      → Highlights in portfolio section
 4. Click "⚠️ Data Issues"       → Query: "Show projects with zero GCA"
-5. AI responds                  → Lists Azure Road, 17175 Yonge
+5. AI responds                  → Lists Project A, Project Y
                                    with #DIV/0! details
 ```
 

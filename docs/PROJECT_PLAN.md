@@ -86,7 +86,7 @@ BuildBridge-MCP represents a significant advancement over traditional MCP implem
   - Construction conversation chains
   - Response quality optimization
 
-- [ ] **Azure OpenAI Service**
+- [ ] **Project A OpenAI Service**
   - Enterprise API integration
   - On-premises compliance options
   - Regional data residency

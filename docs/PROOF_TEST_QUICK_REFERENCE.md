@@ -20,15 +20,15 @@
 ## 🎯 Test Coverage
 
 ### Projects Being Tested
-1. **72 Perth Avenue** (toronto)
+1. **Project P (Northside Residential)** (toronto)
    - GCA: 205 SF
    - Parking: 31 stalls
    - Direct Cost: $897,836
 
-2. **17175 Yonge St** (location TBD)
+2. **Project Y** (location TBD)
    - Full metrics from Google Sheets
 
-3. **Azure Road** (location TBD)
+3. **Project A** (location TBD)
    - Full metrics from Google Sheets
 
 ### 20+ Test Queries Created
@@ -44,7 +44,7 @@
 - Cost per square foot
 
 #### Category 3: Material Costs (3 tests)
-- Concrete costs for Yonge St
+- Concrete costs for Project Y
 - Steel costs comparison
 - Sitework costs
 
@@ -151,7 +151,7 @@ Total Time: 15.3s
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is the total GCA for projects Azure Road, 17175 Yonge St, and 72 Perth Avenue?",
+    "query": "What is the total GCA for projects Project A, Project Y, and Project P (Northside Residential)?",
     "type": "ai_query",
     "parameters": {
       "query_type": "general",
@@ -167,7 +167,7 @@ curl -X POST "http://localhost:8000/query" \
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is the Total Direct Cost for 72 Perth Avenue, 17175 Yonge St, and Azure Road?",
+    "query": "What is the Total Direct Cost for Project P (Northside Residential), Project Y, and Project A?",
     "type": "ai_query",
     "parameters": {
       "query_type": "budget_analysis",
@@ -177,7 +177,7 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Response**: 
-- 72 Perth Avenue: $897,836
+- Project P (Northside Residential): $897,836
 - Other projects: Values from ground truth
 
 ### Example 3: Parking Comparison
@@ -195,7 +195,7 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Response**: 
-- 72 Perth Avenue: 31 stalls
+- Project P (Northside Residential): 31 stalls
 - Other projects: Values from ground truth
 
 ## ✅ Success Criteria
@@ -218,9 +218,9 @@ curl -X POST "http://localhost:8000/query" \
   "generated_at": "2025-10-01T00:00:00",
   "projects": {
     "72_perth": {
-      "name": "72 Perth Avenue",
+      "name": "Project P (Northside Residential)",
       "location": "Toronto, ON",
-      "client": "Castlepoint Numa",
+      "client": "ABC Development Corp",
       "total_budget": 0.0,
       "total_direct_cost": 897836.0,
       "building_area_metric": 17427.0,

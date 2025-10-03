@@ -13,8 +13,8 @@
 ## Ground-Truth Metrics from CSV Exports
 | Project | Units | Total GCA (sf) | Below-Grade GCA (sf) | Key Costs (CAD) | Source Tab |
 |---------|-------|----------------|-----------------------|-----------------|------------|
-| 72 Perth Avenue | 211 | 214,384 | 17,427 | $7.80M (below grade), $70.06M (above grade), $79.38M total, $90.76M incl. contingency | Project Summary |
-| 24021 – 17175 Yonge St | 208 | 269,141 | 84,497 | $7.75M total direct below grade, $8.98M subtotal below grade, $40.37M total direct, $46.80M subtotal overall | Project Summary |
+| Project P (Northside Residential) | 211 | 214,384 | 17,427 | $7.80M (below grade), $70.06M (above grade), $79.38M total, $90.76M incl. contingency | Project Summary |
+| 24021 – Project Y | 208 | 269,141 | 84,497 | $7.75M total direct below grade, $8.98M subtotal below grade, $40.37M total direct, $46.80M subtotal overall | Project Summary |
 
 ## Root Cause
 - `_gather_google_sheets_projects` successfully parsed the `72_perth` project but failed for the other sheet IDs, logging: `Failed to extract project data from sheet for azure_road`.
@@ -34,26 +34,26 @@
 - **Inputs refreshed via:** `scripts/refresh_manifest_local.py --force`
 - **Projects covered:** `72_perth`, `17175_yonge_st`, `azure_road`
 - **Simulated request:**
-	> Hi BuildBridge! I need to analyze cost data across my three active projects: 72 Perth, 17175 Yonge St, and Azure Road. Can you show me a summary of all three projects first?
+	> Hi BuildBridge! I need to analyze cost data across my three active projects: Project P, Project Y, and Project A. Can you show me a summary of all three projects first?
 
 ### Simulated `/process` Response
 ```
 🏗️ BuildBridge Assistant: Here's the latest summary pulled from the manifest cache.
 
-📊 72 Perth Avenue
+📊 Project P (Northside Residential)
 - Location: Toronto, ON
 - Total Budget: $0
 - Gross Construction Area: N/A (17,427 m²)
 - Parking Stalls: 31
 
-📊 24021 - 17175 Yonge St
-- Location: 17175 Yonge St Newmarket, Ontario
+📊 24021 - Project Y
+- Location: Project Y Newmarket, Ontario
 - Total Budget: $46,798,403
 - Gross Construction Area: 184,644 sf (84,497 m²)
 - Functional Units: 208
 - Parking Stalls: 197
 
-📊 6071 Azure Road
+📊 6071 Project A
 - Location: Richmond, British Columbia
 - Total Budget: $23,981,776
 - Gross Construction Area: 98,515 sf (0 m²)

@@ -67,12 +67,12 @@ If you have Cursor installed:
 
 1. **Python not found**: Ensure Python is in your system PATH
 2. **Module import errors**: Check that all dependencies are installed
-3. **Authentication errors**: Verify your Azure app registration and credentials
+3. **Authentication errors**: Verify your Project A app registration and credentials
 4. **File not found errors**: Check that all file paths are correct
 
 ### Error Messages:
 
-- `"MCP server not properly initialized"`: Check credentials.json and Azure setup
+- `"MCP server not properly initialized"`: Check credentials.json and Project A setup
 - `"Failed to download Excel file"`: Verify OneDrive permissions and file paths
 - `"Failed to get items from list"`: Check SharePoint site URL and list names
 
@@ -102,6 +102,6 @@ Try these natural language queries with your MCP-enabled AI assistant:
 ## Security Notes
 
 - Keep your `credentials.json` file secure and never commit it to version control
-- Regularly rotate your Azure app client secrets
+- Regularly rotate your Project A app client secrets
 - Ensure your SharePoint site has appropriate access controls
 - Monitor MCP server logs for any unusual activity

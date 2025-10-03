@@ -27,21 +27,21 @@
 #### Test 2: Parking Stalls Query
 - **Status**: ❌ FAILING
 - **Root Cause**: AI provides project status update instead of parking numbers
-- **Data Availability**: ✅ Cache has parking data (72 Perth: 31, Yonge: 220, Azure: 282)
+- **Data Availability**: ✅ Cache has parking data (Project P: 31, Project Y: 220, Project A: 282)
 - **Extraction Pattern**: ✅ Section-based extraction implemented correctly
 - **Issue**: Query formulation or AI prompt engineering
-- **AI Response Example**: "**1. 72 Perth Avenue:** - Progress Percentage: ... - Budget Status: ..."
+- **AI Response Example**: "**1. Project P (Northside Residential):** - Progress Percentage: ... - Budget Status: ..."
 - **Missing**: No parking stall numbers in response
 
 #### Test 3: Total Direct Cost Query  
 - **Status**: ❌ PARTIALLY FAILING (2/3 projects extracted)
-- **Root Cause**: AI says "I don't have budget information for '72 Perth Avenue'"
-- **Data Availability**: ✅ Cache has cost data (72 Perth: $897,836, Yonge: $7,746,848, Azure: $0)
+- **Root Cause**: AI says "I don't have budget information for 'Project P (Northside Residential)'"
+- **Data Availability**: ✅ Cache has cost data (Project P: $897,836, Project Y: $7,746,848, Project A: $0)
 - **Extraction Pattern**: ✅ Section-based extraction working (2/3 projects correct)
 - **Extracted Values**:
-  - 72 Perth: ❌ Not found in response (AI omits it)
-  - Yonge St: ✅ $7,746,848 (correct)
-  - Azure Road: ✅ $0 (correct)
+  - Project P: ❌ Not found in response (AI omits it)
+  - Project Y: ✅ $7,746,848 (correct)
+  - Project A: ✅ $0 (correct)
 - **Issue**: AI inconsistently includes data in responses
 
 #### Test 5: Portfolio Totals Query
@@ -80,21 +80,21 @@ section_patterns = [
 **Name Variants**:
 ```python
 name_variants = [
-    project_name,  # "24021 - 17175 Yonge St"
-    project_name.replace(' - ', ' '),  # "24021 17175 Yonge St"
-    project_name.split(' - ')[-1],  # "17175 Yonge St"
+    project_name,  # "24021 - Project Y"
+    project_name.replace(' - ', ' '),  # "24021 Project Y"
+    project_name.split(' - ')[-1],  # "Project Y"
     project_id.replace('_', ' '),  # "72 perth"
 ]
 
 # Strip leading numbers
 if re.match(r'^\d+\s+', project_name):
     name_without_number = re.sub(r'^\d+\s+', '', project_name)
-    name_variants.append(name_without_number)  # "Azure Road"
+    name_variants.append(name_without_number)  # "Project A"
 ```
 
 ### Validation Against Cache Data
 
-**72 Perth Avenue** (`cache/normalized/72_perth.json`):
+**Project P (Northside Residential)** (`cache/normalized/72_perth.json`):
 ```json
 {
   "Total_Direct_Cost": 897836.0,
@@ -103,12 +103,12 @@ if re.match(r'^\d+\s+', project_name):
 }
 ```
 
-**17175 Yonge St** (`cache/normalized/17175_yonge_st.json`):
+**Project Y** (`cache/normalized/17175_yonge_st.json`):
 - Total Direct Cost: $7,746,848
 - Parking Stalls: 220
 - Total GCA SF: 269,141
 
-**Azure Road** (`cache/normalized/azure_road.json`):
+**Project A** (`cache/normalized/azure_road.json`):
 - Total Direct Cost: $0
 - Parking Stalls: 282
 - Total GCA SF: 376,332
@@ -128,7 +128,7 @@ if re.match(r'^\d+\s+', project_name):
    - Response: Progress percentages, budget status, milestones (NO stall numbers)
 
 3. **Direct Cost Test Partially Fails** ⚠️
-   - AI says "I don't have budget information for '72 Perth Avenue'"
+   - AI says "I don't have budget information for 'Project P (Northside Residential)'"
    - But cache clearly has the data: $897,836
    - AI provides data for other 2 projects correctly
    - Inconsistent data inclusion behavior
@@ -142,7 +142,7 @@ if re.match(r'^\d+\s+', project_name):
 **The extraction patterns are CORRECT**. The issue is:
 - Query formulation (not specific enough?)
 - AI prompt engineering (not instructed to always include all requested data?)
-- Data context loading (is 72 Perth being passed to AI properly?)
+- Data context loading (is Project P being passed to AI properly?)
 
 ## Next Steps
 
@@ -158,9 +158,9 @@ if re.match(r'^\d+\s+', project_name):
    - Option B: Check if parking data is included in AI's formatted context
    - Option C: Update construction_prompts.py to ensure parking is always included
 
-3. **Fix 72 Perth Direct Cost Issue** (High)
+3. **Fix Project P Direct Cost Issue** (High)
    - Debug why AI says "I don't have budget information"
-   - Check if 72 Perth data is being passed to AI context
+   - Check if Project P data is being passed to AI context
    - May need to update query processor or prompts
 
 ### Long-term Improvements

@@ -23,17 +23,17 @@ Total Parking: 306 stalls
 ```
 
 ### Project Data Extracted
-1. **72 Perth Avenue** (Toronto, ON)
+1. **Project P (Northside Residential)** (Toronto, ON)
    - GCA: 205 SF
    - Parking: 31 stalls
    - Direct Cost: $897,836
 
-2. **24021 - 17175 Yonge St** (Newmarket, Ontario)
+2. **24021 - Project Y** (Newmarket, Ontario)
    - GCA: 269,141 SF
    - Parking: 197 stalls
    - Direct Cost: $7,746,848
 
-3. **6071 Azure Road** (Richmond, British Columbia)
+3. **6071 Project A** (Richmond, British Columbia)
    - GCA: 140,014 SF
    - Parking: 0 stalls
    - Direct Cost: $0
@@ -80,9 +80,9 @@ The failures are **NOT test framework bugs** - they reveal actual system issues:
 ```
 🧪 Test 1: Total GCA Query
   ❌ FAILED
-    - 72 Perth Avenue: GCA value not found in response
-    - 24021 - 17175 Yonge St: GCA value not found in response
-    - 6071 Azure Road: GCA value not found in response
+    - Project P (Northside Residential): GCA value not found in response
+    - 24021 - Project Y: GCA value not found in response
+    - 6071 Project A: GCA value not found in response
 ```
 
 **Expected**: GCA values for all 3 projects  

@@ -62,14 +62,14 @@ This feature branch delivers a **production-ready, user-friendly chat interface*
 Query: "Add up total budget across all projects"
 
 AI Response:
-- 72 Perth: $0 (⚠️ $897K overspending)
-- 17175 Yonge St: $46,798,403
-- Azure Road: $23,981,776
+- Project P: $0 (⚠️ $897K overspending)
+- Project Y: $46,798,403
+- Project A: $23,981,776
 Total: $70,780,179
 
 ⚠️ Data Quality Issues:
-- 72 Perth: Check GCA Stats for missing budget
-- Azure Road: $0 direct cost (verify completeness)
+- Project P: Check GCA Stats for missing budget
+- Project A: $0 direct cost (verify completeness)
 ```
 
 **Impact:**
@@ -118,13 +118,13 @@ AI Response:
 ⚠️ DATA QUALITY ALERT
 
 Issues Detected:
-- 17175 Yonge St: #DIV/0! in $/Suite column
-- 72 Perth: $0 budget but $897K spent
-- Azure Road: Missing GCA area data
+- Project Y: #DIV/0! in $/Suite column
+- Project P: $0 budget but $897K spent
+- Project A: Missing GCA area data
 
 Recommendations:
 1. Check GCA Stats tab for missing areas
-2. Verify budget entry for 72 Perth
+2. Verify budget entry for Project P
 3. Review unit cost formulas
 ```
 

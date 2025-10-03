@@ -1,9 +1,9 @@
 {
-  "timestamp": "2025-10-02T10:34:44.215596",
+  "timestamp": "2025-10-02T21:03:08.533602",
   "server": "http://localhost:8000",
   "ground_truth_source": "tests/ground_truth.json",
   "ground_truth_generated": "2025-10-01T22:41:31.099265",
-  "total_time_seconds": 29.267154693603516,
+  "total_time_seconds": 30.345252990722656,
   "summary": {
     "total": 6,
     "passed": 5,
@@ -25,7 +25,7 @@
         "17175_yonge_st": 269141.0,
         "azure_road": 376332.0
       },
-      "response": "{'ai_response': \"Hey there! Let's talk about the Gross Construction Area (GCA) for the projects you're interested in. Here's the breakdown:\\n\\n1. **72 Perth Avenue:**\\n   - Total GCA: 214,384 SF\\n\\n2. **24021 - 17175 Yonge St:**\\n   - Total GCA: 269,141 SF\\n\\n3. **6071 Azure Road:**\\n   - Total GCA:..."
+      "response": "{'ai_response': \"Hey there! Let's add up the total Gross Construction Area (GCA) for the projects you're interested in. Here's what we've got:\\n\\n1. **72 Perth Avenue:** Total GCA is 214,384 SF\\n2. **17175 Yonge St:** Total GCA is 269,141 SF\\n3. **Azure Road:** Total GCA is 376,332 SF\\n\\nNow, let's ..."
     },
     {
       "test": "GCA Totals",
@@ -41,23 +41,24 @@
         "17175_yonge_st": 269141.0,
         "azure_road": 376332.0
       },
-      "response": "{'ai_response': \"Hey there! Let's talk about the Gross Construction Area (GCA) for the projects you're interested in. Here's the breakdown:\\n\\n1. **72 Perth Avenue:**\\n   - Total GCA: 214,384 SF\\n\\n2. **24021 - 17175 Yonge St:**\\n   - Total GCA: 269,141 SF\\n\\n3. **6071 Azure Road:**\\n   - Total GCA:..."
+      "response": "{'ai_response': \"Hey there! Let's add up the total Gross Construction Area (GCA) for the projects you're interested in. Here's what we've got:\\n\\n1. **72 Perth Avenue:** Total GCA is 214,384 SF\\n2. **17175 Yonge St:** Total GCA is 269,141 SF\\n3. **Azure Road:** Total GCA is 376,332 SF\\n\\nNow, let's ..."
     },
     {
       "test": "Parking Stalls",
-      "passed": true,
-      "errors": [],
+      "passed": false,
+      "errors": [
+        "72 Perth Avenue: Parking stalls not found in response",
+        "24021 - 17175 Yonge St: Parking stalls not found in response"
+      ],
       "expected": {
         "72_perth": 44,
         "17175_yonge_st": 197,
         "azure_road": 0
       },
       "actual": {
-        "72_perth": 44,
-        "17175_yonge_st": 197,
         "azure_road": 0
       },
-      "response": "{'ai_response': \"Hey there! I don't have specific progress percentages or milestone details for the projects in my current data, but I can give you a quick rundown of the budget status and some key details for each project. Here's what's happening:\\n\\n1. **72 Perth Avenue:**\\n   - Total Budget: $0.0..."
+      "response": "{'ai_response': \"Hey there! Let's dive into the status update for the construction projects based on the data I have:\\n\\n1. **72 Perth Avenue:**\\n   - **Progress Percentage:** I don't have specific progress percentage data for this project.\\n   - **Budget Status:** The total budget is listed as $0.0..."
     },
     {
       "test": "Total Direct Cost",
@@ -80,7 +81,7 @@
         "17175_yonge_st": 7746848.0,
         "azure_road": 0.0
       },
-      "response": "{'ai_response': \"Hey there! Let's dive into the budget details for the construction projects I have data on. Here's what I've got:\\n\\n1. **72 Perth Avenue:**\\n   - Total Budget: $0.00\\n   - Total Direct Cost: $897,836.00\\n   - Spent Amount: Not specified\\n   - Remaining Budget: Not applicable since ..."
+      "response": "{'ai_response': \"Hey there! Let's dive into the budget details for the construction projects I have data on. Here's what we've got:\\n\\n1. **72 Perth Avenue:**\\n   - Total Budget: $0.00\\n   - Total Direct Cost: $897,836.00\\n   - Spent Amount: Since the total budget is $0.00, it seems like the project..."
     },
     {
       "test": "Project Locations",
@@ -100,11 +101,8 @@
     },
     {
       "test": "Portfolio Totals",
-      "passed": false,
-      "errors": [
-        "Total Budget not found in response",
-        "Total Direct Cost not found in response"
-      ],
+      "passed": true,
+      "errors": [],
       "expected": {
         "total_projects": 3,
         "total_budget": 70780179.0,
@@ -113,8 +111,11 @@
         "total_building_area_metric": 101924.0,
         "total_parking": 241
       },
-      "actual": {},
-      "response": "{'ai_response': \"Hey there! Let's dive into the budget details for the projects I have data on. Here's what we've got:\\n\\n1. **72 Perth Avenue:**\\n   - Total Budget: $0.00\\n   - Total Direct Cost: $897,836.00\\n   - Spent Amount: Not specified\\n   - Remaining Budget: Not applicable since the total bu..."
+      "actual": {
+        "total_budget": 70780179.0,
+        "total_direct_cost": 8644684.0
+      },
+      "response": "{'ai_response': \"Hey there! Let's crunch those numbers using some construction project management know-how.\\n\\nFirst up, we're calculating 'Portfolio Total A'. Here's how it breaks down:\\n\\n- $0\\n- $46,798,403\\n- $23,981,776\\n\\nWhen we add those up, we get: $0 + $46,798,403 + $23,981,776 = $70,780,1..."
     }
   ]
 }

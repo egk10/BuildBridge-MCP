@@ -15,7 +15,7 @@ This document tracks improvements to the BuildBridge-MCP data parsing system to 
 - ✅ **Model Migration**: gpt-3.5-turbo → gpt-4o (30K TPM, advanced reasoning)
 - ✅ **Impact**: AI now correctly reads and uses budget data from context
 - ✅ **Pass Rate**: 33.3% → 83.3% (5/6 tests passing)
-- ✅ **Ground Truth Corrections**: Fixed parking data (72 Perth: 31→44 stalls, Azure: 275→0 stalls)
+- ✅ **Ground Truth Corrections**: Fixed parking data (Project P: 31→44 stalls, Project A: 275→0 stalls)
 - ✅ **Pattern Matching**: Enhanced parking patterns, added comma-tolerant location matching
 - ✅ **Zero-Value Handling**: Added 'Total_Budget' to show_if_zero list
 - ⚠️ **Remaining Issue**: Portfolio aggregation (AI refuses arithmetic despite instructions)
@@ -35,7 +35,7 @@ This document tracks improvements to the BuildBridge-MCP data parsing system to 
 
 ### October 2, 2025 - Morning Session (33.3% Pass Rate)
 **Root Cause Found: Zero-Value Budget Filtering**
-- ✅ **Data Formatting Bug**: 72 Perth `Total_Budget: 0.0` was filtered out of AI context
+- ✅ **Data Formatting Bug**: Project P `Total_Budget: 0.0` was filtered out of AI context
 - ✅ **Fix Applied**: Added `'Total_Budget'` to `show_if_zero` list in construction_prompts.py line 610
 - ✅ **Verified**: Server logs confirmed complete data now in formatted context
 - ⚠️ **AI Issue**: gpt-3.5-turbo saying "I don't have budget information" despite data in context
@@ -50,9 +50,9 @@ This document tracks improvements to the BuildBridge-MCP data parsing system to 
 
 #### 2.3 AI Response Consistency Issues (NEW - HIGH PRIORITY)
 - [ ] **Investigate portfolio totals extraction** - Quick win to reach 66% pass rate
-- [ ] **Debug why AI omits 72 Perth from responses** - Check data context loading
+- [ ] **Debug why AI omits Project P from responses** - Check data context loading
   - Cache has data ($897,836 direct cost, 31 parking stalls)
-  - AI says "I don't have budget information for '72 Perth Avenue'"
+  - AI says "I don't have budget information for 'Project P (Northside Residential)'"
   - Need to verify data context is passed correctly to AI
 - [ ] **Improve query formulations** - Make queries more specific
   - Parking query returns status update instead of stall counts
@@ -182,7 +182,7 @@ After each implementation phase:
 
 ❌ **FAILING (3/6 tests)**:
 - Test 2: Parking Stalls (0/3 projects) - AI returns status update instead of stall counts
-- Test 3: Direct Costs (2/3 projects) - AI omits 72 Perth ("I don't have budget information")
+- Test 3: Direct Costs (2/3 projects) - AI omits Project P ("I don't have budget information")
 - Test 5: Portfolio Totals - Wrong values extracted (needs investigation)
 
 ---
@@ -220,10 +220,10 @@ After each implementation phase:
 - ✅ **Phase 2.1 Complete**: Section-based extraction proven to work
   - test_gca_totals(): ✅ **NOW PASSING** with 100% accuracy across all 3 projects
   - test_parking_stalls(): Pattern implemented (AI response format issue)
-  - test_direct_costs(): Pattern implemented (AI omits 72 Perth data)
+  - test_direct_costs(): Pattern implemented (AI omits Project P data)
 - 🔍 **Root Cause Identified**: Remaining failures are AI response consistency issues, NOT extraction patterns
   - **Parking Query**: AI provides status update instead of stall counts
-  - **Direct Cost Query**: AI says "I don't have budget information for 72 Perth" (but cache has $897,836)
+  - **Direct Cost Query**: AI says "I don't have budget information for Project P" (but cache has $897,836)
   - **Data Availability**: ✅ All data exists in cache/normalized/*.json files
 - 📊 **Key Insight**: Section-based extraction works perfectly when AI provides the data
   - GCA test proves extraction pattern is correct
@@ -278,7 +278,7 @@ After each implementation phase:
    - Modify query to be more specific: "List the exact number of parking stalls for each project"
    - Test different query wordings to get stall counts instead of status updates
    - Estimated time: 30 minutes
-3. **Debug 72 Perth Data Context** (High Priority)
+3. **Debug Project P Data Context** (High Priority)
    - Investigate why AI says "I don't have budget information" when cache has data
    - Check data loading in construction_prompts.py
    - Verify all 3 projects are passed to AI context

@@ -329,9 +329,9 @@ class SecureConfig:
         )
 
         legacy_keys = {
-            "72_perth": "GOOGLE_SHEETS_PROJECT_72_PERTH",
-            "17175_yonge_st": "GOOGLE_SHEETS_PROJECT_17175_YONGE_ST",
-            "azure_road": "GOOGLE_SHEETS_PROJECT_AZURE_ROAD",
+            "P": "GOOGLE_SHEETS_PROJECT_72_PERTH",
+            "Y": "GOOGLE_SHEETS_PROJECT_17175_YONGE_ST",
+            "A": "GOOGLE_SHEETS_PROJECT_AZURE_ROAD",
         }
         for project_key, env_key in legacy_keys.items():
             sheet_id = os.getenv(env_key)
@@ -480,6 +480,110 @@ def load_legacy_config() -> Dict[str, Any]:
     """Return the dictionary configuration expected by legacy callers."""
 
     return get_config_manager().build_legacy_config()
+
+
+def build_project_manifest_from_env() -> Dict[str, Any]:
+    """
+    Build project manifest using convention-based defaults from environment variables.
+    
+    This eliminates the need for project_manifest.json by using smart defaults:
+    - All projects have standard tabs (Project Summary, GCA Stats)
+    - Standard cell ranges (A1:AZ200, A1:BI200)
+    - Project-specific overrides via env vars if needed
+    
+    Returns:
+        Dict mapping project IDs to their tab configurations
+        
+    Example .env configuration:
+        GOOGLE_SHEETS_PROJECT_1_NAME=P
+        GOOGLE_SHEETS_PROJECT_1_ID=1ABC...
+        GOOGLE_SHEETS_DEFAULT_PROJECT_SUMMARY_TAB=Project Summary
+        GOOGLE_SHEETS_DEFAULT_GCA_STATS_TAB=GCA Stats
+    """
+    projects = {}
+    
+    # Get default tab names and ranges
+    default_summary_tab = os.getenv('GOOGLE_SHEETS_DEFAULT_PROJECT_SUMMARY_TAB', 'Project Summary')
+    default_gca_tab = os.getenv('GOOGLE_SHEETS_DEFAULT_GCA_STATS_TAB', 'GCA Stats')
+    default_range = os.getenv('GOOGLE_SHEETS_DEFAULT_CELL_RANGE', 'A1:AZ200')
+    default_gca_range = os.getenv('GOOGLE_SHEETS_DEFAULT_GCA_RANGE', 'A1:BI200')
+    
+    # Discover all projects from environment
+    i = 1
+    while True:
+        project_name = os.getenv(f'GOOGLE_SHEETS_PROJECT_{i}_NAME')
+        if not project_name:
+            break
+        
+        project_id = os.getenv(f'GOOGLE_SHEETS_PROJECT_{i}_ID')
+        if not project_id:
+            logger.warning(f"Project {i} has NAME but no ID, skipping")
+            i += 1
+            continue
+        
+        # Get project-specific overrides or use defaults
+        summary_tab = os.getenv(
+            f'GOOGLE_SHEETS_PROJECT_{i}_SUMMARY_TAB',
+            default_summary_tab
+        )
+        gca_tab = os.getenv(
+            f'GOOGLE_SHEETS_PROJECT_{i}_GCA_TAB',
+            default_gca_tab
+        )
+        summary_range = os.getenv(
+            f'GOOGLE_SHEETS_PROJECT_{i}_SUMMARY_RANGE',
+            default_range
+        )
+        gca_range = os.getenv(
+            f'GOOGLE_SHEETS_PROJECT_{i}_GCA_RANGE',
+            default_gca_range
+        )
+        
+        # Build standard tab configuration
+        project_config = {
+            'project_summary': {
+                'sheet_name': summary_tab,
+                'range': summary_range,
+                'parsers': ['extract_summary_metrics'],
+                'local_csv': f'data/Project_{project_name}_Summary.csv'
+            },
+            'gca_stats': {
+                'sheet_name': gca_tab,
+                'range': gca_range,
+                'parsers': ['extract_gca_metrics'],
+                'local_csv': f'data/Project_{project_name}_GCA_Stats.csv'
+            }
+        }
+        
+        # Add optional cost breakdown tabs if specified
+        below_grade_tab = os.getenv(f'GOOGLE_SHEETS_PROJECT_{i}_BELOW_GRADE_TAB')
+        if below_grade_tab:
+            project_config['below_grade'] = {
+                'sheet_name': below_grade_tab,
+                'range': os.getenv(f'GOOGLE_SHEETS_PROJECT_{i}_BELOW_GRADE_RANGE', 'A1:R200'),
+                'parsers': ['extract_division_costs'],
+                'local_csv': f'data/Project_{project_name}_Below_Grade.csv'
+            }
+        
+        above_grade_tab = os.getenv(f'GOOGLE_SHEETS_PROJECT_{i}_ABOVE_GRADE_TAB')
+        if above_grade_tab:
+            project_config['above_grade'] = {
+                'sheet_name': above_grade_tab,
+                'range': os.getenv(f'GOOGLE_SHEETS_PROJECT_{i}_ABOVE_GRADE_RANGE', 'A1:R200'),
+                'parsers': ['extract_division_costs'],
+                'local_csv': f'data/Project_{project_name}_Above_Grade.csv'
+            }
+        
+        projects[project_name] = project_config
+        logger.debug(f"Built manifest for project {project_name} with tabs: {list(project_config.keys())}")
+        i += 1
+    
+    if projects:
+        logger.info(f"✅ Built project manifest from .env for {len(projects)} projects: {list(projects.keys())}")
+    else:
+        logger.warning("No projects found in .env configuration")
+    
+    return projects
 
 
 # Backwards-compatible alias used by older scripts

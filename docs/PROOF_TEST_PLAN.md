@@ -24,9 +24,9 @@ Based on `.env` configuration:
 
 | Project Name | Project ID | Google Sheet ID | Status |
 |-------------|-----------|----------------|--------|
-| 72 Perth Avenue | `72_perth` | `1iYDWJx_HSIzo6ORRDOTwkcfy-g0waKnu36THO7E52_k` | ✅ Active |
-| 17175 Yonge St | `17175_yonge_st` | `1L6pKSAvq2_yN6SmQ11l80Q9jHJYG3dx_iLHffUJyDfU` | ✅ Active |
-| Azure Road | `azure_road` | `1pYlXf2-Je0uhxXkU_xWkIpLGXwvMP6SFM6oP-mL9BEg` | ✅ Active |
+| Project P (Northside Residential) | `72_perth` | `1iYDWJx_HSIzo6ORRDOTwkcfy-g0waKnu36THO7E52_k` | ✅ Active |
+| Project Y | `17175_yonge_st` | `1L6pKSAvq2_yN6SmQ11l80Q9jHJYG3dx_iLHffUJyDfU` | ✅ Active |
+| Project A | `azure_road` | `1pYlXf2-Je0uhxXkU_xWkIpLGXwvMP6SFM6oP-mL9BEg` | ✅ Active |
 
 ---
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is the total GCA (Gross Construction Area) for projects Azure Road, 17175 Yonge St, and 72 Perth Avenue?",
+    "query": "What is the total GCA (Gross Construction Area) for projects Project A, Project Y, and Project P (Northside Residential)?",
     "type": "ai_query",
     "parameters": {
       "query_type": "general",
@@ -174,9 +174,9 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- Azure Road: TBD SF
-- 17175 Yonge St: TBD SF
-- 72 Perth Avenue: 205 SF
+- Project A: TBD SF
+- Project Y: TBD SF
+- Project P (Northside Residential): 205 SF
 - **Total: Sum of above**
 
 **Validation Criteria:**
@@ -191,7 +191,7 @@ curl -X POST "http://localhost:8000/query" \
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "How many parking stalls does each project have: 72 Perth Avenue, 17175 Yonge St, and Azure Road?",
+    "query": "How many parking stalls does each project have: Project P (Northside Residential), Project Y, and Project A?",
     "type": "ai_query",
     "parameters": {
       "query_type": "general",
@@ -201,9 +201,9 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- 72 Perth Avenue: 31 stalls (31 below grade)
-- 17175 Yonge St: TBD stalls
-- Azure Road: TBD stalls
+- Project P (Northside Residential): 31 stalls (31 below grade)
+- Project Y: TBD stalls
+- Project A: TBD stalls
 
 **Validation Criteria:**
 - Each project's parking count is accurate
@@ -216,7 +216,7 @@ curl -X POST "http://localhost:8000/query" \
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What are the locations of the three projects: Azure Road, Yonge St, and Perth Avenue?",
+    "query": "What are the locations of the three projects: Project A, Project Y, and Project P?",
     "type": "ai_query",
     "parameters": {
       "query_type": "general"
@@ -225,9 +225,9 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- 72 Perth Avenue: Toronto, ON
-- 17175 Yonge St: TBD
-- Azure Road: TBD
+- Project P (Northside Residential): Toronto, ON
+- Project Y: TBD
+- Project A: TBD
 
 ---
 
@@ -238,7 +238,7 @@ curl -X POST "http://localhost:8000/query" \
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is the Total Direct Cost for 72 Perth Avenue, 17175 Yonge St, and Azure Road?",
+    "query": "What is the Total Direct Cost for Project P (Northside Residential), Project Y, and Project A?",
     "type": "ai_query",
     "parameters": {
       "query_type": "budget_analysis",
@@ -248,9 +248,9 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- 72 Perth Avenue: $897,836
-- 17175 Yonge St: TBD
-- Azure Road: TBD
+- Project P (Northside Residential): $897,836
+- Project Y: TBD
+- Project A: TBD
 
 **Validation Criteria:**
 - Currency formatted correctly
@@ -264,7 +264,7 @@ curl -X POST "http://localhost:8000/query" \
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "Compare the Total Budget and Total Direct Cost for all three projects: Azure, Yonge, and Perth",
+    "query": "Compare the Total Budget and Total Direct Cost for all three projects: Project A, Project Y, and Project P",
     "type": "ai_query",
     "parameters": {
       "query_type": "budget_analysis",
@@ -274,9 +274,9 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- 72 Perth Avenue: Total Budget $0, Direct Cost $897,836
-- 17175 Yonge St: TBD
-- Azure Road: TBD
+- Project P (Northside Residential): Total Budget $0, Direct Cost $897,836
+- Project Y: TBD
+- Project A: TBD
 
 ---
 
@@ -295,20 +295,20 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Calculation:**
-- 72 Perth Avenue: $897,836 / 205 SF = $4,379.20/SF
-- 17175 Yonge St: Calculate from data
-- Azure Road: Calculate from data
+- Project P (Northside Residential): $897,836 / 205 SF = $4,379.20/SF
+- Project Y: Calculate from data
+- Project A: Calculate from data
 
 ---
 
 ### Category 3: Specific Material Cost Queries
 
-#### Test 3.1: Concrete Costs for 17175 Yonge St
+#### Test 3.1: Concrete Costs for Project Y
 ```bash
 curl -X POST "http://localhost:8000/query" \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "What is the unit cost and total cost of concrete for project 17175 Yonge St?",
+    "query": "What is the unit cost and total cost of concrete for project Project Y?",
     "type": "ai_query",
     "parameters": {
       "query_type": "budget_analysis",
@@ -357,7 +357,7 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- 72 Perth Avenue: $0 (Subtotal_Siteworks)
+- Project P (Northside Residential): $0 (Subtotal_Siteworks)
 
 ---
 
@@ -378,7 +378,7 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- 72 Perth Avenue: 17,427 M² and 205 SF (note: this seems inconsistent - validate)
+- Project P (Northside Residential): 17,427 M² and 205 SF (note: this seems inconsistent - validate)
 
 ---
 
@@ -411,7 +411,7 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- 72 Perth Avenue: Castlepoint Numa
+- Project P (Northside Residential): ABC Development Corp
 
 ---
 
@@ -525,7 +525,7 @@ curl -X POST "http://localhost:8000/query" \
 ```
 
 **Expected Ground Truth:**
-- 72 Perth Avenue: 14-Jun-24
+- Project P (Northside Residential): 14-Jun-24
 
 ---
 
@@ -631,7 +631,7 @@ class BuildBridgeProofTester:
         """Test 1: Total GCA for all projects"""
         print("\n🧪 Test 1: Total GCA Query")
         
-        query = "What is the total GCA (Gross Construction Area) for projects Azure Road, 17175 Yonge St, and 72 Perth Avenue?"
+        query = "What is the total GCA (Gross Construction Area) for projects Project A, Project Y, and Project P (Northside Residential)?"
         response = self.query_mcp(query, query_type="ai_query", include_data_context=True)
         
         # Calculate expected total
@@ -682,7 +682,7 @@ class BuildBridgeProofTester:
         """Test 2: Parking stalls per project"""
         print("\n🧪 Test 2: Parking Stalls Query")
         
-        query = "How many parking stalls does each project have: 72 Perth Avenue, 17175 Yonge St, and Azure Road?"
+        query = "How many parking stalls does each project have: Project P (Northside Residential), Project Y, and Project A?"
         response = self.query_mcp(query, query_type="ai_query", include_data_context=True)
         
         response_text = response.get('ai_response', '')
@@ -723,7 +723,7 @@ class BuildBridgeProofTester:
         """Test 3: Total Direct Cost accuracy"""
         print("\n🧪 Test 3: Total Direct Cost Query")
         
-        query = "What is the Total Direct Cost for 72 Perth Avenue, 17175 Yonge St, and Azure Road?"
+        query = "What is the Total Direct Cost for Project P (Northside Residential), Project Y, and Project A?"
         response = self.query_mcp(query, query_type="ai_query", include_data_context=True)
         
         response_text = response.get('ai_response', '')
@@ -894,9 +894,9 @@ cat tests/proof_test_results.json | jq '.'
 - Success Rate: X%
 
 ## Ground Truth Source
-- 72 Perth Avenue: Google Sheet exported [date]
-- 17175 Yonge St: Google Sheet exported [date]
-- Azure Road: Google Sheet exported [date]
+- Project P (Northside Residential): Google Sheet exported [date]
+- Project Y: Google Sheet exported [date]
+- Project A: Google Sheet exported [date]
 
 ## Detailed Results
 
@@ -963,7 +963,7 @@ done
   "generated_at": "2025-10-01T00:00:00",
   "projects": {
     "72_perth": {
-      "name": "72 Perth Avenue",
+      "name": "Project P (Northside Residential)",
       "location": "Toronto, ON",
       "total_budget": 0.0,
       "total_direct_cost": 897836.0,

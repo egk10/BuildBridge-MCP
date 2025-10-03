@@ -16,15 +16,15 @@
 "⚠️ DATA QUALITY ALERT - Calculation Attempted with Caveats
 
 **Data Quality Issues Detected:**
-- 17175 Yonge St: Multiple #DIV/0! errors in unit cost calculations
-- 72 Perth: $0 (confirmed zero, not error)
-- Azure Road: $23,981,776
+- Project Y: Multiple #DIV/0! errors in unit cost calculations
+- Project P: $0 (confirmed zero, not error)
+- Project A: $23,981,776
 
 **Total Budget = $0 + $46,798,403 + $23,981,776 = $70,780,179**"
 ```
 
 **Problems:**
-1. **Hardcoded project names** - "17175 Yonge St", "72 Perth", "Azure Road"
+1. **Hardcoded project names** - "Project Y", "Project P", "Project A"
 2. **Hardcoded values** - "$46,798,403", "$23,981,776", "$70,780,179"
 3. **Not scalable** - What happens when you add Project D, E, F?
 4. **Misleading** - AI might think it should ONLY work with these 3 projects
@@ -91,7 +91,7 @@ Do NOT use placeholder names like "Project A" or example values.
 ```
 Query: "Calculate total budget across all projects"
 
-AI sees template: "72 Perth: $0, 17175 Yonge St: $46,798,403, Azure Road: $23,981,776"
+AI sees template: "Project P: $0, Project Y: $46,798,403, Project A: $23,981,776"
 
 Potential Issues:
 - Might try to match new projects to old names
@@ -106,15 +106,15 @@ Query: "Calculate total budget across all projects"
 AI sees template: "[Project A Name]: $[actual value from data]"
 
 AI Response:
-"**72 Perth Avenue:**
+"**Project P (Northside Residential):**
 - Total Budget: $0.00 ⚠️
 - Total Direct Cost: $897,836.00
 
-**24021 - 17175 Yonge St:**
+**24021 - Project Y:**
 - Total Budget: $46,798,403.00
 - Total Direct Cost: $7,746,848.00
 
-**6071 Azure Road:**
+**6071 Project A:**
 - Total Budget: $23,981,776.00
 - Total Direct Cost: $0.00 ⚠️"
 ```
@@ -204,11 +204,11 @@ Add notes like:
 ### Changes Made
 
 1. **Removed hardcoded project names:**
-   - Before: `"17175 Yonge St: Multiple #DIV/0! errors"`
+   - Before: `"Project Y: Multiple #DIV/0! errors"`
    - After: `"[Project Name]: [Specific error type]"`
 
 2. **Removed hardcoded values:**
-   - Before: `"72 Perth: $0"`
+   - Before: `"Project P: $0"`
    - After: `"[Project Name]: $[actual value from data]"`
 
 3. **Added explicit instructions:**

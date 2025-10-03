@@ -22,10 +22,10 @@ AI needs stronger prompt instructions to perform arithmetic operations.
 > "Maybe AI is not wrong. Maybe the Google Sheet has formula errors and missing crucial values... see cells with 'Error' or 'DIV/0!'. Maybe AI should advise user that spreadsheet has errors."
 
 **Screenshot Evidence:**
-- 17175 Yonge St spreadsheet shows **#DIV/0! errors** in multiple columns
+- Project Y spreadsheet shows **#DIV/0! errors** in multiple columns
 - **"Error" text** in calculated cells
 - **Missing GCA/SF area values** causing division by zero
-- **$0 budget** for 72 Perth but $897K spent (overspending!)
+- **$0 budget** for Project P but $897K spent (overspending!)
 
 **Paradigm Shift:**
 The AI wasn't failing - it was being **conservative and correct** by refusing to calculate when it detected data quality issues. Instead of forcing blind calculation, we should:
@@ -96,31 +96,31 @@ prompt_type = detected_type if detected_type != 'general' else request.parameter
 ⚠️ DATA QUALITY ALERT - Calculation Attempted with Caveats
 
 **Data Quality Issues Detected:**
-- 72 Perth Avenue: $0 budget but $897,836 spent (overspending indicator)
-- 6071 Azure Road: $0 direct cost (needs verification - project may not be started)
-- 17175 Yonge St: Multiple #DIV/0! errors in unit cost calculations
+- Project P (Northside Residential): $0 budget but $897,836 spent (overspending indicator)
+- 6071 Project A: $0 direct cost (needs verification - project may not be started)
+- Project Y: Multiple #DIV/0! errors in unit cost calculations
 
 **Calculation (Budget Totals):**
 Projects with clean budget data:
-- 72 Perth: $0 (confirmed, not error)
-- 17175 Yonge St: $46,798,403 (CAUTION: unit cost metrics have errors)
-- Azure Road: $23,981,776
+- Project P: $0 (confirmed, not error)
+- Project Y: $46,798,403 (CAUTION: unit cost metrics have errors)
+- Project A: $23,981,776
 
 **Total Budget = $0 + $46,798,403 + $23,981,776 = $70,780,179** ✅
 
 **Total Direct Cost = $897,836 + $7,746,848 + $0 = $8,644,684** ✅
 
 **⚠️ RECOMMENDATIONS:**
-1. Fix #DIV/0! errors in 17175 Yonge St:
+1. Fix #DIV/0! errors in Project Y:
    - Likely cause: Zero GCA area (check denominator in $/GCA formula)
    - Likely cause: Zero SF area (check denominator in $/Suite formula)
    
 2. Verify data accuracy:
-   - 72 Perth: Check if $0 budget is intentional or missing data
-   - Azure Road: Confirm $0 direct cost (project phase dependency)
+   - Project P: Check if $0 budget is intentional or missing data
+   - Project A: Confirm $0 direct cost (project phase dependency)
 
 **ACTION ITEMS:**
-- Check "GCA Stats" tab for 17175 Yonge St - Area field may be zero/missing
+- Check "GCA Stats" tab for Project Y - Area field may be zero/missing
 - Verify all area calculations in source spreadsheet
 - Consider using preliminary area estimates if final numbers unavailable
 ```
@@ -135,9 +135,9 @@ Query: "Add up total budget across all projects"
 
 AI Response:
 "Here are the budget values:
-- 72 Perth: $0
-- 17175 Yonge St: $46,798,403
-- Azure Road: $23,981,776
+- Project P: $0
+- Project Y: $46,798,403
+- Project A: $23,981,776
 
 If you need more details, please let me know."
 ```
@@ -170,7 +170,7 @@ AI Response:
 - Flags missing critical data (GCA areas, SF calculations)
 
 ### 3. Actionable Insights
-- Specific error locations ("17175 Yonge St - $/Suite column")
+- Specific error locations ("Project Y - $/Suite column")
 - Root cause analysis ("Zero denominator in area calculation")
 - Clear action items ("Check GCA Stats tab")
 
@@ -261,10 +261,10 @@ Structured Response
 **Solution:** Keyword-based auto-detection makes the system more intelligent and reduces integration complexity.
 
 ### 5. Real Data Reveals Real Problems
-**Testing Value:** Using actual project spreadsheets with real errors (17175 Yonge St) exposed:
+**Testing Value:** Using actual project spreadsheets with real errors (Project Y) exposed:
 - #DIV/0! errors from missing GCA areas
-- Budget discrepancies (72 Perth: $0 budget, $897K spent)
-- Data completeness issues (Azure Road: $0 direct costs)
+- Budget discrepancies (Project P: $0 budget, $897K spent)
+- Data completeness issues (Project A: $0 direct costs)
 
 **Outcome:** AI template was enhanced to handle these real-world scenarios.
 

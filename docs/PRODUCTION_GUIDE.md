@@ -88,7 +88,7 @@ kubectl apply -f k8s/
 
 ### Option C: Cloud Services
 - **AWS**: ECS, EKS, Lambda
-- **Azure**: Container Instances, AKS, Functions  
+- **Project A**: Container Instances, AKS, Functions  
 - **GCP**: Cloud Run, GKE, Cloud Functions
 
 ---
