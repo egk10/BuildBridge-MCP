@@ -157,16 +157,15 @@ Only use the essential tabs that we know exist:
   "project_summary": {
     "sheet_name": "Project Summary",
     "range": "A1:AZ200",
-    "parsers": ["extract_summary_metrics"],
-    "local_csv": "data/Copy of 24021 - 17175 Yonge St. - SKYGRiD Master Estimate - Project Summary.csv"
+    "parsers": ["extract_summary_metrics"]
   },
   "gca_stats": {
     "sheet_name": "GCA Stats",
     "range": "A1:BI200",
-    "parsers": ["extract_gca_metrics"],
-    "local_csv": "data/Copy of 24021 - 17175 Yonge St. - SKYGRiD Master Estimate - GCA Stats.csv"
+    "parsers": ["extract_gca_metrics"]
   }
   // REMOVED: "below_grade" section - not essential for current functionality
+  // REMOVED: "local_csv" references - CSV files removed for privacy, system now uses Google Sheets only
 }
 ```
 

@@ -5,24 +5,21 @@
       "range": "A1:AZ200",
       "parsers": [
         "extract_summary_metrics"
-      ],
-      "local_csv": "data/Copy of 24021 - 17175 Yonge St. - SKYGRiD Master Estimate - Project Summary.csv"
+      ]
     },
     "gca_stats": {
       "sheet_name": "GCA Stats",
       "range": "A1:BI200",
       "parsers": [
         "extract_gca_metrics"
-      ],
-      "local_csv": "data/Copy of 24021 - 17175 Yonge St. - SKYGRiD Master Estimate - GCA Stats.csv"
+      ]
     },
     "below_grade": {
       "sheet_name": "BG1",
       "range": "A1:R200",
       "parsers": [
         "extract_division_costs"
-      ],
-      "local_csv": "data/Copy of 24021 - 17175 Yonge St. - SKYGRiD Master Estimate - BG1.csv"
+      ]
     }
   },
   "A": {
@@ -31,16 +28,14 @@
       "range": "A1:AZ200",
       "parsers": [
         "extract_summary_metrics"
-      ],
-      "local_csv": "data/Copy of 24019 - Azure Road - SKYGRiD Master Estimate - Project Summary.csv"
+      ]
     },
     "gca_stats": {
       "sheet_name": "GCA Stats",
       "range": "A1:BI200",
       "parsers": [
         "extract_gca_metrics"
-      ],
-      "local_csv": "data/Copy of 24019 - Azure Road - SKYGRiD Master Estimate - GCA Stats.csv"
+      ]
     }
   },
   "P": {
@@ -49,24 +44,21 @@
       "range": "A1:AZ200",
       "parsers": [
         "extract_summary_metrics"
-      ],
-      "local_csv": "data/Copy of R7 - 22005 - 72 Perth - SKYGRiD Master Estimate - Project Summary.csv"
+      ]
     },
     "gca_stats": {
       "sheet_name": "GCA Stats",
       "range": "A1:BI200",
       "parsers": [
         "extract_gca_metrics"
-      ],
-      "local_csv": "data/Copy of R7 - 22005 - 72 Perth - SKYGRiD Master Estimate - GCA Stats.csv"
+      ]
     },
     "above_grade": {
       "sheet_name": "Above Grade",
       "range": "A1:R200",
       "parsers": [
         "extract_division_costs"
-      ],
-      "local_csv": "data/Copy of R7 - 22005 - 72 Perth - SKYGRiD Master Estimate - Above Grade.csv"
+      ]
     }
   }
 }
