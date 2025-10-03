@@ -193,7 +193,7 @@ See [`docs/ENV_ONLY_CONFIG_COMPLETE.md`](docs/ENV_ONLY_CONFIG_COMPLETE.md) for m
 
 ## 🚦 Quick Start on New Hardware
 
-See [docs/copilot-continue.md](docs/copilot-continue.md) for step-by-step setup and Copilot Chat resume instructions.
+See the docs folder for step-by-step setup and environment rehydration instructions.
 
 Or use the Ubuntu one-liner:
 ```bash
@@ -395,7 +395,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Technical Details
 - [Project Structure](docs/) - Comprehensive documentation portal
 - [Value Proposition](docs/reports/VALUE_PROPOSITION.md)
-- [Continue Copilot Chat](docs/copilot-continue.md) - Resume development on new hardware
+   - Continue development on new hardware - see docs/ for setup and rehydration guides
 
 ## 🔄 Version History
 
@@ -415,4 +415,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Continue Copilot Chat on new hardware
 
-See `docs/copilot-continue.md` for a quick, copy-paste checklist to rehydrate your environment and resume this chat on another machine.
+See the docs/ directory for a quick, copy-paste checklist to rehydrate your environment and resume development on another machine.
