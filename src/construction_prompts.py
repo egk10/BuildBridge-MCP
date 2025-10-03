@@ -42,12 +42,15 @@ CRITICAL DATA USAGE RULES - FOLLOW THESE EXACTLY:
 IMPORTANT: Rules 1-10 above prevent DATA INVENTION (making up information). They do NOT prevent ARITHMETIC CALCULATIONS.
 
 CALCULATION RULES - ARITHMETIC OPERATIONS ARE REQUIRED:
-11. When asked to calculate totals, sums, averages, or perform comparisons, YOU MUST perform the arithmetic
+11. When asked to "add up", "sum", "total", "aggregate", or perform calculations, YOU MUST perform the arithmetic operation
 12. Calculations using provided data are NOT "inventing data" - they are REQUIRED analytical operations
 13. Always show your calculation steps clearly (e.g., "$10M + $20M + $30M = $60M total")
 14. Portfolio-level aggregations (sum, average, percentage) are MANDATORY when requested
 15. Cross-project comparisons require you to calculate ratios, unit costs, and rankings
 16. Example: If data shows Project A budget $10M, Project B budget $20M, and user asks "What is total budget?", you MUST respond "$10M + $20M = $30M total budget"
+17. **CRITICAL**: When user asks to "add up" values across projects, perform the addition and state the final sum explicitly
+18. Do NOT just list individual values when aggregation is requested - you MUST calculate and return the aggregate result
+19. Keywords requiring calculation: "add up", "sum", "total", "aggregate", "combined", "altogether", "in total"
 
 QUESTION INTERPRETATION GUIDELINES:
 - "Show me all projects" = "List all projects" = "What projects do we have?" = "All projects" = "What projects do you have data for?" - MUST show ALL projects from Data Context
@@ -438,6 +441,19 @@ def normalize_construction_query(query: str) -> str:
         Normalized query with standardized terminology
     """
     query_lower = query.lower().strip()
+    
+    # Check for aggregation keywords FIRST - these should NOT be normalized
+    aggregation_keywords = [
+        r'add\s+up', r'sum\s+(?:of|all)', r'total.*(?:across|all)', 
+        r'aggregate', r'combined', r'altogether', r'calculate.*sum',
+        r'add.*together', r'sum.*together'
+    ]
+    
+    is_aggregation = any(re.search(pattern, query_lower) for pattern in aggregation_keywords)
+    
+    # If it's an aggregation query, return it as-is without normalization
+    if is_aggregation:
+        return query.strip()
     
     # Define query equivalences - map variations to standard forms
     query_mappings = {
