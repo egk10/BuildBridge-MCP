@@ -11,7 +11,7 @@ The **gpt-4o model switch** was the breakthrough that fixed the critical AI beha
 ### Morning Session (Starting Point)
 - **Pass Rate:** 33.3% (2/6 tests) - regression from Oct 1's 50%
 - **Root Cause:** Zero-value budgets being filtered out of AI context
-- **Critical Bug:** 72 Perth with `Total_Budget: 0.0` was excluded from `show_if_zero` list
+- **Critical Bug:** Project P with `Total_Budget: 0.0` was excluded from `show_if_zero` list
 
 ### Data Formatting Fix
 **File:** `src/construction_prompts.py` (line 610)
@@ -29,12 +29,12 @@ The **gpt-4o model switch** was the breakthrough that fixed the critical AI beha
 ### Ground Truth Corrections
 **File:** `tests/ground_truth.json`
 
-#### 72 Perth Avenue
+#### Project P (Northside Residential)
 - **Was:** `parking_stalls: 31` (below grade only)
 - **Corrected:** `parking_stalls: 44` (31 below + 13 above)
 - **Source:** Actual spreadsheet data confirmed 44 total stalls
 
-#### Azure Road
+#### Project A
 - **Was:** `parking_above_grade: 275` (confused with unit count)
 - **Corrected:** `parking_above_grade: 0` (no parking stalls)
 - **Source:** Normalized cache shows 0 parking, 275 residential units
@@ -68,7 +68,7 @@ if not found and expected_stalls == 0:
 normalized_expected = expected_location.replace(',', '').replace('  ', ' ').strip()
 normalized_response = response_text.replace(',', '').replace('  ', ' ')
 
-# Flexible matching: "17175 Yonge St Newmarket" matches "17175 Yonge St, Newmarket"
+# Flexible matching: "Project Y Newmarket" matches "Project Y, Newmarket"
 ```
 
 #### Portfolio Query Update (Test 5)
@@ -85,21 +85,21 @@ normalized_response = response_text.replace(',', '').replace('  ', ' ')
 
 🧪 Test 2: Parking Stalls Query
   ✅ PASSED (44 + 197 + 0 = 241 stalls)
-  - 72 Perth: 44 stalls (31 below + 13 above)
-  - 17175 Yonge St: 197 stalls
-  - Azure Road: 0 stalls (correctly omitted by AI)
+  - Project P: 44 stalls (31 below + 13 above)
+  - Project Y: 197 stalls
+  - Project A: 0 stalls (correctly omitted by AI)
 
 🧪 Test 3: Total Direct Cost Query
   ✅ PASSED (100% accuracy across all projects)
-  - 72 Perth: $897,836 (variance: 0.0%)
-  - 17175 Yonge St: $7,746,848 (variance: 0.0%)
-  - Azure Road: $0 (variance: 0.0%)
+  - Project P: $897,836 (variance: 0.0%)
+  - Project Y: $7,746,848 (variance: 0.0%)
+  - Project A: $0 (variance: 0.0%)
 
 🧪 Test 4: Project Locations Query
   ✅ PASSED (all locations found with comma tolerance)
-  - 72 Perth: Toronto, ON
-  - 17175 Yonge St: 17175 Yonge St, Newmarket, Ontario
-  - Azure Road: Richmond, British Columbia
+  - Project P: Toronto, ON
+  - Project Y: Project Y, Newmarket, Ontario
+  - Project A: Richmond, British Columbia
 
 🧪 Test 5: Portfolio Totals Query
   ❌ FAILED (AI lists individual projects but doesn't calculate sums)
@@ -119,7 +119,7 @@ Total Time: 29.3s
 
 ### Model Capability Difference
 **gpt-3.5-turbo behavior:**
-- Query: "What is Total Direct Cost for 72 Perth?"
+- Query: "What is Total Direct Cost for Project P?"
 - Response: "I don't have budget information"
 - Reality: Data WAS in context, AI refused to use it
 

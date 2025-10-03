@@ -23,7 +23,7 @@
 **Why It Works**:
 - Prevents cross-project contamination (greedy regex matching across boundaries)
 - Handles multiple response formats (numbered lists, bold markers, colon positions)
-- Supports name variants (with/without leading numbers like "6071 Azure Road" → "Azure Road")
+- Supports name variants (with/without leading numbers like "6071 Project A" → "Project A")
 
 **Pattern Structure**:
 ```python
@@ -54,10 +54,10 @@ for value_pattern in value_patterns:
 **Key Discovery**: The extraction patterns work perfectly! The issue is AI response consistency.
 
 **Evidence**:
-- Cache has all data: 72 Perth ($897,836 cost, 31 stalls), Yonge ($7,746,848 cost, 220 stalls), Azure ($0 cost, 282 stalls)
+- Cache has all data: Project P ($897,836 cost, 31 stalls), Project Y ($7,746,848 cost, 220 stalls), Project A ($0 cost, 282 stalls)
 - GCA test proves extraction works when AI provides data
 - Parking query → AI returns status update instead of stall counts
-- Direct cost query → AI says "I don't have budget information for 72 Perth" (but cache has it!)
+- Direct cost query → AI says "I don't have budget information for Project P" (but cache has it!)
 
 ---
 
@@ -67,7 +67,7 @@ for value_pattern in value_patterns:
 
 #### Test 1: Total GCA Query
 - **Status**: ✅ PASSING
-- **Expected**: Azure 376,332 SF, Yonge 269,141 SF, Perth 214,384 SF
+- **Expected**: Project A 376,332 SF, Project Y 269,141 SF, Project P 214,384 SF
 - **Actual**: All correct!
 - **Pattern**: Section-based extraction with multiple bold/colon format handlers
 
@@ -81,21 +81,21 @@ for value_pattern in value_patterns:
 
 #### Test 2: Parking Stalls Query
 - **Status**: ❌ FAILING (0/3 projects found)
-- **Expected**: 72 Perth: 31, Yonge: 220, Azure: 282
+- **Expected**: Project P: 31, Project Y: 220, Project A: 282
 - **Cache Has Data**: ✅ Yes
-- **AI Response**: "**1. 72 Perth Avenue:** - Progress Percentage: ... - Budget Status: ..."
+- **AI Response**: "**1. Project P (Northside Residential):** - Progress Percentage: ... - Budget Status: ..."
 - **Issue**: AI provides general status update, NOT parking stall counts
 - **Root Cause**: Query formulation or prompt engineering issue
 
 #### Test 3: Total Direct Cost Query
 - **Status**: ❌ PARTIALLY FAILING (2/3 projects found)
-- **Expected**: 72 Perth: $897,836, Yonge: $7,746,848, Azure: $0
+- **Expected**: Project P: $897,836, Project Y: $7,746,848, Project A: $0
 - **Cache Has Data**: ✅ Yes  
-- **AI Response**: "I don't have budget information for the '72 Perth Avenue' project. However, I can provide..."
+- **AI Response**: "I don't have budget information for the 'Project P (Northside Residential)' project. However, I can provide..."
 - **Extracted**:
-  - 72 Perth: ❌ Not found (AI omits it)
-  - Yonge St: ✅ $7,746,848 (correct)
-  - Azure Road: ✅ $0 (correct)
+  - Project P: ❌ Not found (AI omits it)
+  - Project Y: ✅ $7,746,848 (correct)
+  - Project A: ✅ $0 (correct)
 - **Root Cause**: AI inconsistently includes projects in responses
 
 #### Test 5: Portfolio Totals Query
@@ -111,7 +111,7 @@ for value_pattern in value_patterns:
 
 ### What Works ✅
 1. **Section-based extraction**: Proven with GCA test (100% accuracy)
-2. **Name variants**: Handles "6071 Azure Road" → "Azure Road"
+2. **Name variants**: Handles "6071 Project A" → "Project A"
 3. **Multiple format handlers**: `**Name:**`, `**Name**:`, `1. **Name:**`
 4. **Stopping conditions**: Prevents cross-project contamination
 
@@ -183,7 +183,7 @@ for value_pattern in value_patterns:
 - Try more specific/direct wording
 - **Expected Result**: Test 2 passes → 83% pass rate (5/6 tests)
 
-### Task 3: Debug 72 Perth Data Context (1 hour)
+### Task 3: Debug Project P Data Context (1 hour)
 - Investigate why AI says "I don't have budget information"
 - Check `src/prompts/construction_prompts.py`
 - Verify all 3 projects are passed to AI context
@@ -225,10 +225,10 @@ Total GCA: 859,857 SF
 3. Apply appropriate extraction pattern
 4. Validate against ground truth
 
-### 72 Perth Data Context Investigation
+### Project P Data Context Investigation
 **Questions to Answer**:
-1. Is 72 Perth being loaded in `_gather_google_sheets_projects()`?
-2. Is 72 Perth included in formatted context passed to AI?
+1. Is Project P being loaded in `_gather_google_sheets_projects()`?
+2. Is Project P included in formatted context passed to AI?
 3. Are parking stalls included in the formatted context?
 4. Are cost fields included in the formatted context?
 
@@ -267,7 +267,7 @@ curl -s -X POST http://localhost:8000/query \
 # Parking stalls with new wording
 curl -s -X POST http://localhost:8000/query \
   -H "Content-Type: application/json" \
-  -d '{"query":"List the exact number of parking stalls for each project: 72 Perth Avenue, 17175 Yonge St, and Azure Road","type":"ai_query","parameters":{"include_data_context":true}}' \
+  -d '{"query":"List the exact number of parking stalls for each project: Project P (Northside Residential), Project Y, and Project A","type":"ai_query","parameters":{"include_data_context":true}}' \
   | python3 -m json.tool
 ```
 
@@ -287,9 +287,9 @@ python3 -c "import json; gt=json.load(open('tests/ground_truth.json')); print(js
 - `tests/debug_extraction.py` - Regex pattern testing script
 
 ### Data Cache
-- `cache/normalized/72_perth.json` - 72 Perth Avenue data
-- `cache/normalized/17175_yonge_st.json` - Yonge St data
-- `cache/normalized/azure_road.json` - Azure Road data
+- `cache/normalized/72_perth.json` - Project P (Northside Residential) data
+- `cache/normalized/17175_yonge_st.json` - Project Y data
+- `cache/normalized/azure_road.json` - Project A data
 
 ### Documentation
 - `docs/PARSER_IMPROVEMENTS_ROADMAP.md` - Overall roadmap and status

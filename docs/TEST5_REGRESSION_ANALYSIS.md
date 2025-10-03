@@ -16,9 +16,9 @@
 
 **Actual Behavior**:
 AI provides detailed breakdown of each project but **does not calculate the aggregate sums**:
-- 72 Perth Avenue: $0 budget, $897,836 direct cost
-- 17175 Yonge St: $46,798,403 budget, $7,746,848 direct cost
-- Azure Road: $23,981,776 budget, $0 direct cost
+- Project P (Northside Residential): $0 budget, $897,836 direct cost
+- Project Y: $46,798,403 budget, $7,746,848 direct cost
+- Project A: $23,981,776 budget, $0 direct cost
 
 ---
 
@@ -49,15 +49,15 @@ The AI:
 
 ### Manual Calculation:
 **Total Budget**:
-- 72 Perth: $0
-- 17175 Yonge St: $46,798,403
-- Azure Road: $23,981,776
+- Project P: $0
+- Project Y: $46,798,403
+- Project A: $23,981,776
 - **SUM**: $70,780,179 ✅
 
 **Total Direct Cost**:
-- 72 Perth: $897,836
-- 17175 Yonge St: $7,746,848
-- Azure Road: $0
+- Project P: $897,836
+- Project Y: $7,746,848
+- Project A: $0
 - **SUM**: $8,644,684 ✅
 
 The ground truth is correct. The AI is simply not performing the addition operation.
@@ -92,8 +92,8 @@ Add aggregation logic in query processor:
 ### Option 4: Test Query Refinement (Workaround)
 Update test query to be more explicit:
 ```
-"What is the sum of: (72 Perth budget) + (17175 Yonge budget) + (Azure Road budget)? 
-What is the sum of: (72 Perth direct cost) + (17175 Yonge direct cost) + (Azure Road direct cost)?"
+"What is the sum of: (Project P budget) + (Project Y budget) + (Project A budget)? 
+What is the sum of: (Project P direct cost) + (Project Y direct cost) + (Project A direct cost)?"
 ```
 
 ---

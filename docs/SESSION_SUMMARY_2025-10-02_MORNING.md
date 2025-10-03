@@ -10,13 +10,13 @@
 
 ## What We Accomplished
 
-### 1. Identified Root Cause of 72 Perth Data Omission ✅
+### 1. Identified Root Cause of Project P Data Omission ✅
 
 **Problem Discovered**:
-- 72 Perth Avenue has `Total_Budget: 0.0` in the cache
+- Project P (Northside Residential) has `Total_Budget: 0.0` in the cache
 - The formatting code in `construction_prompts.py` was skipping fields with zero values
 - `'Total_Budget'` was NOT in the `show_if_zero` list
-- Result: AI never received 72 Perth's budget data in context
+- Result: AI never received Project P's budget data in context
 
 **Evidence**:
 ```python
@@ -38,7 +38,7 @@ show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost',
                          'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade']
 ```
 
-**Result**: Now all projects including 72 Perth have their budget data in the AI context
+**Result**: Now all projects including Project P have their budget data in the AI context
 
 ### 3. Verified Fix Works - Data Now in Context ✅
 
@@ -46,10 +46,10 @@ show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost',
 ```
 🐛 DEBUG: Formatted data context: 
 **Available Project Data:**
-  - Project: 72 Perth Avenue
+  - Project: Project P (Northside Residential)
     Total Budget: $0.00          ✅ NOW SHOWING
     Location: Toronto, ON
-    Client: Castlepoint Numa
+    Client: ABC Development Corp
     Total Parking (stalls): 44.0
     Parking (Below Grade): 31.0
     Parking (Above Grade): 13.0
@@ -75,11 +75,11 @@ show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost',
 
 **Example**:
 ```
-User Query: "What is the Total Direct Cost for 72 Perth Avenue?"
+User Query: "What is the Total Direct Cost for Project P (Northside Residential)?"
 AI Response: "I don't have budget information for the projects listed in the data context."
 
 But the context INCLUDES:
-  - Project: 72 Perth Avenue
+  - Project: Project P (Northside Residential)
     Total Direct Cost: $897,836.00  <-- RIGHT THERE!
 ```
 
@@ -122,20 +122,20 @@ This might be interpreted as "don't talk about budgets" instead of "only use dat
 
 **Test 2: Parking Stalls Query**
 - Status: ❌ FAILING (0/3 projects found)
-- Expected: 72 Perth: 31, Yonge: 220, Azure: 282
+- Expected: Project P: 31, Project Y: 220, Project A: 282
 - AI Response: General status update, no parking numbers
 - Root Cause: Query formulation or AI behavior
 
 **Test 3: Total Direct Cost Query**
 - Status: ❌ FAILING (0/3 projects found) 
-- Expected: 72 Perth: $897,836, Yonge: $7,746,848, Azure: $0
+- Expected: Project P: $897,836, Project Y: $7,746,848, Project A: $0
 - AI Response: "I don't have budget information"
 - Root Cause: AI not using provided data
 
 **Test 4: Project Locations Query**
 - Status: ❌ PARTIALLY FAILING
 - Expected: Toronto, Newmarket, Richmond
-- Issue: "17175 Yonge St Newmarket, Ontario" not matching "Newmarket"
+- Issue: "Project Y Newmarket, Ontario" not matching "Newmarket"
 - Root Cause: Extraction pattern too strict
 
 **Test 5: Portfolio Totals Query**
@@ -198,7 +198,7 @@ show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost',
                          'Parking_Total', 'Parking_Below_Grade', 'Parking_Above_Grade']
 ```
 
-**Impact**: 72 Perth with $0 budget now included in AI context
+**Impact**: Project P with $0 budget now included in AI context
 
 ---
 
@@ -232,7 +232,7 @@ show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost',
 #### 4. Fix Location Extraction Pattern
 **Test 4**: Location matching too strict
 - Current: Expects exact "Newmarket"
-- Actual: "17175 Yonge St Newmarket, Ontario"
+- Actual: "Project Y Newmarket, Ontario"
 - Fix: Use partial matching or extract city name
 
 #### 5. Fix Portfolio Totals Query
@@ -254,14 +254,14 @@ show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost',
 
 ### Server Logs Snippet
 ```
-2025-10-02 10:03:56,909 - INFO - Project Name: 72 Perth Avenue
+2025-10-02 10:03:56,909 - INFO - Project Name: Project P (Northside Residential)
 2025-10-02 10:03:56,909 - INFO - Budget: $0
 
 🐛 DEBUG: AI received data_context: {
   'projects': [
     {
       'Project_ID': '72_perth',
-      'Project_Name': '72 Perth Avenue',
+      'Project_Name': 'Project P (Northside Residential)',
       'Total_Budget': 0.0,
       'Total_Direct_Cost': 897836.0,
       'Parking_Stalls': 31.0,
@@ -271,7 +271,7 @@ show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost',
 }
 
 🐛 DEBUG: Formatted data context: 
-  - Project: 72 Perth Avenue
+  - Project: Project P (Northside Residential)
     Total Budget: $0.00
     Total Direct Cost: $897,836.00
     Parking Stalls: 31.0
@@ -279,7 +279,7 @@ show_if_zero = field in ['Parking_Stalls', 'Total_GCA_SF', 'Total_Direct_Cost',
 
 ### Test Query Response
 ```bash
-$ curl POST /query "What is the Total Direct Cost for 72 Perth Avenue?"
+$ curl POST /query "What is the Total Direct Cost for Project P (Northside Residential)?"
 {
   "ai_response": "I don't have budget information for the projects listed in the data context.",
   "model_used": "gpt-3.5-turbo"

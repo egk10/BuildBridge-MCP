@@ -41,9 +41,9 @@
 ## Wednesday, Oct 5 - Test 7 Prep
 
 ### Morning: Ground Truth
-- [ ] Open 72 Perth spreadsheet → Extract Division 03 cost
-- [ ] Open 17175 Yonge spreadsheet → Extract Division 03 cost
-- [ ] Open Azure Road spreadsheet → Extract Division 03 cost
+- [ ] Open Project P spreadsheet → Extract Division 03 cost
+- [ ] Open Project Y spreadsheet → Extract Division 03 cost
+- [ ] Open Project A spreadsheet → Extract Division 03 cost
 - [ ] Calculate unit costs (cost / GCA SF)
 - [ ] Calculate ratios (cost / total budget)
 - [ ] Update `tests/ground_truth.json`

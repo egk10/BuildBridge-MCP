@@ -15,7 +15,7 @@
 ## Changing Project Names
 
 ### Scenario
-You need to rename a project (e.g., "72 Perth Avenue" → "72 Perth Avenue - Phase 2")
+You need to rename a project (e.g., "Project P (Northside Residential)" → "Project P (Northside Residential) - Phase 2")
 
 ### Impact Assessment
 **Affected Components**:
@@ -38,7 +38,7 @@ nano config/project_manifest.json
 ```json
 {
   "project_id": "72_perth",
-  "project_name": "72 Perth Avenue",  // ← Change this
+  "project_name": "Project P (Northside Residential)",  // ← Change this
   "spreadsheet_id": "1pYlXf2-Je0uhxXkU_xWkIpLGXwvMP6SFM6oP-mL9BEg",
   ...
 }
@@ -48,7 +48,7 @@ nano config/project_manifest.json
 ```json
 {
   "project_id": "72_perth",
-  "project_name": "72 Perth Avenue - Phase 2",  // ← New name
+  "project_name": "Project P (Northside Residential) - Phase 2",  // ← New name
   "spreadsheet_id": "1pYlXf2-Je0uhxXkU_xWkIpLGXwvMP6SFM6oP-mL9BEg",
   ...
 }
@@ -77,7 +77,7 @@ rm cache/test_graph_*.json
 {
   "projects": {
     "72_perth": {
-      "name": "72 Perth Avenue - Phase 2",  // ← Update here
+      "name": "Project P (Northside Residential) - Phase 2",  // ← Update here
       "total_gca_sf": 214384,
       ...
     }
@@ -104,7 +104,7 @@ curl -X POST http://localhost:8000/query \
   -H "Content-Type: application/json" \
   -d '{"query": "List all projects", "query_type": "ai_query", "include_data_context": true}'
 
-# Should show: "72 Perth Avenue - Phase 2"
+# Should show: "Project P (Northside Residential) - Phase 2"
 ```
 
 #### 6. Run Proof Tests
@@ -153,7 +153,7 @@ Example: 1ABCDEF-ghijk123456789-lmnopqrstuv
 ```json
 {
   "project_id": "72_perth",
-  "project_name": "72 Perth Avenue",
+  "project_name": "Project P (Northside Residential)",
   "spreadsheet_id": "1ABCDEF-ghijk123456789-lmnopqrstuv",  // ← NEW ID
   "tabs": {
     "project_summary": "Project Summary",     // ← Verify these match new spreadsheet
@@ -240,7 +240,7 @@ EOF
 {
   "projects": {
     "72_perth": {
-      "name": "72 Perth Avenue",
+      "name": "Project P (Northside Residential)",
       "total_gca_sf": 214384,           // ← Update if changed
       "parking_stalls": 31,              // ← Update if changed
       "total_direct_cost": 897836.0,    // ← Update if changed
@@ -398,7 +398,7 @@ EOF
 If you want to include the new project in existing tests:
 ```python
 def test_total_gca(self):
-    query = "What is the total GCA for projects Azure Road, 17175 Yonge St, 72 Perth Avenue, and New Project?"
+    query = "What is the total GCA for projects Project A, Project Y, Project P (Northside Residential), and New Project?"
     # ... rest of test ...
 ```
 
@@ -472,10 +472,10 @@ rm cache/schemas/graph_[SPREADSHEET_ID].json
 Remove project references from test queries:
 ```python
 # Before:
-query = "What is the total GCA for projects Azure Road, 17175 Yonge St, and 72 Perth Avenue?"
+query = "What is the total GCA for projects Project A, Project Y, and Project P (Northside Residential)?"
 
 # After:
-query = "What is the total GCA for projects Azure Road and 17175 Yonge St?"
+query = "What is the total GCA for projects Project A and Project Y?"
 ```
 
 #### 5. Restart and Validate

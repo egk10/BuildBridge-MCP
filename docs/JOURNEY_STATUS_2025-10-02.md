@@ -240,19 +240,19 @@ Query: "Add up total budget across all projects"
 
 AI Response:
 ✅ Total Budget: $70,780,179
-   - 72 Perth: $0
-   - 17175 Yonge St: $46,798,403
-   - Azure Road: $23,981,776
+   - Project P: $0
+   - Project Y: $46,798,403
+   - Project A: $23,981,776
 
 ⚠️ Data Quality Issues:
-   - 72 Perth: $0 budget but $897K spent (check GCA Stats)
-   - 17175 Yonge: #DIV/0! in unit cost columns
-   - Azure Road: $0 direct cost (verify completeness)
+   - Project P: $0 budget but $897K spent (check GCA Stats)
+   - Project Y: #DIV/0! in unit cost columns
+   - Project A: $0 direct cost (verify completeness)
 
 📋 Recommendations:
    1. Check GCA Stats tab for missing area values
-   2. Verify preliminary vs final budget for 72 Perth
-   3. Review unit cost formulas for 17175 Yonge
+   2. Verify preliminary vs final budget for Project P
+   3. Review unit cost formulas for Project Y
 ```
 
 ### 2. Dynamic Project Loading 🔄
@@ -275,14 +275,14 @@ AI Response:
 
 **Before:**
 ```
-User types: "What is the total GCA for 17175 Yonge St project?"
+User types: "What is the total GCA for Project Y?"
 Mistakes: Typos, wrong project name, incomplete query
 Time: 30-60 seconds
 ```
 
 **After:**
 ```
-User clicks: "Overview" button under "17175 Yonge St"
+User clicks: "Overview" button under "Project Y"
 Mistakes: None (button ensures correct query)
 Time: 1 second
 ```

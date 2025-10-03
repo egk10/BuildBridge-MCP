@@ -98,12 +98,12 @@ python tests/debug_extraction.py
 # Query: "What is the total GCA for each project?"
 curl -X POST http://localhost:8000/query \
   -H "Content-Type: application/json" \
-  -d '{"query": "...GCA for 72 Perth, Yonge St, Azure...", "type": "ai_query"}'
+  -d '{"query": "...GCA for Project P, Project Y, Project A...", "type": "ai_query"}'
 
 # Response: 
-# 1. **72 Perth Avenue:**  Total GCA: 214,384 SF ✅
-# 2. **17175 Yonge St:**   Total GCA: 269,141 SF ✅
-# 3. **Azure Road:**       Total GCA: 376,332 SF ✅
+# 1. **Project P (Northside Residential):**  Total GCA: 214,384 SF ✅
+# 2. **Project Y:**   Total GCA: 269,141 SF ✅
+# 3. **Project A:**       Total GCA: 376,332 SF ✅
 ```
 
 ###Debug Script Validates Regex Patterns
@@ -111,15 +111,15 @@ curl -X POST http://localhost:8000/query \
 python tests/debug_extraction.py
 
 # Output:
-# 🔍 Extracting GCA for: 72 Perth Avenue
+# 🔍 Extracting GCA for: Project P (Northside Residential)
 #   Name then number:
 #     ✅ Extracted: 214,384 SF (Expected: 214,384 SF)
 # 
-# 🔍 Extracting GCA for: 17175 Yonge St
+# 🔍 Extracting GCA for: Project Y
 #   Name then number:
 #     ✅ Extracted: 269,141 SF (Expected: 269,141 SF)
 # 
-# 🔍 Extracting GCA for: Azure Road
+# 🔍 Extracting GCA for: Project A
 #   Name then number:
 #     ✅ Extracted: 376,332 SF (Expected: 376,332 SF)
 ```

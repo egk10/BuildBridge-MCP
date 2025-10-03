@@ -47,10 +47,10 @@ Click any project button to see **6 one-click queries**:
 
 ### Single Project Analysis
 ```
-1. Click "17175 Yonge St" button
+1. Click "Project Y" button
 2. Submenu expands with 6 options
 3. Click "💰 Budget Status"
-4. Query auto-fills: "What is the budget for 17175 Yonge St?"
+4. Query auto-fills: "What is the budget for Project Y?"
 5. AI responds with budget details for that specific project
 ```
 
@@ -107,7 +107,7 @@ Response:
   "projects": [
     {
       "id": "17175_yonge_st",
-      "display": "17175 Yonge St",
+      "display": "Project Y",
       "queries": [
         {"label": "📋 Project Overview", "query": "..."},
         {"label": "💰 Budget Status", "query": "..."}
@@ -188,9 +188,9 @@ Response:
 **Edit:** `src/production_mcp_integration.py`
 ```python
 project_display_names = {
-    '17175_yonge_st': '17175 Yonge St',
-    'azure_road': 'Azure Road - Richmond',  # More descriptive
-    '72_perth': '72 Perth (Toronto)'        # Add location
+    '17175_yonge_st': 'Project Y',
+    'azure_road': 'Project A - Richmond',  # More descriptive
+    '72_perth': 'Project P (Toronto)'        # Add location
 }
 ```
 

@@ -79,9 +79,9 @@
 **Actual**:
 AI provides detailed breakdown but **doesn't calculate sums**:
 ```
-72 Perth: $0 budget, $897,836 direct cost
-17175 Yonge: $46,798,403 budget, $7,746,848 direct cost
-Azure Road: $23,981,776 budget, $0 direct cost
+Project P: $0 budget, $897,836 direct cost
+Project Y: $46,798,403 budget, $7,746,848 direct cost
+Project A: $23,981,776 budget, $0 direct cost
 ```
 
 **Impact**: 

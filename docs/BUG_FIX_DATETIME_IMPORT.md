@@ -105,7 +105,7 @@ timestamp=dt_import.now()  # Changed from datetime.now()
 ### Before Fix ❌
 ```bash
 $ curl -X POST http://localhost:8000/process \
-  -d '{"query":"Show me details for 17175 Yonge St project"}'
+  -d '{"query":"Show me details for Project Y project"}'
 
 Response:
 {
@@ -121,18 +121,18 @@ variable 'datetime' where it is not associated with a value
 ### After Fix ✅
 ```bash
 $ curl -X POST http://localhost:8000/process \
-  -d '{"query":"Show me details for 17175 Yonge St project"}'
+  -d '{"query":"Show me details for Project Y project"}'
 
 Response:
 {
   "success": true,
   "response": "Hey there! Let's dive into the status update for 
-  17175 Yonge St:
+  Project Y:
   
-  ### Project: 24021 - 17175 Yonge St
+  ### Project: 24021 - Project Y
   - **Total Budget:** $46,798,403.00
-  - **Location:** 17175 Yonge St, Newmarket, Ontario
-  - **Client:** Trinity Coptic Foundation
+  - **Location:** Project Y, Newmarket, Ontario
+  - **Client:** Summit Investment Group
   - **Units:** 208
   - **Building Area:** 184,644 sq ft
   - **Total GCA:** 269,141 sq ft
@@ -153,14 +153,14 @@ INFO - 🤖 AI RESPONSE: 'Hey there! Let's dive into...'
 
 ### ✅ Single Project Query
 ```
-Query: "Show me details for 17175 Yonge St project"
+Query: "Show me details for Project Y project"
 Result: ✅ Full project details returned
 Data: Budget $46.7M, 208 units, 184K sqft, etc.
 ```
 
 ### ✅ Budget Query
 ```
-Query: "What is the budget for 17175 Yonge St?"
+Query: "What is the budget for Project Y?"
 Result: ✅ Budget calculation with remaining amount
 Data: Total $46.7M, Direct Cost $7.7M, Remaining $39.0M
 ```
@@ -170,9 +170,9 @@ Data: Total $46.7M, Direct Cost $7.7M, Remaining $39.0M
 Query: "Add up the total budget across all projects"
 Result: ✅ All 3 projects with detailed breakdown
 Data:
-  - 72 Perth: $0 budget, $897K spent
-  - 17175 Yonge: $46.7M budget, $7.7M spent
-  - Azure Road: $23.9M budget, $0 spent
+  - Project P: $0 budget, $897K spent
+  - Project Y: $46.7M budget, $7.7M spent
+  - Project A: $23.9M budget, $0 spent
   Total: $70.7M
 ```
 
@@ -236,7 +236,7 @@ try:
 ```python
 def test_project_query():
     response = client.post('/process', 
-                          json={'query': 'Show me details for 17175 Yonge St'})
+                          json={'query': 'Show me details for Project Y'})
     assert 'Total Budget' in response.json()['response']
     assert '$46,798,403' in response.json()['response']
 ```
@@ -283,7 +283,7 @@ Result: ✅ All project queries working perfectly
 ### Verification Steps
 - [x] Server restarted
 - [x] Health check passed
-- [x] Single project query tested (17175 Yonge St)
+- [x] Single project query tested (Project Y)
 - [x] Budget query tested
 - [x] Portfolio calculation tested
 - [x] No errors in server logs
@@ -322,7 +322,7 @@ pkill -f "production_mcp_integration"
 
 ### What Users See:
 
-**Click "17175 Yonge St" → "💰 Budget Status":**
+**Click "Project Y" → "💰 Budget Status":**
 ```
 ✅ Response shows:
 - Total Budget: $46,798,403.00
@@ -334,9 +334,9 @@ pkill -f "production_mcp_integration"
 **Click "💰 Total Budget" (Portfolio):**
 ```
 ✅ Response shows:
-1. 72 Perth Avenue: $0 budget, $897K spent
-2. 17175 Yonge St: $46.7M budget, $7.7M spent  
-3. Azure Road: $23.9M budget, $0 spent
+1. Project P (Northside Residential): $0 budget, $897K spent
+2. Project Y: $46.7M budget, $7.7M spent  
+3. Project A: $23.9M budget, $0 spent
 Total Portfolio: $70,780,179
 ```
 

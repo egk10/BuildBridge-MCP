@@ -46,15 +46,15 @@ Query: "Add up total budget across all projects"
 
 AI Response:
 Portfolio Totals:
-- 72 Perth: $0 (⚠️ $897K overspending)
-- 17175 Yonge St: $46,798,403
-- Azure Road: $23,981,776
+- Project P: $0 (⚠️ $897K overspending)
+- Project Y: $46,798,403
+- Project A: $23,981,776
 Total: $70,780,179
 
 ⚠️ Data Quality Issues:
-- 72 Perth: Check GCA Stats for missing budget
-- 17175 Yonge St: #DIV/0! in $/Suite column
-- Azure Road: $0 direct cost (verify completeness)
+- Project P: Check GCA Stats for missing budget
+- Project Y: #DIV/0! in $/Suite column
+- Project A: $0 direct cost (verify completeness)
 ```
 
 **Implementation:**
@@ -177,15 +177,15 @@ timestamp=dt_import.now()  # ✅ All usages updated
 
 #### Bug #2: Zero-Value Budgets Hidden
 **Symptom:** Projects with $0 budget not shown in data context  
-**Impact:** Missing critical budget anomalies (e.g., 72 Perth: $0 budget, $897K spent)  
+**Impact:** Missing critical budget anomalies (e.g., Project P: $0 budget, $897K spent)  
 **Fix:** Added 'Total_Budget' to `show_if_zero` list  
 **Commit:** `5420027`
 
 #### Bug #3: Ground Truth Parking Data
 **Issue:** Test 2 failing due to incorrect expected values  
 **Fix:** Updated ground truth:
-  - 72 Perth: 31 → 44 stalls (corrected)
-  - Azure Road: 275 → 0 stalls (corrected - no parking)
+  - Project P: 31 → 44 stalls (corrected)
+  - Project A: 275 → 0 stalls (corrected - no parking)
 
 #### Bug #4: Regex F-String Pattern Conflict
 **Symptom:** Extraction patterns failing silently  

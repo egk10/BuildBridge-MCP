@@ -133,7 +133,7 @@ Budget Analysis shows this project is 10% over allocated budget.
 ## Troubleshooting Common Issues
 
 ### Authentication Errors
-- Verify Azure app registration
+- Verify Project A app registration
 - Check client ID, secret, and tenant ID
 - Ensure proper API permissions
 

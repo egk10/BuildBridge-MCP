@@ -57,9 +57,9 @@ I've created a comprehensive testing framework for BuildBridge-MCP that validate
 ## 🎯 Test Coverage
 
 ### Projects Configured
-1. **72 Perth Avenue** (`72_perth`)
-2. **17175 Yonge St** (`17175_yonge_st`)
-3. **Azure Road** (`azure_road`)
+1. **Project P (Northside Residential)** (`72_perth`)
+2. **Project Y** (`17175_yonge_st`)
+3. **Project A** (`azure_road`)
 
 ### 20+ Test Queries Created
 
@@ -74,7 +74,7 @@ I've created a comprehensive testing framework for BuildBridge-MCP that validate
 - ✅ Cost per square foot calculations
 
 #### Category 3: Material-Specific Costs (3 tests)
-- ✅ Concrete costs for 17175 Yonge St
+- ✅ Concrete costs for Project Y
 - ✅ Steel costs comparison
 - ✅ Sitework costs
 
@@ -153,9 +153,9 @@ curl -X POST "http://localhost:8000/query" \
 🏗️  BuildBridge-MCP Ground Truth Generator
 ======================================================================
 
-✅ Extracted ground truth for 72_perth: 72 Perth Avenue
-✅ Extracted ground truth for 17175_yonge_st: 17175 Yonge St
-✅ Extracted ground truth for azure_road: Azure Road
+✅ Extracted ground truth for 72_perth: Project P (Northside Residential)
+✅ Extracted ground truth for 17175_yonge_st: Project Y
+✅ Extracted ground truth for azure_road: Project A
 
 ✅ Ground truth saved to tests/ground_truth.json
    Projects: 3
@@ -210,27 +210,27 @@ Total Time: 15.3s
 ## 🎨 Example Test Queries
 
 ### Query 1: GCA Totals
-**Question**: "What is the total GCA (Gross Construction Area) for projects Azure Road, 17175 Yonge St, and 72 Perth Avenue?"
+**Question**: "What is the total GCA (Gross Construction Area) for projects Project A, Project Y, and Project P (Northside Residential)?"
 
 **Expected Response**: Includes accurate GCA values for all 3 projects matching ground truth data
 
 **Validation**: Within 1% tolerance
 
 ### Query 2: Parking Analysis
-**Question**: "How many parking stalls does each project have: 72 Perth Avenue, 17175 Yonge St, and Azure Road?"
+**Question**: "How many parking stalls does each project have: Project P (Northside Residential), Project Y, and Project A?"
 
 **Expected Response**: 
-- 72 Perth Avenue: 31 stalls
-- 17175 Yonge St: [from ground truth]
-- Azure Road: [from ground truth]
+- Project P (Northside Residential): 31 stalls
+- Project Y: [from ground truth]
+- Project A: [from ground truth]
 
 **Validation**: Exact integer match
 
 ### Query 3: Cost Comparison
-**Question**: "What is the Total Direct Cost for 72 Perth Avenue, 17175 Yonge St, and Azure Road?"
+**Question**: "What is the Total Direct Cost for Project P (Northside Residential), Project Y, and Project A?"
 
 **Expected Response**:
-- 72 Perth Avenue: $897,836
+- Project P (Northside Residential): $897,836
 - Others: [from ground truth]
 
 **Validation**: Within 1% or $1,000 tolerance

@@ -11,18 +11,18 @@ Successfully fixed Test 5 (Portfolio Totals) regression through pragmatic query 
 ### ✅ Passing Tests (5/6)
 
 1. **Test 2: Parking Stalls Query** - ✅ PASSED
-   - Status: Azure Road correctly returns 0 parking stalls
-   - Note: 72 Perth and 17175 Yonge data not explicitly validated but query successful
+   - Status: Project A correctly returns 0 parking stalls
+   - Note: Project P and Project Y data not explicitly validated but query successful
 
 2. **Test 3: Direct Cost Query** - ✅ PASSED
-   - 72 Perth Avenue: $897,836 (0.0% variance) ✅
-   - 17175 Yonge St: $7,746,848 (0.0% variance) ✅
-   - Azure Road: $0 (0.0% variance) ✅
+   - Project P (Northside Residential): $897,836 (0.0% variance) ✅
+   - Project Y: $7,746,848 (0.0% variance) ✅
+   - Project A: $0 (0.0% variance) ✅
 
 3. **Test 4: Project Locations Query** - ✅ PASSED
-   - 72 Perth Avenue: "Toronto, ON" ✅
-   - 17175 Yonge St: "17175 Yonge St Newmarket, Ontario" ✅
-   - Azure Road: "Richmond, British Columbia" ✅
+   - Project P (Northside Residential): "Toronto, ON" ✅
+   - Project Y: "Project Y Newmarket, Ontario" ✅
+   - Project A: "Richmond, British Columbia" ✅
 
 4. **Test 5: Portfolio Totals Query** - ✅ PASSED (FIXED TODAY!)
    - **Portfolio Total A**: $70,780,179 ✅ (was failing, now fixed)
@@ -209,8 +209,8 @@ commit 9b2f1a4e - "Fix Test 5 portfolio totals by avoiding normalization trigger
 - **Priority**: P2 (functional but not ideal)
 
 ### 3. Test 2 Incomplete Validation
-- **Status**: Only Azure Road (0 stalls) explicitly validated
-- **Missing**: 72 Perth (44 stalls), 17175 Yonge (197 stalls) not checked
+- **Status**: Only Project A (0 stalls) explicitly validated
+- **Missing**: Project P (44 stalls), Project Y (197 stalls) not checked
 - **Impact**: Low (query successful, just validation incomplete)
 - **Fix**: Update Test 2 validation logic
 - **Priority**: P3 (nice-to-have improvement)

@@ -67,8 +67,8 @@ This document tracks improvements to the BuildBridge-MCP data parsing system to 
 ⚠️ DATA QUALITY ALERT - Calculation with Caveats
 
 **Data Quality Issues:**
-- 17175 Yonge St: #DIV/0! in unit cost columns
-- 72 Perth: $0 budget but $897K spent (overspending!)
+- Project Y: #DIV/0! in unit cost columns
+- Project P: $0 budget but $897K spent (overspending!)
 
 **Calculation:**
 Total Budget = $0 + $46,798,403 + $23,981,776 = $70,780,179
@@ -87,9 +87,9 @@ AI Response:
 ✅ Total Budget: $70,780,179 (calculated correctly)
 ✅ Total Direct Cost: $8,644,684 (calculated correctly)
 ⚠️ Data Quality Alerts:
-   - 72 Perth: Budget $0, Spent $897K (overspending)
-   - Azure Road: Direct cost $0 (needs verification)
-   - 17175 Yonge: #DIV/0! errors in $/Suite column
+   - Project P: Budget $0, Spent $897K (overspending)
+   - Project A: Direct cost $0 (needs verification)
+   - Project Y: #DIV/0! errors in $/Suite column
 
 Actionable Recommendations:
 - Check GCA Stats tab for missing area values
@@ -164,7 +164,7 @@ BuildBridge-MCP is now a **production-ready construction management AI** with:
 - ✅ **Model Migration**: gpt-3.5-turbo → gpt-4o (30K TPM, advanced reasoning)
 - ✅ **Impact**: AI now correctly reads and uses budget data from context
 - ✅ **Pass Rate**: 33.3% → 83.3% (5/6 tests passing)
-- ✅ **Ground Truth Corrections**: Fixed parking data (72 Perth: 31→44 stalls, Azure: 275→0 stalls)
+- ✅ **Ground Truth Corrections**: Fixed parking data (Project P: 31→44 stalls, Project A: 275→0 stalls)
 - ✅ **Pattern Matching**: Enhanced parking patterns, added comma-tolerant location matching
 - ✅ **Zero-Value Handling**: Added 'Total_Budget' to show_if_zero list
 - ⚠️ **Remaining Issue**: Portfolio aggregation (AI refuses arithmetic despite instructions)
@@ -218,7 +218,7 @@ AI has the capability to perform calculations but is blocked by conflicting prom
   - Scans for: #DIV/0!, #ERROR!, #N/A, #VALUE!, #REF!
   - Checks for: null, undefined, empty cells in critical fields
   - Identifies: "Error", "N/A", "TBD", "Pending" in numeric fields
-  - Flags: $0 values when millions expected (72 Perth: $0 budget, $897K spent)
+  - Flags: $0 values when millions expected (Project P: $0 budget, $897K spent)
 
 - [x] **Portfolio calculation queries** working
   - "Calculate total budget across all projects" → ✅ PASSING

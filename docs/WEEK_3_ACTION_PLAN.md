@@ -108,9 +108,9 @@ Overall Progress:                                       ░░░░░░░░
 
 **Tasks:**
 1. [ ] **Open project spreadsheets** (via Google Sheets)
-   - 72 Perth Avenue
-   - 17175 Yonge St
-   - Azure Road
+   - Project P (Northside Residential)
+   - Project Y (Central Plaza Development)
+   - Project A (Westgate Towers)
 
 2. [ ] **Extract Division 03 (Concrete) costs** for each project
    - Navigate to appropriate tab (Cost Breakdown, Division Summary, etc.)
@@ -119,16 +119,16 @@ Overall Progress:                                       ░░░░░░░░
 
 3. [ ] **Calculate unit costs** (Division Cost / Total GCA SF)
    ```
-   72 Perth: $X / 214,384 SF = $Y.YY per SF
-   17175 Yonge: $X / 269,141 SF = $Y.YY per SF
-   Azure Road: $X / 376,332 SF = $Y.YY per SF
+   Project P: $X / 214,384 SF = $Y.YY per SF
+   Project Y: $X / 269,141 SF = $Y.YY per SF
+   Project A: $X / 376,332 SF = $Y.YY per SF
    ```
 
 4. [ ] **Calculate ratios** (Division Cost / Total Budget)
    ```
-   72 Perth: $X / $0 = N/A (or calculate vs direct cost)
-   17175 Yonge: $X / $46,798,403 = Y.Y%
-   Azure Road: $X / $23,981,776 = Y.Y%
+   Project P: $X / $0 = N/A (or calculate vs direct cost)
+   Project Y: $X / $46,798,403 = Y.Y%
+   Project A: $X / $23,981,776 = Y.Y%
    ```
 
 5. [ ] **Update ground truth file**
@@ -138,7 +138,7 @@ Overall Progress:                                       ░░░░░░░░
    "division_cost_comparison": {
      "query": "Compare Concrete Placing costs across all projects",
      "expected": {
-       "72_perth": {
+       "P": {
          "division_03_cost": <value>,
          "unit_cost_sf": <value>,
          "ratio_of_budget": <value>
@@ -155,7 +155,7 @@ Overall Progress:                                       ░░░░░░░░
   # Test current context
   python -c "
   from src.parsers.google_sheet_manifest_parsers import get_formatted_data_for_ai
-  context = get_formatted_data_for_ai('17175_yonge_st')
+  context = get_formatted_data_for_ai('Y')
   print('Division' in context)
   "
   ```
@@ -184,7 +184,7 @@ Overall Progress:                                       ░░░░░░░░
        response = self._send_query(server_url, query)
        
        # Extract values for each project
-       projects = ['72_perth', '17175_yonge_st', 'azure_road']
+       projects = ['P', 'Y', 'A']
        actual = {}
        
        for project in projects:
@@ -267,9 +267,9 @@ Overall Progress:                                       ░░░░░░░░
    
    **Simple Single-Project Queries:**
    ```
-   "What is the total GCA for 17175 Yonge St?"
-   "Show me the budget for Azure Road project"
-   "How many parking stalls does 72 Perth have?"
+   "What is the total GCA for Project Y?"
+   "Show me the budget for Project A"
+   "How many parking stalls does Project P have?"
    ```
    
    **Comparison Queries:**

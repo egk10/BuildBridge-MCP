@@ -16,7 +16,7 @@
 
 #### 1. **Dynamic Project Sidebar** 📂
 - Automatically loads all projects from `config/project_manifest.json`
-- Shows actual project names (17175 Yonge St, Azure Road, 72 Perth Avenue)
+- Shows actual project names (Project Y, Project A, Project P (Northside Residential))
 - Zero code changes when adding/removing projects
 - Updates automatically based on `.env` configuration
 
@@ -90,7 +90,7 @@ Each project button expands to show **6 one-click queries**:
 ```
 User Flow:
 1. Page loads → Projects auto-populate sidebar
-2. Click "17175 Yonge St" → Submenu expands (smooth animation)
+2. Click "Project Y" → Submenu expands (smooth animation)
 3. Click "💰 Budget Status" → Query auto-fills input
 4. Query auto-submits → AI responds with project budget
 5. Click project again → Submenu collapses
@@ -168,10 +168,10 @@ project_display_names = {
 
 ### Before (V1 Interface)
 ```
-User wants to know budget for 17175 Yonge St:
-1. Type: "What is the budget for 17175 Yonge St?"
+User wants to know budget for Project Y:
+1. Type: "What is the budget for Project Y?"
 2. Wait for AI response
-3. Next project → Type again: "What is the budget for Azure Road?"
+3. Next project → Type again: "What is the budget for Project A?"
 4. Repeat 10+ times during testing
 
 Problems:
@@ -184,10 +184,10 @@ Problems:
 
 ### After (V2 Interface)
 ```
-User wants to know budget for 17175 Yonge St:
-1. Click "17175 Yonge St" button → Submenu opens
+User wants to know budget for Project Y:
+1. Click "Project Y" button → Submenu opens
 2. Click "💰 Budget Status" → Query auto-fills and submits
-3. Next project → Click "Azure Road" → Click "💰 Budget Status"
+3. Next project → Click "Project A" → Click "💰 Budget Status"
 4. Done in 10 clicks (vs 10+ typed queries)
 
 Benefits:
@@ -206,8 +206,8 @@ Benefits:
 ```
 Morning Routine:
 - Click "Portfolio Queries" → "📋 All Projects" (5-minute overview)
-- Notices Azure Road has issues
-- Click "Azure Road" → "⚠️ Data Quality Check" (1 click, not typing)
+- Notices Project A has issues
+- Click "Project A" → "⚠️ Data Quality Check" (1 click, not typing)
 - Finds #DIV/0! errors in GCA Stats
 - Takes action: Reviews spreadsheet
 ```
@@ -217,8 +217,8 @@ Morning Routine:
 Board Meeting Preparation:
 - Click "💰 Total Budget" → $70.7M portfolio budget
 - Click "📈 Budget Comparison" → See project distribution
-- Click "🏆 Highest Budget" → 17175 Yonge St ($46.8M)
-- Click "72 Perth Avenue" → "📋 Overview" → See detailed status
+- Click "🏆 Highest Budget" → Project Y ($46.8M)
+- Click "Project P (Northside Residential)" → "📋 Overview" → See detailed status
 - All in 4 clicks, <2 minutes total
 ```
 
@@ -226,7 +226,7 @@ Board Meeting Preparation:
 ```
 First Time Using BuildBridge:
 - Opens interface → Sees 3 projects immediately
-- Clicks "17175 Yonge St" → Submenu shows 6 options
+- Clicks "Project Y" → Submenu shows 6 options
 - Tries "📋 Project Overview" → Gets comprehensive summary
 - Learns: "Oh, I can ask about budget, costs, units, parking!"
 - No training manual needed (self-documenting)
@@ -302,7 +302,7 @@ Notice how they're organized with clear names and visual hierarchy."
 
 **2. Expand Project Menu (1 min)**
 ```
-"Click '17175 Yonge St' and watch the submenu expand.
+"Click 'Project Y' and watch the submenu expand.
 Now we have 6 one-click queries specifically for this project."
 ```
 

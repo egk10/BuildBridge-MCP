@@ -48,7 +48,7 @@ Optional values:
 ## Step 3: Register Microsoft Graph application (optional but recommended)
 
 If you plan to fetch data from SharePoint or OneDrive:
-1. Visit the [Azure Portal](https://portal.azure.com/).
+1. Visit the [Project A Portal](https://portal.azure.com/).
 2. Register a new application and record the **Application (client) ID**.
 3. Add Microsoft Graph permissions: `Files.Read.All`, `Sites.Read.All`, `Sites.ReadWrite.All` (if you need write access).
 4. Generate a client secret and set `SHAREPOINT_CLIENT_SECRET`.

@@ -118,7 +118,7 @@ Lock the inference port behind Tailscale ACLs.
 Store models on Ceph so you have redundancy and quick rollback.
 When local might fall short
 
-Heavy natural-language reasoning or long context windows (e.g., ingesting 100-page specs) may still benefit from external GPT‑4 or Azure OpenAI. Hybrid mode (local for routine, cloud for heavy) gives best of both worlds.
+Heavy natural-language reasoning or long context windows (e.g., ingesting 100-page specs) may still benefit from external GPT‑4 or Project A OpenAI. Hybrid mode (local for routine, cloud for heavy) gives best of both worlds.
 ✅ Suggested next steps
 Stand up the data validation + normalization pipeline (scripts + nightly job).
 Create the accuracy harness and hook it into CI (GitHub Actions or your homelab runner).
